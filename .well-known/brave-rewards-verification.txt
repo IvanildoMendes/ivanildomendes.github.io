@@ -1,0 +1,4 @@
+This is a Brave Rewards publisher verification file.
+
+Domain: ivanildomendes.github.io
+Token: dc30ce7ae48296c36c8915f9722500ae13e2f05869cf0c067fbbcb31f00f5fa7
