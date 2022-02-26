@@ -145,7 +145,7 @@ var invisivel = document.querySelector('#invisivel');
 gerar.addEventListener("click",gerador);
 function gerador() {    
     var valor= $('#TextoDoUsuario').val();    
-    var url = 'https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${valor}';
+    var url = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${valor}`;
     saida.src = url;
     alert("Novo QR Code gerado");
     }
