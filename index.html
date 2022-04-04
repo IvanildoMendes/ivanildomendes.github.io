@@ -13,8 +13,8 @@
 	<div id="menu"></div>
 	<article class="relogio" >
    <script>
-    var myVar = setInterval(myTimer ,1000);
-    function myTimer() {
+    var horario = setInterval(relogio ,1000);
+    function relogio() {
         var d = new Date(), displayDate;
        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
           displayDate = d.toLocaleTimeString('pt-BR');
