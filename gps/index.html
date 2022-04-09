@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="description" content="Página inicial do site ivanildo.net.br">
+<meta name="keywords" content="Digital, Relógio, mostra as horas">
+<meta name="author" content="Ivanildo Medes dos Santos">
+<link rel="shortcut icon" href="/img/favicon.png">
+<link rel="stylesheet" href="/css/estilo.css">
+<title>ivanildo.net.br</title>
+</head><bodyonload="miniGps();" >
+<H1 id="gps">Para sabe sua localização lige o supor ao java Javascript</H1>
+
+<script>
+var x=document.getElementById("gps");
+function miniGps()
+  {  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition( mostrarLugar, mostrarError); }
+  else{x.innerHTML="Seu browser não suporte prara Geolocalização.";}
+  }
+function mostrarLugar(position)
+  {
+  x.innerHTML="Latitude: " + position.coords.latitude + 
+  "<br>Longitude: " + position.coords.longitude;  
+  }
+function mostrarError(error)
+  {
+  switch(error.code) 
+    {
+    case error.PERMISSION_DENIED:
+      x.innerHTML="Usuário ou browser rejeitou a solicitação de Geolocalização\. dei permições ao browser, ao site e lige o GPS"
+      break;
+    case error.POSITION_UNAVAILABLE:
+      x.innerHTML="Localização indisponível."
+      break;
+    case error.TIMEOUT:
+      x.innerHTML="A requisição expirou."
+      break;
+    case error.UNKNOWN_ERROR:
+      x.innerHTML="Algum erro desconhecido aconteceu."
+      break;
+    }
+  }
+</script>
+</body>
+</html>
