@@ -16,7 +16,7 @@
 var x=document.getElementById("gps");
 function miniGps()
   {  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition( mostrarLugar, mostrarError); }
+    navigator.geolocation.getCurrentPosition( mostrarLugar ); }
   else{x.innerHTML="Seu browser não suporte prara Geolocalização.";}
   }
 function mostrarLugar(position)
