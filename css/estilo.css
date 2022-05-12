@@ -1,11 +1,111 @@
-body { color: #fff;
-background-color: #000;
+body {
+   color: #fff;
+   background-color: #000;
+   margin: 0;
+   padding: 0;
 }
 .relogio {
+  font-size: 1000%;
+  text-align: center;
   margin: 9px;
   padding: 5px;
   background-color: #555;
   color:#000;
-  font-size: 350%;
-  text-align: center;
 }
+article {
+  margin: 9px;
+  padding: 5px;
+  text-align: center;
+  background-color: #555;
+  color:#000;
+	}
+#menu {
+	color: #fff;
+    background-color: 000;
+	}
+#menu ul{
+	padding: 0;
+	text-decoration: none;
+	list-styke:none;
+	position: relative;
+	}
+#menu li {
+	display: inline;
+}
+#menu a {
+	margin: 5px;
+	text-decoration: none;
+	color: #fff;
+	}
+
+
+#menu a:hover {
+	text-decoration: underline;
+	color: #000;
+	background-color: #fff;
+	}
+
+
+#rodape {
+	color: #fff;
+    background-color: 000;
+    font-size: 20%;
+	}
+
+
+#rodape ul{
+	padding: 0;
+	text-decoration: none;
+	list-styke:none;
+	position: relative;
+	}
+#rodape li {
+	display: inline;
+}
+
+#rodape a {
+	margin: 5px;
+	text-decoration: none;
+	color: #fff;
+	}
+
+
+#rodape a:hover {
+	text-decoration: underline;
+	color: #000;
+	background-color: #fff;
+	}
+
+
+
+a:link.normal {
+  color: yellow;
+  text-decoration: none;
+}
+
+a:visited.normal {
+ color: yellow;
+  text-decoration: none;
+  text-decoration: line-through;
+}
+
+
+a:hover.normal {
+  color: yellow;
+  text-decoration: underline;
+}
+
+
+a:active.normal {
+  color: yellow;
+   text-decoration: none;
+}
+.centro {
+   text-align: center;
+}
+.esquerda {
+	text-align: left;
+	}
+.direita {
+	text-align: right;
+	}
