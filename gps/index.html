@@ -13,35 +13,69 @@
 <H1 id="gps">Para sabe sua localização lige o supor ao java Javascript</H1>
 
 <script>
-var x=document.getElementById("gps");
-function miniGps()
-  {  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition( mostrarLugar ); }
-  else{x.innerHTML="Seu browser não suporte prara Geolocalização.";}
-  }
-function mostrarLugar(position)
-  {
-  x.innerHTML="Latitude: " + position.coords.latitude + 
-  "<br>Longitude: " + position.coords.longitude;  
-  }
-function mostrarError(error)
-  {
-  switch(error.code) 
-    {
-    case error.PERMISSION_DENIED:
-      x.innerHTML="Usuário ou browser rejeitou a solicitação de Geolocalização, dei permições ao browser, ao site e lige o GPS" ;
-      break;
-    case error.POSITION_UNAVAILABLE:
-      x.innerHTML="Localização indisponível."
-      break;
-    case error.TIMEOUT:
-      x.innerHTML="A requisição expirou."
-      break;
-    case error.UNKNOWN_ERROR:
-      x.innerHTML="Algum erro desconhecido aconteceu."
-      break;
+function prompt(window, pref, message, callback) {
+    let branch = Components.classes["@mozilla.org/preferences-service;1"]
+                           .getService(Components.interfaces.nsIPrefBranch);
+
+    if (branch.getPrefType(pref) === branch.PREF_STRING) {
+        switch (branch.getCharPref(pref)) {
+        case "always":
+            return callback(true);
+        case "never":
+            return callback(false);
+        }
     }
-  }
+
+    let done = false;
+
+    function remember(value, result) {
+        return function() {
+            done = true;
+            branch.setCharPref(pref, value);
+            callback(result);
+        }
+    }
+
+    let self = window.PopupNotifications.show(
+        window.gBrowser.selectedBrowser,
+        "geolocation",
+        message,
+        "geo-notification-icon",
+        {
+            label: "Share Location",
+            accessKey: "S",
+            callback: function(notification) {
+                done = true;
+                callback(true);
+            }
+        }, [
+            {
+                label: "Always Share",
+                accessKey: "A",
+                callback: remember("always", true)
+            },
+            {
+                label: "Never Share",
+                accessKey: "N",
+                callback: remember("never", false)
+            }
+        ], {
+            eventCallback: function(event) {
+                if (event === "dismissed") {
+                    if (!done) callback(false);
+                    done = true;
+                    window.PopupNotifications.remove(self);
+                }
+            },
+            persistWhileVisible: true
+        });
+}
+
+prompt(window,
+       "extensions.foo-addon.allowGeolocation",
+       "Foo Add-on wants to know your location.",
+       function callback(allowed) { alert(allowed); });
+
 </script>
 </body>
 </html>
