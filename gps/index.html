@@ -11,6 +11,11 @@
 </head><body>
 <H1 id="gps">Para sabe sua localização lige o suporte ao Javascript</H1>
 
+
+<br><br>
+<button onclick="copiar()">Copiar Posição atual</button>
+
+
 <script>
 var options = {
   enableHighAccuracy: true,
@@ -31,8 +36,6 @@ function error(err) {
 };
 
 navigator.geolocation.getCurrentPosition(success, error, options);
-
-    <button onclick="copiar()">Copiar Posição atual</button>
 
 
 function copiar() {
