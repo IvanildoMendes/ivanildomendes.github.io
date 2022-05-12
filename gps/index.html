@@ -22,7 +22,7 @@ var options = {
 function success(pos) {
   var crd = pos.coords;
   
-  document.getElementById("gps").innerHTML = 'Sua posição atual é:<br>Latitude : ' + crd.latitude + '<br>Longitude: ' + crd.longitude + '<br>Mais ou menos ' + crd.accuracy + ' metros.';
+  document.getElementById("gps").innerHTML = 'Sua posição atual é:<br>Latitude : ' + crd.latitude + '<br>Longitude: ' + crd.longitude + 'Mais ou menos <br>' + crd.accuracy + ' metros.';
 };
 
 function error(err) {
