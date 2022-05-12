@@ -9,7 +9,7 @@
 <link rel="shortcut icon" href="/img/favicon.png">
 <link rel="stylesheet" href="/css/estilo.css">
 <title>ivanildo.net.br</title>
-</head><bodyonload="miniGps();" >
+</head><body>
 <H1 id="gps">Para sabe sua localização lige o supor ao java Javascript</H1>
 
 <script>
@@ -21,15 +21,12 @@ var options = {
 
 function success(pos) {
   var crd = pos.coords;
-
-  console.log('Sua posição atual é:');
-  console.log('Latitude : ' + crd.latitude);
-  console.log('Longitude: ' + crd.longitude);
-  console.log('Mais ou menos ' + crd.accuracy + ' metros.');
+  
+  document.getElementById("gps").innerHTML = 'Sua posição atual é:<br>Latitude : ' + crd.latitude + '<br>Longitude: ' + crd.longitude + '<br>Mais ou menos ' + crd.accuracy + ' metros.';
 };
 
 function error(err) {
-  console.warn('ERROR(' + err.code + '): ' + err.message);
+  document.getElementById("gps").innerHTML = 'ERROR(' + err.code + '): ' + err.message;
 };
 
 navigator.geolocation.getCurrentPosition(success, error, options);
