@@ -20,8 +20,9 @@ var options = {
 
 function success(pos) {
   var crd = pos.coords;
-  
-  document.getElementById("gps").innerHTML = 'Sua posição atual é:<textarea>Latitude: ' + crd.latitude + ' Longitude: ' + crd.longitude + '</textarea>, Margem de erro em ' + crd.accuracy + ' metros.';
+  document.getElementById("gps").innerHTML = 'Posição atual<br><textarea>Latitude: ' + crd.latitude + ' Longitude: ' + crd.longitude + '</textarea>, Margem de erro em ' + crd.accuracy + ' metros.';
+  navigator.clipboard.writeText( 'Latitude: ' + crd.latitude + ' Longitude: ' + crd.longitude' );
+  alert("Copiado, pronto pra colar");
 };
 
 function error(err) {
