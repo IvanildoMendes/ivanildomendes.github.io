@@ -21,7 +21,7 @@ var options = {
 function success(pos) {
   var crd = pos.coords;
   var info = 'Latitude: ' + crd.latitude + ' Longitude: ' + crd.longitude ;
-  document.getElementById("gps").innerHTML = 'Posição atual<br><href=\"/copiar/?copia=' + info + '\">' + info + '</a>, Margem de erro em ' + crd.accuracy + ' metros.';
+  document.getElementById("gps").innerHTML = 'Posição atual<br><br>' + info + '<br><br>, Margem de erro em ' + crd.accuracy + ' metros.';
   info.select();
   document.execCommand('copy');
   //alert("Copiado");
