@@ -32,6 +32,18 @@ function error(err) {
 
 navigator.geolocation.getCurrentPosition(success, error, options);
 
+    <button onclick="copiar()">Copiar Posição atual</button>
+
+
+function copiar() {
+
+    var content = document.getElementById("gps");
+    
+    content.select();
+    document.execCommand('copy');
+
+    alert("Copiado");
+}
 </script>
 </body>
 </html>
