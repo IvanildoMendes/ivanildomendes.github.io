@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><body>
+<script>
+    var horario = setInterval(relogio ,1000);
+    function relogio() {
+        var d = new Date(), displayDate;
+       if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+          displayDate = d.toLocaleTimeString('pt-BR');
+       } else {
+          displayDate = d.toLocaleTimeString('pt-BR', {timeZone: 'America/Belem'});
+       }
+          document.getElementById("relogio").innerHTML = displayDate;
+    }
+    </script>
+<H1 id="relogio" ></H1>
+</body></html>
