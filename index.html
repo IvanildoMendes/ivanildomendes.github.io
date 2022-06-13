@@ -1,68 +1,102 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta charset="UTF-8">
-      <meta name="description" content="Página inicial do site ivanildo.net.br">
-      <meta name="keywords" content="Digital, Relógio, mostra as horas">
-      <meta name="author" content="Ivanildo Medes dos Santos">
-      <link rel="shortcut icon" href="/img/favicon.png">
-      <link rel="stylesheet" href="/css/estilo.css">
-      <title>ivanildo.net.br</title>
-</head><body>
-<nav id="menu">
-     <br>
-    <ul  class="esquerda">
-        <li><a href="https://www.ivanildo.net.br/gps" >GPS</a></li>
-        <li><a href="https://lookup.icann.org/en" >whois</a></li>
-    </ul>
-     <ul  class="direita">
-             
-             <li><a href="https://www.horariodebrasilia.org/">horariodebrasilia.org</a></li>
-	     <li><a href="https://accounts.google.com/AccountChooser/signinchooser?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&flowName=GlifWebSignIn&flowEntry=AccountChooser" > Gmail </a></li>
-	     <li><a href="https://mail.protonmail.com/login" > ProtonMail </a></li>
-	     <li><a href="https://www.hotmail.com/" > Hotmail</a></li>
-</ul>
+	<meta charset="UTF-8">
+	<title>Gerador de senhas variadas e aleatórias</title>
+	<script type="text/javascript" src="/js/script.js"></script>
+	<link rel="stylesheet" type="text/css" href="/css/style.css" />
+</head>
+<body>
+
+<nav id="tes">
+	<br><p id="resultado"></p>
 </nav>
-<nav id="artigo">
-<article><br><br><h1>Pesquisar</h1><br>
-<form action="/pesquisar/" method="get">
-<select name="motor">
-  <option selected value="DuckDuckGo">DuckDuckGo.com</option>
-  <option value="Amazon">Amazon.com.br</option>
-  <option value="Archive">Archive.org</option>
-  <option value="Ask">Ask.com</option>
-  <option value="Bing">Bing.com</option>
-  <option value="Bitchute">Bitchute.com</option>
-  <option value="Brave">Brave search</option>
-  <option value="Google">Google.com</option>
-  <option value="Odysee">Odysee.com</option>
-  <option value="Registro">Registro.br</option>
-  <option value="Rumble">Rumble.com</option>
-  <option value="Sputniknews">Sputniknews.com</option>
-  <option value="Transparencia">Transparencia.gov.br</option>
-  <option value="Wiby">Wiby.me</option>
-  <option value="Wikipedia">Wikipedia.org</option>
-  <option value="Yahoo">Yahoo!</option>
-  <option value="Yandex">Yandex.com</option>
-  <option value="Youtube">Youtube.com</option>
-</select>
-<br>
-      <input type="search" name="pesquisa" value="" placeholder="Pesquisar . . ."><br>
-  	<input type="submit" value="Buscar">
-  	</form>
-<br><br>
-    </article>
-</nav>
-<a class="normal" href="/uf/" >Estado</a>
- <nav id="rodape">
-  <p></p>
-    <ul>
- 	<li><a class="normal" href="/termos.html" > termos de uso</a></li>
-        <li><a class="normal" href="/privacidade.html" > politicas de privacidade</a></li>
-        <li><a class="normal" href="/lgpd.html" > lgpd </a></li>
-        <li><a href="https://link112.com/" title="Link112: Submeter Site" >Link112</a></li>
-    </ul>
- <p id="ano"></p> <script> var ano = new Date(); document.getElementById("ano").textContent = "Copyright© 2022 - " + ano.getFullYear() + " by Ivanildo Mendes dos Santos. All Rights Reserved."; </script>
-</nav>
-</body></html>
+
+
+<div id="corpo">
+	<div>
+		<div id="corpoPrincipal">
+			<div id="gerarSenha">
+				<h1>Gerador de senhas</h1>
+			</div>
+			<div id="corpo2">
+				<div id="lado1">
+					<textarea class="botao" id="resul" placeholder="A senha aparecera aqui."></textarea>
+					<input type="submit" value="Copiar senha" onclick="copiar()" class="botao" id="bot">
+				</div>
+				<div id="lado2">
+					<p>Quantidade de dígito:
+						<select id="numero">
+							<script>
+							for(var a = 4;a < 51;a++){
+								document.write("	<option value="+a+">"+a+"</option>");
+							}
+							</script>
+						</select>
+					</p>
+					<br>
+					<fieldset>
+						<legend>Caracteres para entrada</legend>
+						<label onclick="che()"><input type="checkbox" class="input" id="L" checked> Letras<br></label>
+						<label id="min"></label>
+						<label id="mas"></label>
+						<label id="min_mas"></label>
+						<label><input type="checkbox" class="input" id="N"> Números<br></label>
+						<label><input type="checkbox" class="input" id="S"> Símbolos<br></label>
+					</fieldset>
+					<br>
+				</div>
+			</div>
+			<br>
+			<div id="btbGerar">
+				<center><input type="submit" value="Gerar senha" onclick="gerar()" class="botao"></center>
+			</div>
+			<center><div id="propaganda"></div></center>
+		</div>	
+		<div id="corpoTexto">
+		
+		</div>
+	</div>
+	<div id="rodape">
+		<ul>
+			<li><a class="normal" href="/termos.html" >TERMOS DE USO</a></li>
+			<li><a class="normal" href="/privacidade.html" >POLITICAS DE PRIVACIDADE</a></li>
+			<li><a class="normal" href="/lgpd.html" > LGPD </a></li>
+			<li><a href="https://link112.com/" title="Link112: Submeter Site" >Link112</a></li>
+		</ul>
+		<p id="copyraty"></p> 
+	</div>
+</div>
+
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	<!--
+	
+	<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+	<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+	
+
+
+
+<div id="teste">f</div>
+-->
+
+<script>
+/*Caracteres para entrada*/
+che();
+/*rodape*/
+ano();
+</script>
+</body>
+</html>
