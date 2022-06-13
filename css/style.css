@@ -1,0 +1,306 @@
+*{
+	margin: 0px;
+}
+#corpo{
+	display: flex;                 
+	flex-direction: column;         
+	justify-content: space-between; 
+	
+}
+#corpoPrincipal{
+	background: #D3D3D3;
+	height: 100vh;
+}
+#corpoTexto{
+	width: 100%;
+	/*height: 100px;*/
+	background: white;
+}
+#rodape{
+	width: 100%;
+	height: 200px;
+	background: black;
+	color: white;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+}
+#rodape p{
+	margin-bottom: 20px;
+}
+
+
+
+
+body{
+	
+}
+#teste{
+	background: red;
+}
+
+
+#corpo2{
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	
+}
+
+#gerarSenha{
+	padding: 30px;
+	margin-bottom: 50px;
+	text-align: center;
+}
+
+#lado1{
+	width: 50%;
+	text-align: center;
+}
+
+#lado2{
+	width: 40%;
+	margin-right: 40px;
+}
+
+#propaganda{
+	width: 700px;
+	height: 70px;
+	background: #A9A9A9;
+	margin-top: 80px;
+}
+
+#resul{
+	margin-left: 15px;
+	margin-top: 10px;
+	margin-bottom: 20px;
+	height: 150px;
+	width: 500px;
+	font-size: 30px;
+	background: white;
+	resize: none;
+}
+
+
+.botao{
+	background: #808080;
+	margin: 3px;
+	text-align: center;
+	line-height: 40px;
+	border: 0 none;
+	box-shadow: 0 0 0 0;
+    outline: 0;
+	font-size: 20px;
+	width: 150px;
+}
+
+
+
+#gerarSenha h1{
+	font-size: 40px;
+}
+
+nav{
+	background-color: #A9A9A9;
+	width: 400px;
+	height: 100px;
+	top: -400px;
+	position: absolute;
+	transition: all .5s;
+	margin-left: 200px;
+	text-align: center;
+	font-family: arial;
+}
+nav p{
+	font-size: 16px;
+	margin: 10px;
+	
+}
+
+/*rodape*/
+#rodape ul{
+	display: flex;
+	list-style-type: none;
+	padding: 0;
+	margin-bottom: 80px;
+}
+
+#rodape ul li{
+	flex: 1;
+	width: 200px;
+	text-align: center;
+}
+
+#rodape ul li a{
+	text-decoration: none;
+	color: white;
+	font-size: 16px;
+}
+
+#rodape ul li a:hover{
+	text-decoration: underline;	
+}
+
+
+#corpoTexto{
+	display: flex;
+	justify-content: center;
+	
+}
+#corpoTexto .texto-completo{
+	margin-top: 70px;
+	margin-bottom: 70px;
+	width: 1100px;
+}
+#corpoTexto .texto-completo h1{
+	padding: 30px;
+	
+}
+
+input:hover{
+	background: #696969;
+}
+
+
+@media (max-width: 1000px){
+	*{
+		
+		vertical-align:baseline;
+		list-style:none;
+
+	}
+	#corpoPrincipal {
+		font-size: 40px;
+	}
+	#teste{
+		background: blue;
+	}
+	#corpo2{
+		display: flex;
+		flex-direction: column-reverse;
+	}
+	#gerarSenha h1{
+		font-size: 70px;
+		margin-top: 30px;
+	}
+	
+	#lado1{
+		width: 90%;
+		display: flex;
+		align-items: center;
+		margin-left: 40px;
+	}
+
+	#lado2{
+		width: 87%;
+		margin-left: 40px;
+	}
+	
+	#bot{
+		margin-left: 20px;
+	}
+	
+	#resul{
+		margin-left: 30px;
+		margin-top: 10px;
+		margin-bottom: 20px;
+		height: 150px;
+		width: 70%;
+		font-size: 40px;
+		background: white;
+		padding: 5px;
+	}
+	
+	.input {
+		min-width: 30px;
+		min-height: 30px;
+		margin-right: 7px;
+	}
+	
+	option{
+		font-size: 17px;
+	}
+	
+	.botao{
+		font-size: 40px;
+		width: 300px;
+		padding: 10px;
+		height: 70px;
+	}
+	
+	#propaganda{
+		width: 700px;
+		height: 200px;
+		background: #A9A9A9;
+		margin-top: 120px;
+	}
+	
+	nav{
+		width: 400px;
+		height: 300px;
+		transition: all .5s;
+		margin-left: 30%;
+	}
+	nav p{
+		font-size: 40px;
+		margin: 10px;
+		
+	}
+	#numero{
+		font-size: 40px;
+	}
+	
+	#corpoTexto{
+		font-size: 30px;
+	}
+	#corpoTexto .texto-completo{
+		font-size: 15px;
+		width: 90vw;
+	}
+	#corpoTexto .texto-completo h1{
+		font-size: 60px;
+	}
+	
+	
+	
+	
+	
+	
+	#rodape{
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		height: 600px;
+	}
+	
+	
+	#rodape #copyraty{
+		font-size: 25px;
+		width: 80%;
+		margin-bottom: 60px;
+		margin-left: 10%;
+	}
+	#rodape ul{
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 150px;
+		padding: 50px;
+	}
+
+	#rodape ul li{
+		width: 100%;
+		margin: 10px;
+		text-align: left;
+	}
+
+	#rodape ul li a{
+		color: white;
+		font-size: 30px;
+		text-decoration: underline;	
+	}
+	
+	
+}
+
+
