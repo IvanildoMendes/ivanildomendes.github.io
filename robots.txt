@@ -2,6 +2,4 @@ User-Agent: *
 Allow: /
 Allow: /pivacidade.html
 Allow: /termos.html
-Disallow: 404.html
-
-
+Disallow: /404.html
