@@ -13,12 +13,13 @@ body {
   color:#000;
 }
 #artigo {
-    margin: 0;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%) }
+     height: 10em;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     max-width:70%;
+     height:auto;
+}
 #menu {
 	color: #fff;
     background-color: 000;
