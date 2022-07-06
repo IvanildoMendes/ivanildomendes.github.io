@@ -3,3 +3,4 @@ Allow: /
 Allow: /pivacidade.html
 Allow: /termos.html
 Disallow: /404.html
+Sitemap: https://www.ivanido.net.br/sitemap.xml
