@@ -2,9 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
    <url>
       <loc>https://www.ivanildo.net.br/</loc>
-      <xhtml:link href="https://www.ivanildo.net.br/" hreflang="x-default" rel="alternate"/>
-      <xhtml:link href="https://www.ivanildo.net.br/" hreflang="x-default" rel=canonical"/>
-      <lastmod>2022-07-26</lastmod>
+      <lastmod>2022-07-13</lastmod>
       <priority>0.8</priority>
    </url>
+   <url>
+      <loc>https://www.ivanildo.net.br/echo.html</loc>
+      <lastmod>2022-07-13</lastmod>
+      <priority>0.7</priority>
+   </url>
+
 </urlset>
