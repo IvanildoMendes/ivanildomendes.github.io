@@ -1,7 +1,9 @@
 User-Agent: *
-Allow: /
-Allow: /pivacidade.html
-Allow: /termos.html
+Allow: /index.html
+Allow: /echo.html
+Disallow: /pivacidade.html
+Disallow: /termos.html
+Disallow: /lgpd.html
 Disallow: /404.html
 Sitemap: https://www.ivanido.net.br/sitemap.xml
 
