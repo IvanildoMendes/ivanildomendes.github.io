@@ -1,4 +1,4 @@
 This is a Brave Rewards publisher verification file.
 
 Domain: ivanildo.net.br
-Token: 1cddd637616db222915890a6e1dde138916ca3bcb76c2490e86aaff2775205c7
+Token: d18f1d66b293879b8f8b615499338ac7052741a1a77c0886b2556316fa3d7111
