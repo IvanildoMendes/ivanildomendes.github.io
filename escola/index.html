@@ -47,7 +47,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('/app/lista.csv')
+            fetch('/escola/lista.csv')
                 .then(response => response.text())
                 .then(text => {
                     const lines = text.split('\n');
