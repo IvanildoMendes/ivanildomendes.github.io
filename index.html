@@ -1,117 +1,122 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-	<meta charset="UTF-8">
-	<meta name="yandex-verification" content="6f55ac30311075a9" />
-        <meta content="Esta página tem como objetivo, disponibilizar um gerador simples e eficiente de senhas, para e-mails e outros sistemas." name="description">
-        <meta name="keywords" content="Gerador, senha, novas, senhas, variadas, aleatórias, Ivanildo, criando, fortes"/>
-        <meta name="robots" content="index, follow">
-        <link rel="canonical" href="https://www.ivanildo.net.br/">
-	<link rel="alternate" media="handheld" href="https://m.ivanildo.net.br/">
-	<link rel="alternate" media="only screen and (max-width: 640px)" href="https://m.ivanildo.net.br/">
-	<title>Gerador de senhas</title>
-	<script type="text/javascript" src="/js/script.js"></script>
-	<link rel="stylesheet" type="text/css" href="/css/style.css" />
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6132833469273542"
-     crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - Leitores de Arquivos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
 
+    <div class="container">
+        <h1>Leitores de Arquivos</h1>
+        <p>Selecione um formato de arquivo para começar:</p>
+        <ul>
+            <li><a href="/WebApp/leitor_pdf.html">Leitor de PDF</a></li>
+            <li><a href="/WebApp/leitor_csv.html">Leitor de CSV</a></li>
+            <li><a href="/WebApp/leitor_docx.html">Leitor de DOCX</a></li>
+            <li><a href="/WebApp/leitor_xlsx.html">Leitor de XLSX</a></li>
+            <li><a href="/WebApp/leitor_odt.html">Leitor de ODT</a></li>
+            <li><a href="/WebApp/leitor_rtf.html">Leitor de RTF</a></li>
+            <li><a href="/WebApp/leitor_pptx.html">Leitor de PPTX</a></li>
+            <li><a href="/WebApp/leitor_ods.html">Leitor de ODS</a></li>
+        </ul>
+    </div>
 
-<nav id="tes">
-	<br><p id="resultado"></p>
-</nav>
-
-
-<div id="corpo">
-	<div>
-		<div id="corpoPrincipal">
-			<div id="gerarSenha">
-				<h1>Gerador de senhas</h1>
-			</div>
-			<div id="corpo2">
-				<div id="lado1">
-					<textarea class="botao" id="resul" placeholder="A senha aparecera aqui."></textarea>
-					<input type="submit" value="Copiar senha" onclick="copiar()" class="botao" id="bot">
-				</div>
-				<div id="lado2">
-					<p>Quantidade de dígito:
-						<select id="numero">
-							<script>
-							for(var a = 4;a < 51;a++){
-								document.write("	<option value="+a+">"+a+"</option>");
-							}
-							</script>
-						</select>
-					</p>
-					<br>
-					<fieldset>
-						<legend>Caracteres para entrada</legend>
-						<label onclick="che()"><input type="checkbox" class="input" id="L" checked> Letras<br></label>
-						<label id="min"></label>
-						<label id="mas"></label>
-						<label id="min_mas"></label>
-						<label><input type="checkbox" class="input" id="N"> Números<br></label>
-						<label><input type="checkbox" class="input" id="S"> Símbolos<br></label>
-					</fieldset>
-					<br>
-				</div>
-			</div>
-			<br>
-			<div id="btbGerar">
-				<center><input type="submit" value="Gerar senha" onclick="gerar()" class="botao"></center>
-			</div>
-			<center><div id="propaganda"></div></center>
-		</div>	
-		<div id="corpoTexto">
-		
-		</div>
-	</div>
-	<div id="rodape">
-		<ul>
-			<li><a class="normal" rel="nofollow" href="/materiall" >Material</a></li>
-			<li><a class="normal" rel="nofollow" href="/termos.html" >TERMOS DE USO</a></li>
-			<li><a class="normal" rel="nofollow" href="/privacidade.html" >POLITICAS DE PRIVACIDADE</a></li>
-			<li><a class="normal" rel="nofollow" href="/lgpd.html" > LGPD </a></li>
-			<li><a href="https://link112.com/" title="Link112: Submeter Site" >Link112</a></li>
-		</ul>
-		<p id="copyraty"></p> 
-	</div>
-</div>
-
-	
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	<!--
-	
-	<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-	<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-	
-
-
-
-<div id="teste">f</div>
--->
-
-<script>
-	<br><a href="/material/">Material</a>
-	
-/*Caracteres para entrada*/
-che();
-/*rodape*/
-ano();
-</script>
 </body>
 </html>
--->
-	<a href="https://mega.nz/folder/OdUixIJZ#bvebCQnlx4ANtD8OQw4Y1w"> escola </a>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - Leitores de Arquivos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Leitores de Arquivos</h1>
+        <p>Selecione um formato de arquivo para começar:</p>
+        <ul>
+            <li><a href="/WebApp/leitor_pdf.html">Leitor de PDF</a></li>
+            <li><a href="/WebApp/leitor_csv.html">Leitor de CSV</a></li>
+            <li><a href="/WebApp/leitor_docx.html">Leitor de DOCX</a></li>
+            <li><a href="/WebApp/leitor_xlsx.html">Leitor de XLSX</a></li>
+            <li><a href="/WebApp/leitor_odt.html">Leitor de ODT</a></li>
+            <li><a href="/WebApp/leitor_rtf.html">Leitor de RTF</a></li>
+            <li><a href="/WebApp/leitor_pptx.html">Leitor de PPTX</a></li>
+            <li><a href="/WebApp/leitor_ods.html">Leitor de ODS</a></li>
+        </ul>
+    </div>
+
+</body>
+</html>
