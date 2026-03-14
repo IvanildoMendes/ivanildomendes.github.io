@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Links</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* Cabeçalho com relógio */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .clock {
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        /* Barra de pesquisa */
+        .search-section {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transform: scale(1.02);
+        }
+
+        .search-engine-select {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+        }
+
+        .search-btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 30px;
+            background: #4CAF50;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Grid de categorias */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .category {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+        }
+
+        .category h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category h2 i {
+            color: #667eea;
+        }
+
+        .links-list {
+            list-style: none;
+        }
+
+        .links-list li {
+            margin-bottom: 12px;
+        }
+
+        .links-list a {
+            color: #555;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .links-list a:hover {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .links-list a i {
+            font-size: 14px;
+            color: #667eea;
+        }
+
+        /* Rodapé */
+        .footer {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .buscador-list {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .buscador-list span {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .buscador-list a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .buscador-list a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .copyright {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Ícones (usando emojis como fallback) */
+        .icon {
+            font-size: 18px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+
+            .search-input-wrapper {
+                width: 100%;
+            }
+
+            .search-engine-select, .search-btn {
+                width: 100%;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .buscador-list {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header com relógio -->
+        <div class="header">
+            <div class="logo">
+                <h1>🏢 Portal de links</h1>
+            </div>
+            <div class="clock" id="relogio">--:--:--</div>
+        </div>
+
+        <!-- Seção de pesquisa -->
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Digite sua pesquisa..." onkeypress="handleKeyPress(event)">
+                </div>
+                <select class="search-engine-select" id="searchEngine">
+                    <option value="google">Google</option>
+                    <option value="duckduckgo">DuckDuckGo</option>
+                    <option value="wikipedia">Wikipedia</option>
+                </select>
+                <button class="search-btn" onclick="performSearch()">🔍 Pesquisar</button>
+            </div>
+        </div>
+
+        <!-- Grid de categorias -->
+        <div class="categories-grid">
+            <!-- Downloads de ISOs -->
+            <div class="category">
+                <h2><span class="icon">💿</span> ISOs - Sistemas Operacionais</h2>
+                <ul class="links-list">
+                    <li><a href="https://www.debian.org/download.pt.html" target="_blank"><span class="icon">🐧</span> Debian (Download Oficial)</a></li>
+                    <li><a href="https://www.microsoft.com/pt-br/evalcenter/download-windows-server-2025" target="_blank"><span class="icon">🪟</span> Windows Server 2025 (Avaliação)</a></li>
+                    <li><a href="https://www.microsoft.com/pt-br/evalcenter/download-windows-server-2022" target="_blank"><span class="icon">🪟</span> Windows Server 2022 (Avaliação)</a></li>
+                    <li><a href="https://www.microsoft.com/pt-br/evalcenter/download-windows-server-2019" target="_blank"><span class="icon">🪟</span> Windows Server 2019 (Avaliação)</a></li>
+                    <li><a href="https://www.freebsd.org/where/" target="_blank"><span class="icon">😈</span> FreeBSD (Download Oficial)</a></li>
+                    <li><a href="https://fedoraproject.org/pt_BR/server/download/" target="_blank"><span class="icon">🪣</span> Fedora Server</a></li>
+                    <li><a href="https://fedoraproject.org/pt_BR/workstation/download/" target="_blank"><span class="icon">🪣</span> Fedora Workstation</a></li>
+                </ul>
+            </div>
+
+            <!-- Redes Sociais -->
+            <div class="category">
+                <h2><span class="icon">📱</span> Redes Sociais</h2>
+                <ul class="links-list">
+                    <li><a href="https://web.whatsapp.com/" target="_blank"><span class="icon">💬</span> WhatsApp Web</a></li>
+                    <li><a href="https://www.instagram.com/" target="_blank"><span class="icon">📷</span> Instagram</a></li>
+                    <li><a href="https://www.tiktok.com/" target="_blank"><span class="icon">🎵</span> TikTok</a></li>
+                </ul>
+            </div>
+
+            <!-- Email -->
+            <div class="category">
+                <h2><span class="icon">📧</span> Email</h2>
+                <ul class="links-list">
+                    <li><a href="https://mail.google.com/mail/u/0/" target="_blank"><span class="icon">📧</span> Gmail</a></li>
+                    <li><a href="https://mail.zoho.com" target="_blank"><span class="icon">📧</span> Zoho Mail</a></li>
+                </ul>
+            </div>
+
+            <!-- Documentos -->
+            <div class="category">
+                <h2><span class="icon">📄</span> Documentos</h2>
+                <ul class="links-list">
+                    <li><a href="https://docs.google.com/document/u/0/?hl=pt-BR&pli=1" target="_blank"><span class="icon">📄</span> Google Docs</a></li>
+                    <li><a href="https://www.office.com/" target="_blank"><span class="icon">📄</span> Office 365</a></li>
+                </ul>
+            </div>
+
+            <!-- Clouds -->
+            <div class="category">
+                <h2><span class="icon">☁️</span> Clouds</h2>
+                <ul class="links-list">
+                    <li><a href="https://mega.io/" target="_blank"><span class="icon">☁️</span> MEGA</a></li>
+                    <li><a href="https://drive.google.com/drive/" target="_blank"><span class="icon">☁️</span> Google Drive</a></li>
+                    <li><a href="https://www.microsoft.com/pt-br/microsoft-365/onedrive/online-cloud-storage" target="_blank"><span class="icon">☁️</span> OneDrive</a></li>
+                </ul>
+            </div>
+
+            <!-- Intranet -->
+            <div class="category">
+                <h2><span class="icon">🌐</span> Intranet</h2>
+                <ul class="links-list">
+                    <li><a href="http://192.168.0.1/" target="_blank"><span class="icon">🌐</span> 192.168.0.1</a></li>
+                    <li><a href="http://192.168.1.1/" target="_blank"><span class="icon">🌐</span> 192.168.1.1</a></li>
+                    <li><a href="http://10.0.0.1/" target="_blank"><span class="icon">🌐</span> 10.0.0.1</a></li>
+                    <li><a href="https://127.0.0.1/" target="_blank"><span class="icon">🌐</span> 127.0.0.1 (localhost)</a></li>
+                </ul>
+            </div>
+
+            <!-- IAs -->
+            <div class="category">
+                <h2><span class="icon">🤖</span> IAs</h2>
+                <ul class="links-list">
+                    <li><a href="https://chat.deepseek.com/" target="_blank"><span class="icon">🤖</span> DeepSeek</a></li>
+                    <li><a href="https://chatgpt.com/" target="_blank"><span class="icon">🤖</span> ChatGPT</a></li>
+                    <li><a href="https://gemini.google.com" target="_blank"><span class="icon">🤖</span> Gemini</a></li>
+                    <li><a href="https://grok.com/" target="_blank"><span class="icon">🤖</span> Grok</a></li>
+                    <li><a href="https://duck.ai/chat?ia=chat" target="_blank"><span class="icon">🤖</span> Duck.ai</a></li>
+                    <li><a href="https://lmstudio.ai/download" target="_blank"><span class="icon">🤖</span> LM Studio</a></li>
+                </ul>
+            </div>
+
+            <!-- Domínios -->
+            <div class="category">
+                <h2><span class="icon">🔗</span> Domínios</h2>
+                <ul class="links-list">
+                    <li><a href="https://registro.br/" target="_blank"><span class="icon">🔗</span> Registro.br</a></li>
+                    <li><a href="https://dash.cloudflare.com/" target="_blank"><span class="icon">🔗</span> Cloudflare</a></li>
+                    <li><a href="https://www.zoho.com/pt-br/mail/admin-console.html" target="_blank"><span class="icon">🔗</span> Zoho Admin</a></li>
+                    <li><a href="https://www.noip.com/pt-BR" target="_blank"><span class="icon">🔗</span> No-IP</a></li>
+                </ul>
+            </div>
+
+            <!-- Códigos -->
+            <div class="category">
+                <h2><span class="icon">💻</span> Códigos</h2>
+                <ul class="links-list">
+                    <li><a href="https://github.com/login" target="_blank"><span class="icon">💻</span> GitHub</a></li>
+                    <li><a href="https://codeberg.org/user/login?redirect_to=%2f" target="_blank"><span class="icon">💻</span> Codeberg</a></li>
+                </ul>
+            </div>
+
+            <!-- Repositórios -->
+            <div class="category">
+                <h2><span class="icon">📦</span> Repositórios</h2>
+                <ul class="links-list">
+                    <li><a href="https://sourceforge.net/" target="_blank"><span class="icon">📦</span> SourceForge</a></li>
+                </ul>
+            </div>
+
+            <!-- Sites -->
+            <div class="category">
+                <h2><span class="icon">🌍</span> Sites</h2>
+                <ul class="links-list">
+                    <li><a href="https://www.wix.com/" target="_blank"><span class="icon">🌍</span> Wix</a></li>
+                    <li><a href="https://dash.infinityfree.com/accounts" target="_blank"><span class="icon">🌍</span> InfinityFree</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Rodapé com lista de buscadores -->
+        <div class="footer">
+            <div class="footer-content">
+                <div class="buscador-list">
+                    <span>Buscadores:</span>
+                    <a href="https://duckduckgo.com/" target="_blank">DuckDuckGo</a>
+                    <a href="https://www.google.com/" target="_blank">Google</a>
+                    <a href="https://pt.wikipedia.org/w/index.php?search=&title=Especial%3APesquisar" target="_blank">Wikipedia</a>
+                </div>
+                <div class="copyright">
+                  
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para atualizar o relógio
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('relogio').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Atualiza o relógio a cada segundo
+        setInterval(updateClock, 1000);
+        updateClock(); // Chamada inicial
+
+        // Função de pesquisa
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            const engine = document.getElementById('searchEngine').value;
+            
+            if (!query) {
+                alert('Por favor, digite algo para pesquisar');
+                return;
+            }
+
+            let url = '';
+            switch(engine) {
+                case 'google':
+                    url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    break;
+                case 'duckduckgo':
+                    url = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+                    break;
+                case 'wikipedia':
+                    url = `https://pt.wikipedia.org/w/index.php?search=${encodeURIComponent(query)}&title=Especial%3APesquisar`;
+                    break;
+            }
+            
+            window.open(url, '_blank');
+        }
+
+        // Permitir pesquisa com Enter
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+    </script>
+</body>
+</html>
