@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔴 Lig-4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px;
+            border-radius: 30px;
+            border: 1px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+            max-width: 100%;
+        }
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+        .sub {
+            color: #8080a0;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #a0a0c0;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .info-bar span {
+            background: #0f0f1a;
+            padding: 4px 16px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+        }
+        .info-bar .red-score { color: #ff6b6b; }
+        .info-bar .yellow-score { color: #ffd93d; }
+        .info-bar .turn { font-size: 1.1rem; }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            background: #0f0f1a;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 560px;
+            height: auto;
+            aspect-ratio: 560 / 480;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            border: 1px solid transparent;
+        }
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(108,108,255,0.15);
+        }
+        .controls button:active { transform: scale(0.95); }
+        .controls button.active-mode {
+            background: #4a4a8a;
+            border-color: #6c6cff;
+        }
+
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .info-bar { font-size: 0.85rem; }
+            .controls button { padding: 8px 14px; font-size: 0.8rem; }
+            .hint { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔴 LIG-4</h1>
+    <div class="sub">Conecte 4 peças para vencer!</div>
+    <div class="info-bar">
+        <span class="red-score">🔴 <span id="redScore">0</span></span>
+        <span class="turn" id="turnDisplay">Vez: 🔴</span>
+        <span class="yellow-score">🟡 <span id="yellowScore">0</span></span>
+    </div>
+
+    <div class="game-area">
+        <canvas id="gameCanvas" width="560" height="480"></canvas>
+    </div>
+
+    <div class="controls">
+        <button id="restartBtn">🔄 Reiniciar</button>
+        <button id="modeBtn" class="active-mode">👥 2 Jogadores</button>
+        <button id="undoBtn">↩️ Desfazer</button>
+    </div>
+    <div class="hint">
+        <kbd>Clique</kbd> na coluna para jogar &nbsp;·&nbsp; <kbd>Z</kbd> desfazer
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    //  1.  CONFIGURAÇÕES
+    // ================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const redScoreSpan = document.getElementById('redScore');
+    const yellowScoreSpan = document.getElementById('yellowScore');
+    const turnDisplay = document.getElementById('turnDisplay');
+    const restartBtn = document.getElementById('restartBtn');
+    const modeBtn = document.getElementById('modeBtn');
+    const undoBtn = document.getElementById('undoBtn');
+
+    const COLS = 7;
+    const ROWS = 6;
+    const CELL = 70;
+    const RADIUS = 30;
+    const OFFSET_X = 10;
+    const OFFSET_Y = 10;
+    const BOARD_W = COLS * CELL + OFFSET_X * 2;
+    const BOARD_H = ROWS * CELL + OFFSET_Y * 2;
+
+    const EMPTY = 0;
+    const RED = 1;
+    const YELLOW = 2;
+
+    // ================================================================
+    //  2.  ESTADO DO JOGO
+    // ================================================================
+    let board = [];
+    let currentPlayer = RED;
+    let gameOver = false;
+    let winner = 0;
+    let winCells = [];
+    let redScore = 0;
+    let yellowScore = 0;
+
+    // Modo: true = 2 jogadores, false = vs IA
+    let twoPlayerMode = true;
+    let aiTimer = null;
+
+    // Histórico (para desfazer)
+    let history = [];
+
+    // ================================================================
+    //  3.  FUNÇÕES AUXILIARES
+    // ================================================================
+
+    function initBoard() {
+        board = Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
+        currentPlayer = RED;
+        gameOver = false;
+        winner = 0;
+        winCells = [];
+        history = [];
+        updateUI();
+        draw();
+    }
+
+    function getEmptyRow(col) {
+        for (let r = ROWS - 1; r >= 0; r--) {
+            if (board[r][col] === EMPTY) return r;
+        }
+        return -1;
+    }
+
+    function dropPiece(col) {
+        if (gameOver) return false;
+        if (col < 0 || col >= COLS) return false;
+        const row = getEmptyRow(col);
+        if (row === -1) return false;
+
+        // Salva estado para desfazer
+        history.push({
+            board: board.map(row => [...row]),
+            currentPlayer: currentPlayer,
+            gameOver: gameOver,
+            winner: winner,
+            winCells: winCells.map(c => ({...c}))
+        });
+
+        board[row][col] = currentPlayer;
+        draw();
+
+        // Verifica vitória
+        const win = checkWin(row, col, currentPlayer);
+        if (win) {
+            gameOver = true;
+            winner = currentPlayer;
+            winCells = win;
+            updateScore();
+            updateUI();
+            draw();
+            // Efeito de partículas
+            spawnParticles(win);
+            return true;
+        }
+
+        // Verifica empate
+        if (isDraw()) {
+            gameOver = true;
+            winner = 0;
+            updateUI();
+            draw();
+            return true;
+        }
+
+        // Troca jogador
+        currentPlayer = (currentPlayer === RED) ? YELLOW : RED;
+        updateUI();
+        draw();
+
+        // Se for vs IA e for a vez da IA
+        if (!twoPlayerMode && currentPlayer === YELLOW && !gameOver) {
+            aiMove();
+        }
+
+        return true;
+    }
+
+    function checkWin(row, col, player) {
+        const directions = [
+            [0, 1], // horizontal
+            [1, 0], // vertical
+            [1, 1], // diagonal principal
+            [1, -1] // diagonal secundária
+        ];
+
+        for (const [dr, dc] of directions) {
+            let cells = [{ r: row, c: col }];
+            // Para frente
+            for (let i = 1; i < 4; i++) {
+                const nr = row + dr * i;
+                const nc = col + dc * i;
+                if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break;
+                if (board[nr][nc] !== player) break;
+                cells.push({ r: nr, c: nc });
+            }
+            // Para trás
+            for (let i = 1; i < 4; i++) {
+                const nr = row - dr * i;
+                const nc = col - dc * i;
+                if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break;
+                if (board[nr][nc] !== player) break;
+                cells.push({ r: nr, c: nc });
+            }
+            if (cells.length >= 4) {
+                return cells;
+            }
+        }
+        return null;
+    }
+
+    function isDraw() {
+        for (let c = 0; c < COLS; c++) {
+            if (getEmptyRow(c) !== -1) return false;
+        }
+        return true;
+    }
+
+    function updateScore() {
+        if (winner === RED) redScore++;
+        else if (winner === YELLOW) yellowScore++;
+        redScoreSpan.textContent = redScore;
+        yellowScoreSpan.textContent = yellowScore;
+    }
+
+    function updateUI() {
+        const playerName = currentPlayer === RED ? '🔴' : '🟡';
+        turnDisplay.textContent = gameOver ? (winner ? `🏆 ${winner === RED ? '🔴' : '🟡'} venceu!` : '🤝 Empate!') : `Vez: ${playerName}`;
+    }
+
+    // ================================================================
+    //  4.  PARTÍCULAS (efeito de vitória)
+    // ================================================================
+
+    let particles = [];
+
+    function spawnParticles(cells) {
+        for (const cell of cells) {
+            const x = OFFSET_X + cell.c * CELL + CELL / 2;
+            const y = OFFSET_Y + cell.r * CELL + CELL / 2;
+            const color = board[cell.r][cell.c] === RED ? '#ff6b6b' : '#ffd93d';
+            for (let i = 0; i < 12; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const speed = 2 + Math.random() * 4;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 1,
+                    life: 1,
+                    decay: 0.015 + Math.random() * 0.02,
+                    size: 3 + Math.random() * 5,
+                    color
+                });
+            }
+        }
+        // Anima partículas
+        let frame = 0;
+        function animateParticles() {
+            if (particles.length === 0) return;
+            let alive = false;
+            for (const p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.06;
+                p.life -= p.decay;
+                if (p.life > 0) alive = true;
+            }
+            particles = particles.filter(p => p.life > 0);
+            draw();
+            if (alive) {
+                requestAnimationFrame(animateParticles);
+            }
+        }
+        animateParticles();
+    }
+
+    // ================================================================
+    //  5.  IA (inteligência artificial)
+    // ================================================================
+
+    function aiMove() {
+        if (aiTimer) clearTimeout(aiTimer);
+        aiTimer = setTimeout(() => {
+            if (gameOver || currentPlayer !== YELLOW) return;
+            const col = getBestMove();
+            if (col !== -1) {
+                dropPiece(col);
+            }
+            aiTimer = null;
+        }, 300 + Math.random() * 200);
+    }
+
+    function getBestMove() {
+        // IA simples: avalia cada coluna e escolhe a melhor
+        let bestScore = -Infinity;
+        let bestCol = -1;
+
+        for (let c = 0; c < COLS; c++) {
+            const row = getEmptyRow(c);
+            if (row === -1) continue;
+
+            // Simula a jogada
+            board[row][c] = YELLOW;
+            let score = evaluateBoard(YELLOW);
+            board[row][c] = EMPTY;
+
+            // Adiciona um bônus para jogadas centrais
+            const centerBonus = 1 - Math.abs(c - 3) / 3;
+            score += centerBonus * 2;
+
+            // Penaliza se der ao oponente uma vitória imediata (defensivo)
+            board[row][c] = RED;
+            const redScore2 = evaluateBoard(RED);
+            board[row][c] = EMPTY;
+            score -= redScore2 * 1.5;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestCol = c;
+            }
+        }
+
+        return bestCol;
+    }
+
+    function evaluateBoard(player) {
+        let score = 0;
+        // Avalia todas as linhas de 4
+        const directions = [
+            [0, 1],
+            [1, 0],
+            [1, 1],
+            [1, -1]
+        ];
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (board[r][c] !== player) continue;
+                for (const [dr, dc] of directions) {
+                    let count = 1;
+                    let open = 0;
+                    // Para frente
+                    for (let i = 1; i < 4; i++) {
+                        const nr = r + dr * i;
+                        const nc = c + dc * i;
+                        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break;
+                        if (board[nr][nc] === player) count++;
+                        else if (board[nr][nc] === EMPTY) open++;
+                        else break;
+                    }
+                    // Para trás
+                    for (let i = 1; i < 4; i++) {
+                        const nr = r - dr * i;
+                        const nc = c - dc * i;
+                        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break;
+                        if (board[nr][nc] === player) count++;
+                        else if (board[nr][nc] === EMPTY) open++;
+                        else break;
+                    }
+                    // Pontuação: quanto mais próximo de 4, maior
+                    if (count >= 4) score += 100;
+                    else if (count === 3 && open >= 1) score += 10;
+                    else if (count === 2 && open >= 2) score += 3;
+                    else if (count === 1) score += 1;
+                }
+            }
+        }
+        return score;
+    }
+
+    // ================================================================
+    //  6.  DESFAZER
+    // ================================================================
+
+    function undo() {
+        if (history.length === 0) return;
+        if (gameOver && winner !== 0) {
+            // Se houve vitória, desfaz o placar
+            if (winner === RED) redScore--;
+            else if (winner === YELLOW) yellowScore--;
+            redScoreSpan.textContent = redScore;
+            yellowScoreSpan.textContent = yellowScore;
+        }
+        const state = history.pop();
+        board = state.board;
+        currentPlayer = state.currentPlayer;
+        gameOver = state.gameOver;
+        winner = state.winner;
+        winCells = state.winCells || [];
+        // Limpa partículas
+        particles = [];
+        updateUI();
+        draw();
+        // Se for vs IA e for a vez da IA, chama
+        if (!twoPlayerMode && currentPlayer === YELLOW && !gameOver) {
+            aiMove();
+        }
+    }
+
+    // ================================================================
+    //  7.  RENDERIZAÇÃO
+    // ================================================================
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Fundo do tabuleiro
+        ctx.fillStyle = '#1a2a4a';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, canvas.width, canvas.height, 16);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Grid
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const x = OFFSET_X + c * CELL;
+                const y = OFFSET_Y + r * CELL;
+                const val = board[r][c];
+
+                // Fundo da célula (buraco)
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#0f0f1a';
+                ctx.beginPath();
+                ctx.arc(x + CELL / 2, y + CELL / 2, RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Peça
+                if (val !== EMPTY) {
+                    const color = val === RED ? '#ff6b6b' : '#ffd93d';
+                    const shadowColor = val === RED ? '#ff6b6b' : '#ffd93d';
+                    ctx.shadowColor = shadowColor;
+                    ctx.shadowBlur = 15;
+                    // Gradiente para dar efeito 3D
+                    const grad = ctx.createRadialGradient(
+                        x + CELL / 2 - 8, y + CELL / 2 - 8, 4,
+                        x + CELL / 2, y + CELL / 2, RADIUS
+                    );
+                    grad.addColorStop(0, val === RED ? '#ff9999' : '#ffe066');
+                    grad.addColorStop(0.6, color);
+                    grad.addColorStop(1, val === RED ? '#cc3333' : '#cc9900');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(x + CELL / 2, y + CELL / 2, RADIUS - 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Brilho
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.beginPath();
+                    ctx.arc(x + CELL / 2 - 8, y + CELL / 2 - 10, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Destaque das células vencedoras
+        if (winCells && winCells.length > 0) {
+            for (const cell of winCells) {
+                const x = OFFSET_X + cell.c * CELL + CELL / 2;
+                const y = OFFSET_Y + cell.r * CELL + CELL / 2;
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 30;
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(x, y, RADIUS + 2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Partículas (sobrepostas)
+        for (const p of particles) {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        }
+        ctx.globalAlpha = 1;
+
+        // Mensagem de game over no canvas (já temos no UI, mas reforço)
+        if (gameOver && winner === 0) {
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🤝 EMPATE', canvas.width / 2, canvas.height / 2);
+        }
+    }
+
+    // Polyfill roundRect
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (r > w/2) r = w/2;
+            if (r > h/2) r = h/2;
+            this.moveTo(x + r, y);
+            this.arcTo(x + w, y, x + w, y + h, r);
+            this.arcTo(x + w, y + h, x, y + h, r);
+            this.arcTo(x, y + h, x, y, r);
+            this.arcTo(x, y, x + w, y, r);
+            return this;
+        };
+    }
+
+    // ================================================================
+    //  8.  EVENTOS
+    // ================================================================
+
+    // --- Clique no canvas ---
+    canvas.addEventListener('click', (e) => {
+        if (gameOver) return;
+        if (!twoPlayerMode && currentPlayer === YELLOW) return; // espera IA
+
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const x = (e.clientX - rect.left) * scaleX;
+        const col = Math.floor((x - OFFSET_X) / CELL);
+        if (col < 0 || col >= COLS) return;
+        dropPiece(col);
+    });
+
+    // --- Toque (celular) ---
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameOver) return;
+        if (!twoPlayerMode && currentPlayer === YELLOW) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const touch = e.touches[0];
+        const x = (touch.clientX - rect.left) * scaleX;
+        const col = Math.floor((x - OFFSET_X) / CELL);
+        if (col < 0 || col >= COLS) return;
+        dropPiece(col);
+    }, { passive: false });
+
+    // --- Teclado (para desfazer) ---
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'z' || e.key === 'Z') {
+            e.preventDefault();
+            undo();
+        }
+    });
+
+    // --- Botões ---
+    restartBtn.addEventListener('click', () => {
+        if (aiTimer) clearTimeout(aiTimer);
+        initBoard();
+        // Se for vs IA, inicia com o jogador vermelho
+        if (!twoPlayerMode && currentPlayer === YELLOW) {
+            aiMove();
+        }
+    });
+
+    modeBtn.addEventListener('click', () => {
+        twoPlayerMode = !twoPlayerMode;
+        modeBtn.textContent = twoPlayerMode ? '👥 2 Jogadores' : '🤖 vs IA';
+        modeBtn.classList.toggle('active-mode');
+        if (aiTimer) clearTimeout(aiTimer);
+        initBoard();
+        if (!twoPlayerMode && currentPlayer === YELLOW) {
+            aiMove();
+        }
+    });
+
+    undoBtn.addEventListener('click', undo);
+
+    // ================================================================
+    //  9.  INICIALIZAR
+    // ================================================================
+
+    initBoard();
+</script>
+</body>
+</html>

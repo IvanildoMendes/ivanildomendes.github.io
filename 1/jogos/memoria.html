@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🧠 Jogo da Memória</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px;
+            border-radius: 30px;
+            border: 1px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+            max-width: 100%;
+            width: 560px;
+        }
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+        .sub {
+            color: #8080a0;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #a0a0c0;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .info-bar span {
+            background: #0f0f1a;
+            padding: 4px 14px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+        }
+        .info-bar .pairs { color: #6bcb77; }
+        .info-bar .moves { color: #ffd93d; }
+        .info-bar .timer { color: #6c6cff; }
+
+        #gameCanvas {
+            background: #0f0f1a;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 480px;
+            height: auto;
+            aspect-ratio: 480 / 480;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            border: 1px solid transparent;
+        }
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(108,108,255,0.15);
+        }
+        .controls button:active { transform: scale(0.95); }
+
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+        }
+
+        @media (max-width: 500px) {
+            .container { padding: 15px; }
+            .info-bar { font-size: 0.8rem; }
+            .controls button { padding: 8px 16px; font-size: 0.8rem; }
+            .hint { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧠 JOGO DA MEMÓRIA</h1>
+    <div class="sub">Encontre todos os pares!</div>
+    <div class="info-bar">
+        <span class="pairs">🎯 <span id="pairsDisplay">0</span>/<span id="totalPairs">8</span></span>
+        <span class="moves">🔄 <span id="movesDisplay">0</span></span>
+        <span class="timer">⏱️ <span id="timerDisplay">0</span>s</span>
+    </div>
+    <canvas id="gameCanvas" width="480" height="480"></canvas>
+    <div class="controls">
+        <button id="newGameBtn">🔄 Novo Jogo</button>
+        <button id="shuffleBtn">🔀 Embaralhar</button>
+    </div>
+    <div class="hint">
+        <kbd>Clique</kbd> nas cartas para virar &nbsp;·&nbsp; Encontre todos os pares!
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    //  1.  CONFIGURAÇÕES
+    // ================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const pairsSpan = document.getElementById('pairsDisplay');
+    const totalPairsSpan = document.getElementById('totalPairs');
+    const movesSpan = document.getElementById('movesDisplay');
+    const timerSpan = document.getElementById('timerDisplay');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+
+    const W = 480,
+        H = 480;
+    const COLS = 4;
+    const ROWS = 4;
+    const TOTAL = COLS * ROWS;
+    const PAIRS = TOTAL / 2;
+    const CELL_W = W / COLS;
+    const CELL_H = H / ROWS;
+    const GAP = 6;
+    const RADIUS = 12;
+
+    // Emojis para as cartas (8 pares)
+    const EMOJIS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🦄', '🐧', '🐦', '🐤'];
+
+    // Cores das cartas (verso e face)
+    const CARD_BACK = '#3a3a6a';
+    const CARD_FRONT_BG = '#1a1a3a';
+    const CARD_BORDER = '#4a4a7a';
+
+    // ================================================================
+    //  2.  ESTADO DO JOGO
+    // ================================================================
+    let cards = [];
+    let selected = []; // índices das cartas viradas (máx 2)
+    let matched = []; // índices das cartas já pareadas
+    let moves = 0;
+    let pairsFound = 0;
+    let timer = 0;
+    let timerInterval = null;
+    let gameOver = false;
+    let lock = false; // trava para não clicar durante animação
+
+    // ================================================================
+    //  3.  FUNÇÕES AUXILIARES
+    // ================================================================
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function initCards() {
+        // Escolhe os emojis para esta partida
+        const emojis = EMOJIS.slice(0, PAIRS);
+        const deck = [];
+        for (const e of emojis) {
+            deck.push(e, e);
+        }
+        shuffleArray(deck);
+        cards = deck.map((emoji, index) => ({
+            emoji: emoji,
+            flipped: false,
+            matched: false,
+            index: index
+        }));
+        selected = [];
+        matched = [];
+        pairsFound = 0;
+        moves = 0;
+        gameOver = false;
+        lock = false;
+        clearTimer();
+        timer = 0;
+        timerSpan.textContent = '0';
+        updateUI();
+        draw();
+        startTimer();
+    }
+
+    function clearTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (!gameOver) {
+                timer++;
+                timerSpan.textContent = timer;
+            }
+        }, 1000);
+    }
+
+    function updateUI() {
+        pairsSpan.textContent = pairsFound;
+        totalPairsSpan.textContent = PAIRS;
+        movesSpan.textContent = moves;
+    }
+
+    // ================================================================
+    //  4.  LÓGICA DO JOGO
+    // ================================================================
+
+    function flipCard(index) {
+        if (lock) return;
+        if (gameOver) return;
+        if (cards[index].flipped) return;
+        if (cards[index].matched) return;
+        if (selected.length >= 2) return;
+
+        // Vira a carta
+        cards[index].flipped = true;
+        selected.push(index);
+        draw();
+
+        if (selected.length === 2) {
+            // Verifica se é um par
+            const i1 = selected[0];
+            const i2 = selected[1];
+            if (cards[i1].emoji === cards[i2].emoji) {
+                // Par!
+                lock = true;
+                setTimeout(() => {
+                    cards[i1].matched = true;
+                    cards[i2].matched = true;
+                    matched.push(i1, i2);
+                    pairsFound++;
+                    selected = [];
+                    lock = false;
+                    moves++;
+                    updateUI();
+                    draw();
+                    if (pairsFound === PAIRS) {
+                        gameOver = true;
+                        clearTimer();
+                        draw();
+                    }
+                }, 300);
+            } else {
+                // Não é par, desvira depois de um tempo
+                lock = true;
+                setTimeout(() => {
+                    cards[i1].flipped = false;
+                    cards[i2].flipped = false;
+                    selected = [];
+                    lock = false;
+                    moves++;
+                    updateUI();
+                    draw();
+                }, 600);
+            }
+        }
+    }
+
+    // ================================================================
+    //  5.  RENDERIZAÇÃO
+    // ================================================================
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Fundo
+        ctx.fillStyle = '#0f0f1a';
+        ctx.fillRect(0, 0, W, H);
+
+        // Desenha cada carta
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const row = Math.floor(i / COLS);
+            const col = i % COLS;
+            const x = col * CELL_W + GAP / 2;
+            const y = row * CELL_H + GAP / 2;
+            const w = CELL_W - GAP;
+            const h = CELL_H - GAP;
+
+            // Sombra
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 10;
+
+            if (card.flipped || card.matched) {
+                // Face da carta (mostra o emoji)
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = CARD_FRONT_BG;
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, RADIUS);
+                ctx.fill();
+
+                // Borda (se matched, dourada)
+                if (card.matched) {
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, w, h, RADIUS);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else {
+                    ctx.strokeStyle = CARD_BORDER;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, w, h, RADIUS);
+                    ctx.stroke();
+                }
+
+                // Emoji
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `${Math.min(w, h) * 0.7}px 'Segoe UI', sans-serif`;
+                ctx.fillText(card.emoji, x + w / 2, y + h / 2 + 2);
+
+                // Brilho se matched
+                if (card.matched) {
+                    ctx.fillStyle = 'rgba(255,215,0,0.1)';
+                    ctx.beginPath();
+                    ctx.roundRect(x + 4, y + 4, w - 8, h - 8, RADIUS - 2);
+                    ctx.fill();
+                }
+            } else {
+                // Verso da carta
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 12;
+                const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+                grad.addColorStop(0, '#5a5a8a');
+                grad.addColorStop(1, '#2a2a5a');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, RADIUS);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                // Padrão de "carta" (losango central)
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + w / 2, y + 8);
+                ctx.lineTo(x + w - 8, y + h / 2);
+                ctx.lineTo(x + w / 2, y + h - 8);
+                ctx.lineTo(x + 8, y + h / 2);
+                ctx.closePath();
+                ctx.stroke();
+
+                // Brilho sutil
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                ctx.beginPath();
+                ctx.roundRect(x + 6, y + 6, w * 0.3, h * 0.2, 4);
+                ctx.fill();
+            }
+        }
+
+        ctx.shadowBlur = 0;
+
+        // Mensagem de vitória
+        if (gameOver && pairsFound === PAIRS) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 42px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🎉 PARABÉNS!', W / 2, H / 2 - 30);
+            ctx.fillStyle = '#fff';
+            ctx.font = '22px sans-serif';
+            ctx.fillText(`Você encontrou todos os ${PAIRS} pares em ${moves} movimentos e ${timer}s!`, W / 2, H / 2 + 40);
+        }
+    }
+
+    // Polyfill roundRect
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (r > w / 2) r = w / 2;
+            if (r > h / 2) r = h / 2;
+            this.moveTo(x + r, y);
+            this.arcTo(x + w, y, x + w, y + h, r);
+            this.arcTo(x + w, y + h, x, y + h, r);
+            this.arcTo(x, y + h, x, y, r);
+            this.arcTo(x, y, x + w, y, r);
+            return this;
+        };
+    }
+
+    // ================================================================
+    //  6.  EVENTOS (Clique e Toque)
+    // ================================================================
+
+    function getCardIndexFromClick(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clientX, clientY;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        const mx = (clientX - rect.left) * scaleX;
+        const my = (clientY - rect.top) * scaleY;
+        if (mx < 0 || mx > W || my < 0 || my > H) return -1;
+        const col = Math.floor(mx / CELL_W);
+        const row = Math.floor(my / CELL_H);
+        if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return -1;
+        return row * COLS + col;
+    }
+
+    canvas.addEventListener('click', (e) => {
+        const idx = getCardIndexFromClick(e);
+        if (idx >= 0) flipCard(idx);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const idx = getCardIndexFromClick(e);
+        if (idx >= 0) flipCard(idx);
+    }, { passive: false });
+
+    // ================================================================
+    //  7.  BOTÕES
+    // ================================================================
+
+    newGameBtn.addEventListener('click', () => {
+        clearTimer();
+        initCards();
+    });
+
+    shuffleBtn.addEventListener('click', () => {
+        // Embaralha apenas as cartas não viradas
+        const unflipped = [];
+        const flippedIndices = [];
+        for (let i = 0; i < cards.length; i++) {
+            if (!cards[i].flipped && !cards[i].matched) {
+                unflipped.push(i);
+            } else {
+                flippedIndices.push(i);
+            }
+        }
+        if (unflipped.length === 0) return;
+        // Embaralha os emojis das cartas não viradas
+        const emojis = unflipped.map(i => cards[i].emoji);
+        shuffleArray(emojis);
+        for (let j = 0; j < unflipped.length; j++) {
+            cards[unflipped[j]].emoji = emojis[j];
+        }
+        draw();
+    });
+
+    // ================================================================
+    //  8.  INICIALIZAR
+    // ================================================================
+
+    initCards();
+</script>
+</body>
+</html>
