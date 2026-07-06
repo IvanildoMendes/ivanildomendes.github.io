@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Gerador de Cartelas de Bingo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f4f6fc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            color: #1a1a2e;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 900px;
+            background: #ffffff;
+            border-radius: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            transition: all 0.2s ease;
+        }
+
+        .screen {
+            display: flex;
+            flex-direction: column;
+            gap: 1.8rem;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #16213e;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #546e7a;
+            margin-top: 0.3rem;
+        }
+
+        .mode-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .mode-card {
+            background: #f0f4ff;
+            border: 2px solid transparent;
+            border-radius: 1.5rem;
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-size: 1rem;
+            color: #1a1a2e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .mode-card:hover {
+            background: #e1e8ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+
+        .mode-card.selected {
+            border-color: #3a56e4;
+            background: #eef1ff;
+            box-shadow: 0 0 0 3px rgba(58, 86, 228, 0.2);
+        }
+
+        .mode-flag {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+
+        .mode-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .mode-range {
+            font-size: 0.85rem;
+            color: #455a64;
+            background: rgba(0,0,0,0.04);
+            padding: 0.2rem 0.8rem;
+            border-radius: 2rem;
+        }
+
+        .custom-range {
+            background: #f8faff;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .custom-range.hidden {
+            display: none;
+        }
+
+        .range-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .range-label {
+            font-weight: 600;
+            color: #37474f;
+            font-size: 0.85rem;
+        }
+
+        .range-input {
+            width: 100px;
+            padding: 0.8rem 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 1rem;
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: inherit;
+            background: white;
+            transition: border 0.2s;
+        }
+
+        .range-input:focus {
+            border-color: #3a56e4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(58,86,228,0.2);
+        }
+
+        .btn {
+            border: none;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 2.5rem;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-primary {
+            background: #3a56e4;
+            color: white;
+            border: 2px solid #3a56e4;
+            box-shadow: 0 4px 14px rgba(58, 86, 228, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #2c44c9;
+            border-color: #2c44c9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #cfd8dc;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #90a4ae;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.2);
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .warning-box {
+            background: #fff8e1;
+            border: 2px solid #ffc107;
+            color: #795548;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            font-weight: 500;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .cartelas-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .cartela-card {
+            background: white;
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .cartela-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .cartela-card h4 {
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            color: #37474f;
+        }
+
+        .cartela-grid {
+            display: grid;
+            gap: 0.3rem;
+            margin: 0 auto;
+            background: #f8faff;
+            padding: 0.5rem;
+            border-radius: 1rem;
+            justify-content: center;
+        }
+
+        .cartela-grid.tipo-americana,
+        .cartela-grid.tipo-infantil {
+            grid-template-columns: repeat(5, 1fr);
+            max-width: 280px;
+        }
+
+        .cartela-grid.tipo-brasileira {
+            grid-template-columns: repeat(9, 1fr);
+            max-width: 450px;
+        }
+
+        .cartela-cell {
+            width: 2.8rem;
+            height: 2.8rem;
+            background: white;
+            border: 2px solid #dfe6e9;
+            border-radius: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #2d3436;
+            transition: 0.2s;
+            overflow: hidden;
+        }
+
+        .cartela-cell.livre {
+            background: #ffeaa7;
+            border-color: #fdcb6e;
+            font-size: 1.2rem;
+            color: #d63031;
+        }
+
+        .cartela-cell.livre img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
+
+        .cartela-cell.vazio {
+            border-style: dashed;
+            background: #f1f2f6;
+            color: transparent;
+        }
+
+        .btn-imprimir {
+            margin-top: 0.8rem;
+            font-size: 0.9rem;
+            padding: 0.4rem 1.2rem;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .cartelas-gallery, .cartelas-gallery * {
+                visibility: visible;
+            }
+            .cartelas-gallery {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .btn-imprimir, .mode-cards, #btn-gerar-cartelas, .custom-range, .range-input-group, .header, .warning-box, .error-message {
+                display: none;
+            }
+        }
+
+        @media (max-width: 500px) {
+            #app {
+                padding: 1.2rem;
+            }
+            .title {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="screen active">
+            <header class="header">
+                <h1 class="title">🎴 Gerador de Cartelas</h1>
+                <p class="subtitle">Crie cartelas personalizadas para imprimir</p>
+            </header>
+
+            <div class="mode-cards" id="cartela-mode-cards">
+                <button class="mode-card selected" data-tipo="americana">
+                    <span class="mode-flag">🇺🇸</span>
+                    <span class="mode-name">Americana</span>
+                    <span class="mode-range">5×5 (75 bolas)</span>
+                </button>
+                <button class="mode-card" data-tipo="brasileira">
+                    <span class="mode-flag">🇧🇷</span>
+                    <span class="mode-name">Brasileira</span>
+                    <span class="mode-range">3×9 (90 bolas)</span>
+                </button>
+                <button class="mode-card" data-tipo="infantil">
+                    <span class="mode-flag">👦</span>
+                    <span class="mode-name">Infantil</span>
+                    <span class="mode-range">5×5 (50 bolas)</span>
+                </button>
+                <button class="mode-card" data-tipo="livre">
+                    <span class="mode-flag">⚙️</span>
+                    <span class="mode-name">Livre</span>
+                    <span class="mode-range">Grade personalizada</span>
+                </button>
+            </div>
+
+            <div id="cartela-custom-opts" class="custom-range hidden">
+                <div class="range-input-group">
+                    <label class="range-label">Mínimo</label>
+                    <input type="number" id="cartela-min" class="range-input" value="1" min="1">
+                </div>
+                <div class="range-input-group">
+                    <label class="range-label">Máximo</label>
+                    <input type="number" id="cartela-max" class="range-input" value="50" min="2">
+                </div>
+                <div class="range-input-group">
+                    <label class="range-label">Colunas</label>
+                    <input type="number" id="cartela-cols" class="range-input" value="4" min="2" max="10">
+                </div>
+                <div class="range-input-group">
+                    <label class="range-label">Linhas</label>
+                    <input type="number" id="cartela-linhas" class="range-input" value="4" min="1" max="10">
+                </div>
+            </div>
+
+            <div class="custom-range">
+                <div class="range-input-group">
+                    <label class="range-label" for="titulo-cartela">Título das cartelas</label>
+                    <input type="text" id="titulo-cartela" class="range-input" style="width: 200px;" placeholder="Ex: Sorte Grande">
+                </div>
+                <div class="range-input-group" id="grupo-simbolo-centro">
+                    <label class="range-label" for="simbolo-centro">Símbolo central (Americana)</label>
+                    <input type="text" id="simbolo-centro" class="range-input" style="width: 200px;" value="★" placeholder="Emoji ou imagem.png">
+                </div>
+            </div>
+
+            <div class="range-input-group" style="margin-top: 0.5rem;">
+                <label class="range-label">Quantas cartelas?</label>
+                <input type="number" id="qtd-cartelas" class="range-input" value="1" min="1" max="1000">
+            </div>
+
+            <!-- Aviso sobre combinações insuficientes (aparece dinamicamente) -->
+            <div id="aviso-combinacoes" class="warning-box hidden">
+                ⚠️ <span id="texto-aviso"></span>
+            </div>
+
+            <button id="btn-gerar-cartelas" class="btn btn-primary btn-large">🎲 Gerar Cartelas</button>
+            <p id="cartela-msg" class="error-message hidden"></p>
+
+            <div id="cartelas-geradas" class="cartelas-gallery"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Referências ao DOM
+            const cartelaModeCards = document.querySelectorAll('#cartela-mode-cards .mode-card');
+            const cartelaCustomOpts = document.getElementById('cartela-custom-opts');
+            const grupoSimboloCentro = document.getElementById('grupo-simbolo-centro');
+            const simboloCentroInput = document.getElementById('simbolo-centro');
+            const tituloCartelaInput = document.getElementById('titulo-cartela');
+            const btnGerarCartelas = document.getElementById('btn-gerar-cartelas');
+            const cartelaMsg = document.getElementById('cartela-msg');
+            const cartelasGeradasDiv = document.getElementById('cartelas-geradas');
+            const inputQtdCartelas = document.getElementById('qtd-cartelas');
+            const inputCartelaMin = document.getElementById('cartela-min');
+            const inputCartelaMax = document.getElementById('cartela-max');
+            const inputCartelaCols = document.getElementById('cartela-cols');
+            const inputCartelaLinhas = document.getElementById('cartela-linhas');
+            const avisoCombinacoes = document.getElementById('aviso-combinacoes');
+            const textoAviso = document.getElementById('texto-aviso');
+
+            let tipoCartelaSelecionado = 'americana';
+
+            // Funções auxiliares
+            function embaralharFisherYates(array) {
+                const novoArray = [...array];
+                for (let i = novoArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [novoArray[i], novoArray[j]] = [novoArray[j], novoArray[i]];
+                }
+                return novoArray;
+            }
+
+            function isImagem(str) {
+                return /\.(png|jpe?g|gif|svg|webp)$/i.test(str.trim());
+            }
+
+            // Cálculo do número de combinações possíveis C(n, k)
+            function combinacoes(n, k) {
+                if (k > n) return 0;
+                let r = 1;
+                for (let i = 1; i <= k; i++) {
+                    r = r * (n - i + 1) / i;
+                }
+                return r;
+            }
+
+            // Atualiza o aviso com base nos parâmetros do modo Livre
+            function atualizarAvisoLivre() {
+                if (tipoCartelaSelecionado !== 'livre') {
+                    avisoCombinacoes.classList.add('hidden');
+                    return;
+                }
+
+                const min = parseInt(inputCartelaMin.value, 10);
+                const max = parseInt(inputCartelaMax.value, 10);
+                const colunas = parseInt(inputCartelaCols.value, 10);
+                const linhas = parseInt(inputCartelaLinhas.value, 10);
+
+                if (isNaN(min) || isNaN(max) || isNaN(colunas) || isNaN(linhas) || min >= max || colunas < 2 || linhas < 1) {
+                    avisoCombinacoes.classList.add('hidden');
+                    return;
+                }
+
+                const totalNumeros = max - min + 1;
+                const celulas = colunas * linhas;
+                const totalCombinacoes = combinacoes(totalNumeros, celulas);
+
+                // Consideramos "poucas" combinações quando há menos de 10.000 possibilidades
+                if (totalCombinacoes < 10000) {
+                    textoAviso.textContent = `Poucas combinações possíveis (${Math.round(totalCombinacoes).toLocaleString('pt-BR')}). Risco de cartelas repetidas ou lentidão. Considere aumentar o intervalo ou reduzir a grade.`;
+                    avisoCombinacoes.classList.remove('hidden');
+                } else {
+                    avisoCombinacoes.classList.add('hidden');
+                }
+            }
+
+            // Listeners para inputs do modo Livre
+            [inputCartelaMin, inputCartelaMax, inputCartelaCols, inputCartelaLinhas].forEach(input => {
+                input.addEventListener('input', atualizarAvisoLivre);
+            });
+
+            // Geradores de cartela
+            function gerarCartelaAmericana(simboloLivre = '★') {
+                const intervalos = [
+                    { min: 1, max: 15 },
+                    { min: 16, max: 30 },
+                    { min: 31, max: 45 },
+                    { min: 46, max: 60 },
+                    { min: 61, max: 75 }
+                ];
+                const cartela = [];
+                for (let col = 0; col < 5; col++) {
+                    const { min, max } = intervalos[col];
+                    const numeros = new Set();
+                    while (numeros.size < 5) {
+                        numeros.add(Math.floor(Math.random() * (max - min + 1)) + min);
+                    }
+                    cartela.push(Array.from(numeros).sort((a, b) => a - b));
+                }
+                const linhas = [];
+                for (let lin = 0; lin < 5; lin++) {
+                    const linha = [];
+                    for (let col = 0; col < 5; col++) {
+                        const numero = cartela[col][lin];
+                        const livre = (lin === 2 && col === 2);
+                        linha.push({ numero, livre, simbolo: livre ? simboloLivre : null });
+                    }
+                    linhas.push(linha);
+                }
+                return linhas;
+            }
+
+            function gerarCartelaBrasileira() {
+                const intervalos = [];
+                for (let col = 0; col < 9; col++) {
+                    const min = col * 10 + 1;
+                    const max = col === 8 ? 90 : min + 9;
+                    intervalos.push({ min, max });
+                }
+                const usadosPorColuna = Array.from({ length: 9 }, () => new Set());
+                const linhas = [];
+                for (let lin = 0; lin < 3; lin++) {
+                    const colunasComNumero = new Set();
+                    while (colunasComNumero.size < 5) {
+                        colunasComNumero.add(Math.floor(Math.random() * 9));
+                    }
+                    const linha = [];
+                    for (let col = 0; col < 9; col++) {
+                        if (colunasComNumero.has(col)) {
+                            const { min, max } = intervalos[col];
+                            let numero;
+                            do {
+                                numero = Math.floor(Math.random() * (max - min + 1)) + min;
+                            } while (usadosPorColuna[col].has(numero));
+                            usadosPorColuna[col].add(numero);
+                            linha.push({ numero, livre: false });
+                        } else {
+                            linha.push({ numero: null, livre: false });
+                        }
+                    }
+                    linhas.push(linha);
+                }
+                return linhas;
+            }
+
+            function gerarCartelaInfantil() {
+                const totalNumeros = 25;
+                const numeros = new Set();
+                while (numeros.size < totalNumeros) {
+                    numeros.add(Math.floor(Math.random() * 50) + 1);
+                }
+                const arrayNumeros = embaralharFisherYates(Array.from(numeros));
+                const linhas = [];
+                let idx = 0;
+                for (let lin = 0; lin < 5; lin++) {
+                    const linha = [];
+                    for (let col = 0; col < 5; col++) {
+                        linha.push({ numero: arrayNumeros[idx], livre: false });
+                        idx++;
+                    }
+                    linhas.push(linha);
+                }
+                return linhas;
+            }
+
+            function gerarCartelaLivre(min, max, linhasQtd, colunasQtd) {
+                const total = linhasQtd * colunasQtd;
+                const numeros = new Set();
+                while (numeros.size < total) {
+                    numeros.add(Math.floor(Math.random() * (max - min + 1)) + min);
+                }
+                const arrayNumeros = embaralharFisherYates(Array.from(numeros));
+                const linhas = [];
+                let idx = 0;
+                for (let l = 0; l < linhasQtd; l++) {
+                    const linha = [];
+                    for (let c = 0; c < colunasQtd; c++) {
+                        linha.push({ numero: arrayNumeros[idx], livre: false });
+                        idx++;
+                    }
+                    linhas.push(linha);
+                }
+                return linhas;
+            }
+
+            function atualizarVisibilidadeSimbolo() {
+                if (tipoCartelaSelecionado === 'americana') {
+                    grupoSimboloCentro.classList.remove('hidden');
+                } else {
+                    grupoSimboloCentro.classList.add('hidden');
+                }
+            }
+
+            // Seleção do tipo de cartela
+            cartelaModeCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    cartelaModeCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    tipoCartelaSelecionado = card.dataset.tipo;
+                    if (tipoCartelaSelecionado === 'livre') {
+                        cartelaCustomOpts.classList.remove('hidden');
+                        atualizarAvisoLivre();
+                    } else {
+                        cartelaCustomOpts.classList.add('hidden');
+                        avisoCombinacoes.classList.add('hidden');
+                    }
+                    atualizarVisibilidadeSimbolo();
+                });
+            });
+
+            // Geração e exibição
+            function gerarEExibirCartelas() {
+                const qtd = parseInt(inputQtdCartelas.value, 10);
+                if (isNaN(qtd) || qtd < 1 || qtd > 1000) {
+                    cartelaMsg.textContent = 'Escolha entre 1 e 1000 cartelas.';
+                    cartelaMsg.classList.remove('hidden');
+                    return;
+                }
+                cartelaMsg.classList.add('hidden');
+                cartelasGeradasDiv.innerHTML = '<p style="text-align:center; color:#546e7a;">Gerando cartelas...</p>';
+
+                setTimeout(() => {
+                    cartelasGeradasDiv.innerHTML = '';
+
+                    let min, max, linhas, colunas;
+                    if (tipoCartelaSelecionado === 'livre') {
+                        min = parseInt(inputCartelaMin.value, 10);
+                        max = parseInt(inputCartelaMax.value, 10);
+                        colunas = parseInt(inputCartelaCols.value, 10);
+                        linhas = parseInt(inputCartelaLinhas.value, 10);
+                        if (isNaN(min) || isNaN(max) || min >= max || min < 1 || max > 10000) {
+                            cartelaMsg.textContent = 'Intervalo inválido.';
+                            cartelaMsg.classList.remove('hidden');
+                            cartelasGeradasDiv.innerHTML = '';
+                            return;
+                        }
+                        if (isNaN(colunas) || isNaN(linhas) || colunas < 2 || linhas < 1 || colunas > 10 || linhas > 10) {
+                            cartelaMsg.textContent = 'Colunas (2-10) e linhas (1-10).';
+                            cartelaMsg.classList.remove('hidden');
+                            cartelasGeradasDiv.innerHTML = '';
+                            return;
+                        }
+                    } else {
+                        switch (tipoCartelaSelecionado) {
+                            case 'americana': min=1; max=75; colunas=5; linhas=5; break;
+                            case 'brasileira': min=1; max=90; colunas=9; linhas=3; break;
+                            case 'infantil': min=1; max=50; colunas=5; linhas=5; break;
+                        }
+                    }
+
+                    const titulo = tituloCartelaInput.value.trim();
+                    const prefixo = titulo ? `${titulo} Nº` : 'Nº';
+
+                    let simboloCentro = '★';
+                    if (tipoCartelaSelecionado === 'americana') {
+                        simboloCentro = simboloCentroInput.value.trim() || '★';
+                    }
+
+                    const fragmento = document.createDocumentFragment();
+
+                    for (let i = 0; i < qtd; i++) {
+                        let matriz;
+                        if (tipoCartelaSelecionado === 'americana') {
+                            matriz = gerarCartelaAmericana(simboloCentro);
+                        } else if (tipoCartelaSelecionado === 'brasileira') {
+                            matriz = gerarCartelaBrasileira();
+                        } else if (tipoCartelaSelecionado === 'infantil') {
+                            matriz = gerarCartelaInfantil();
+                        } else if (tipoCartelaSelecionado === 'livre') {
+                            matriz = gerarCartelaLivre(min, max, linhas, colunas);
+                        }
+
+                        const cardDiv = document.createElement('div');
+                        cardDiv.className = 'cartela-card';
+                        cardDiv.innerHTML = `<h4>${prefixo} ${i + 1}</h4>`;
+
+                        const grid = document.createElement('div');
+                        grid.className = 'cartela-grid';
+                        grid.classList.add(`tipo-${tipoCartelaSelecionado}`);
+                        if (tipoCartelaSelecionado === 'livre') {
+                            grid.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+                            grid.style.maxWidth = `${colunas * 3.2}rem`;
+                        }
+
+                        matriz.forEach(linha => {
+                            linha.forEach(cel => {
+                                const cell = document.createElement('div');
+                                cell.className = 'cartela-cell';
+                                if (cel.livre) {
+                                    cell.classList.add('livre');
+                                    if (cel.simbolo && isImagem(cel.simbolo)) {
+                                        const img = document.createElement('img');
+                                        img.src = cel.simbolo;
+                                        img.alt = 'Símbolo central';
+                                        cell.appendChild(img);
+                                    } else {
+                                        cell.textContent = cel.simbolo || '★';
+                                    }
+                                } else if (cel.numero === null) {
+                                    cell.classList.add('vazio');
+                                    cell.textContent = '';
+                                } else {
+                                    cell.textContent = cel.numero;
+                                }
+                                grid.appendChild(cell);
+                            });
+                        });
+
+                        cardDiv.appendChild(grid);
+
+                        const btnImp = document.createElement('button');
+                        btnImp.className = 'btn btn-outline btn-imprimir';
+                        btnImp.textContent = '🖨️ Imprimir';
+                        btnImp.addEventListener('click', () => {
+                            const janela = window.open('', '_blank', 'width=600,height=400');
+                            janela.document.write(`
+                                <html><head><title>${prefixo} ${i+1}</title>
+                                <style>
+                                    body { font-family: sans-serif; display: flex; justify-content: center; padding: 2rem; }
+                                    .cartela-grid { display: grid; gap: 0.3rem; }
+                                    .cartela-cell { width: 2.8rem; height: 2.8rem; border: 2px solid #333; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+                                    .livre { background: #ffeaa7; }
+                                    .vazio { border-style: dashed; background: #f5f5f5; }
+                                    .cartela-cell img { width: 80%; height: 80%; object-fit: contain; }
+                                </style></head><body>${cardDiv.innerHTML}</body></html>
+                            `);
+                            janela.document.close();
+                            janela.print();
+                        });
+                        cardDiv.appendChild(btnImp);
+                        fragmento.appendChild(cardDiv);
+                    }
+
+                    cartelasGeradasDiv.innerHTML = '';
+                    cartelasGeradasDiv.appendChild(fragmento);
+                }, 10);
+            }
+
+            btnGerarCartelas.addEventListener('click', gerarEExibirCartelas);
+
+            // Inicialização
+            document.querySelector('#cartela-mode-cards .mode-card[data-tipo="americana"]').classList.add('selected');
+            atualizarVisibilidadeSimbolo();
+            atualizarAvisoLivre();
+        })();
+    </script>
+</body>
+</html>

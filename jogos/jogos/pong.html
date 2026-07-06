@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🏓 Pong</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 1px solid #2a2a4a;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 12px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #a0a0c0;
+        }
+
+        .scoreboard .player {
+            color: #6c6cff;
+        }
+        .scoreboard .ai {
+            color: #ff6b6b;
+        }
+        .scoreboard .vs {
+            color: #606080;
+            font-weight: 300;
+        }
+
+        #gameCanvas {
+            background: #0f0f1a;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            aspect-ratio: 800 / 400;
+            image-rendering: pixelated;
+            touch-action: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 18px;
+        }
+
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            letter-spacing: 0.5px;
+            border: 1px solid transparent;
+        }
+
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(108, 108, 255, 0.15);
+        }
+
+        .controls button:active {
+            transform: scale(0.95);
+        }
+
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .scoreboard { font-size: 1.2rem; gap: 20px; }
+            .controls button { padding: 8px 18px; font-size: 0.8rem; }
+            .hint { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🏓 PONG</h1>
+
+        <div class="scoreboard">
+            <span class="player" id="playerScore">0</span>
+            <span class="vs">VS</span>
+            <span class="ai" id="aiScore">0</span>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+        <div class="controls">
+            <button id="restartBtn">🔄 Reiniciar</button>
+            <button id="pauseBtn">⏸️ Pausar</button>
+            <button id="aiBtn">🤖 IA: Ligada</button>
+        </div>
+
+        <div class="hint">
+            <kbd>Mouse</kbd> ou <kbd>W</kbd> / <kbd>S</kbd> para mover a raquete &nbsp;·&nbsp; <kbd>P</kbd> pausa
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        //  1.  CONFIGURAÇÕES E ELEMENTOS
+        // ================================================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const playerScoreEl = document.getElementById('playerScore');
+        const aiScoreEl = document.getElementById('aiScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const aiBtn = document.getElementById('aiBtn');
+
+        const W = 800,
+            H = 400;
+        const PADDLE_W = 12;
+        const PADDLE_H = 80;
+        const BALL_SIZE = 10;
+        const PLAYER_X = 25;
+        const AI_X = W - 25 - PADDLE_W;
+
+        // Velocidades
+        const BASE_SPEED = 4.5;
+        const MAX_SPEED = 10;
+
+        // ================================================================
+        //  2.  ESTADO DO JOGO
+        // ================================================================
+        let playerY = H / 2 - PADDLE_H / 2;
+        let aiY = H / 2 - PADDLE_H / 2;
+        let ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: BASE_SPEED };
+        let playerScore = 0;
+        let aiScore = 0;
+        let aiEnabled = true;
+        let paused = false;
+        let gameOver = false;
+        let animationId = null;
+
+        // Controle do jogador via mouse
+        let mouseY = playerY;
+
+        // ================================================================
+        //  3.  FUNÇÕES AUXILIARES
+        // ================================================================
+
+        function resetBall(direction) {
+            ball.x = W / 2;
+            ball.y = H / 2 + (Math.random() - 0.5) * 60;
+            ball.speed = BASE_SPEED;
+            const angle = (Math.random() - 0.5) * 0.8; // -0.4 ~ 0.4 rad
+            const dir = direction || (Math.random() > 0.5 ? 1 : -1);
+            ball.vx = dir * ball.speed * Math.cos(angle);
+            ball.vy = ball.speed * Math.sin(angle);
+            // Garante que nunca fique totalmente horizontal
+            if (Math.abs(ball.vy) < 0.5) ball.vy = 1.2 * (Math.random() > 0.5 ? 1 : -1);
+            // Normaliza
+            const norm = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+            ball.vx = (ball.vx / norm) * ball.speed;
+            ball.vy = (ball.vy / norm) * ball.speed;
+        }
+
+        function resetGame() {
+            playerY = H / 2 - PADDLE_H / 2;
+            aiY = H / 2 - PADDLE_H / 2;
+            playerScore = 0;
+            aiScore = 0;
+            gameOver = false;
+            paused = false;
+            pauseBtn.textContent = '⏸️ Pausar';
+            updateScore();
+            resetBall(1);
+            mouseY = playerY;
+        }
+
+        function updateScore() {
+            playerScoreEl.textContent = playerScore;
+            aiScoreEl.textContent = aiScore;
+        }
+
+        // ================================================================
+        //  4.  LÓGICA DA IA
+        // ================================================================
+
+        function updateAI() {
+            if (!aiEnabled) return;
+            const aiSpeed = 3.8 + (ball.speed - BASE_SPEED) * 0.15; // IA acompanha a velocidade
+            const targetY = ball.y - PADDLE_H / 2;
+            const diff = targetY - aiY;
+            if (Math.abs(diff) > 6) {
+                aiY += Math.sign(diff) * Math.min(Math.abs(diff), aiSpeed);
+            }
+            // Limita
+            aiY = Math.max(0, Math.min(H - PADDLE_H, aiY));
+        }
+
+        // ================================================================
+        //  5.  ATUALIZAÇÃO DO JOGO (FÍSICA)
+        // ================================================================
+
+        function update() {
+            if (paused || gameOver) return;
+
+            // --- Movimento do player (mouse ou teclado) ---
+            // O mouseY é atualizado pelos eventos. Vamos suavizar.
+            playerY += (mouseY - playerY) * 0.2;
+            playerY = Math.max(0, Math.min(H - PADDLE_H, playerY));
+
+            // --- IA ---
+            updateAI();
+
+            // --- Bola ---
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // Colisão com paredes (cima / baixo)
+            if (ball.y - BALL_SIZE / 2 < 0) {
+                ball.y = BALL_SIZE / 2;
+                ball.vy = -ball.vy;
+            }
+            if (ball.y + BALL_SIZE / 2 > H) {
+                ball.y = H - BALL_SIZE / 2;
+                ball.vy = -ball.vy;
+            }
+
+            // Colisão com raquete do jogador (esquerda)
+            if (ball.vx < 0 &&
+                ball.x - BALL_SIZE / 2 < PLAYER_X + PADDLE_W &&
+                ball.x + BALL_SIZE / 2 > PLAYER_X &&
+                ball.y > playerY &&
+                ball.y < playerY + PADDLE_H) {
+
+                // Aumenta velocidade
+                ball.speed = Math.min(MAX_SPEED, ball.speed + 0.15);
+                // Calcula novo ângulo baseado em onde acertou na raquete (0~1)
+                const hitPos = (ball.y - playerY) / PADDLE_H; // 0 ~ 1
+                const angle = (hitPos - 0.5) * 1.2; // -0.6 ~ 0.6 rad
+                const dir = 1;
+                ball.vx = dir * ball.speed * Math.cos(angle);
+                ball.vy = ball.speed * Math.sin(angle);
+                ball.x = PLAYER_X + PADDLE_W + BALL_SIZE / 2 + 1;
+            }
+
+            // Colisão com raquete da IA (direita)
+            if (ball.vx > 0 &&
+                ball.x + BALL_SIZE / 2 > AI_X &&
+                ball.x - BALL_SIZE / 2 < AI_X + PADDLE_W &&
+                ball.y > aiY &&
+                ball.y < aiY + PADDLE_H) {
+
+                ball.speed = Math.min(MAX_SPEED, ball.speed + 0.15);
+                const hitPos = (ball.y - aiY) / PADDLE_H;
+                const angle = (hitPos - 0.5) * 1.2;
+                const dir = -1;
+                ball.vx = dir * ball.speed * Math.cos(angle);
+                ball.vy = ball.speed * Math.sin(angle);
+                ball.x = AI_X - BALL_SIZE / 2 - 1;
+            }
+
+            // --- Pontos ---
+            if (ball.x - BALL_SIZE / 2 < -10) {
+                // Ponto da IA
+                aiScore++;
+                updateScore();
+                resetBall(-1);
+                if (aiScore >= 7) {
+                    gameOver = true;
+                    draw(); // redesenha para mostrar game over
+                    return;
+                }
+            }
+            if (ball.x + BALL_SIZE / 2 > W + 10) {
+                // Ponto do Jogador
+                playerScore++;
+                updateScore();
+                resetBall(1);
+                if (playerScore >= 7) {
+                    gameOver = true;
+                    draw();
+                    return;
+                }
+            }
+
+            draw();
+        }
+
+        // ================================================================
+        //  6.  RENDERIZAÇÃO
+        // ================================================================
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // --- Linha central (tracejada) ---
+            ctx.setLineDash([8, 12]);
+            ctx.strokeStyle = '#2a2a4a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(W / 2, 0);
+            ctx.lineTo(W / 2, H);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // --- Círculo central ---
+            ctx.strokeStyle = '#2a2a4a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(W / 2, H / 2, 40, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // --- Raquete do Jogador ---
+            ctx.shadowColor = '#6c6cff';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = '#6c6cff';
+            ctx.fillRect(PLAYER_X, playerY, PADDLE_W, PADDLE_H);
+            // Brilho
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(PLAYER_X + 2, playerY + 4, PADDLE_W - 4, 6);
+
+            // --- Raquete da IA ---
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(AI_X, aiY, PADDLE_W, PADDLE_H);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(AI_X + 2, aiY + 4, PADDLE_W - 4, 6);
+
+            // --- Bola ---
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 25;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // --- Game Over ---
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 48px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const msg = playerScore >= 7 ? '🏆 VOCÊ VENCEU!' : '💀 VOCÊ PERDEU!';
+                ctx.fillText(msg, W / 2, H / 2 - 20);
+                ctx.fillStyle = '#a0a0c0';
+                ctx.font = '20px sans-serif';
+                ctx.fillText('Clique em "Reiniciar" para jogar novamente', W / 2, H / 2 + 50);
+            }
+
+            // --- Pausa ---
+            if (paused && !gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 44px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⏸ PAUSADO', W / 2, H / 2);
+            }
+        }
+
+        // ================================================================
+        //  7.  LOOP PRINCIPAL
+        // ================================================================
+
+        function gameLoop() {
+            update();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // ================================================================
+        //  8.  EVENTOS (Mouse, Teclado, Toque)
+        // ================================================================
+
+        // --- Mouse: move a raquete do jogador ---
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleY = canvas.height / rect.height;
+            const y = (e.clientY - rect.top) * scaleY;
+            mouseY = Math.max(0, Math.min(H - PADDLE_H, y - PADDLE_H / 2));
+        });
+
+        // --- Toque (celular) ---
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const scaleY = canvas.height / rect.height;
+            const touch = e.touches[0];
+            const y = (touch.clientY - rect.top) * scaleY;
+            mouseY = Math.max(0, Math.min(H - PADDLE_H, y - PADDLE_H / 2));
+        }, { passive: false });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const scaleY = canvas.height / rect.height;
+            const touch = e.touches[0];
+            const y = (touch.clientY - rect.top) * scaleY;
+            mouseY = Math.max(0, Math.min(H - PADDLE_H, y - PADDLE_H / 2));
+        }, { passive: false });
+
+        // --- Teclado ---
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === 'w' || e.key === 'W') {
+                e.preventDefault();
+                mouseY = Math.max(0, playerY - 15);
+            }
+            if (e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                mouseY = Math.min(H - PADDLE_H, playerY + 15);
+            }
+            if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Movimento contínuo com teclado (W/S)
+        setInterval(() => {
+            if (keys['w'] || keys['W']) {
+                mouseY = Math.max(0, playerY - 10);
+            }
+            if (keys['s'] || keys['S']) {
+                mouseY = Math.min(H - PADDLE_H, playerY + 10);
+            }
+        }, 16);
+
+        // --- Botões ---
+        function togglePause() {
+            if (gameOver) return;
+            paused = !paused;
+            pauseBtn.textContent = paused ? '▶️ Retomar' : '⏸️ Pausar';
+            draw();
+        }
+
+        function toggleAI() {
+            aiEnabled = !aiEnabled;
+            aiBtn.textContent = aiEnabled ? '🤖 IA: Ligada' : '🤖 IA: Desligada';
+            if (!aiEnabled) {
+                // Congela a IA onde está
+            }
+        }
+
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+            // Reseta a posição do mouse para o meio
+            mouseY = H / 2 - PADDLE_H / 2;
+            // Se estiver pausado, despausa
+            if (paused) {
+                paused = false;
+                pauseBtn.textContent = '⏸️ Pausar';
+            }
+            draw();
+        });
+
+        pauseBtn.addEventListener('click', togglePause);
+        aiBtn.addEventListener('click', toggleAI);
+
+        // ================================================================
+        //  9.  INICIALIZAR
+        // ================================================================
+
+        resetGame();
+        resetBall(1);
+        draw();
+        gameLoop();
+    </script>
+
+</body>
+</html>

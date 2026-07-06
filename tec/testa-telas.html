@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎨 Barras Móveis + Menu Móvel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            transition: flex-direction 0.2s;
+        }
+
+        /* Menu na parte inferior */
+        body.menu-bottom {
+            flex-direction: column-reverse;
+        }
+        body.menu-bottom #toolbar {
+            border-bottom: none;
+            border-top: 2px solid #444;
+        }
+
+        #toolbar {
+            background: #222;
+            padding: 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            border-bottom: 2px solid #444;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        #toolbar button {
+            background: #3a3a5a;
+            border: none;
+            color: #eee;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        #toolbar button:hover {
+            background: #5a5a8a;
+            border-color: #7aa9ff;
+        }
+
+        #toolbar button.active {
+            background: #7aa9ff;
+            color: #1e1e2f;
+            font-weight: 600;
+        }
+
+        #toolbar label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        #toolbar input[type="range"] {
+            width: 100px;
+            accent-color: #7aa9ff;
+        }
+
+        #toolbar select {
+            background: #2d2d44;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 12px;
+            padding: 4px 10px;
+            font-size: 0.85rem;
+        }
+
+        #canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        #fullscreen-btn {
+            background: #5a5a8a !important;
+        }
+        #fullscreen-btn:hover {
+            background: #7a7aaa !important;
+        }
+
+        #move-btn {
+            background: #8a5a5a !important;
+        }
+        #move-btn:hover {
+            background: #aa7a7a !important;
+        }
+
+        #dica {
+            background: #333;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #ffaa00;
+            border: 1px solid #666;
+        }
+
+        @media (max-width: 700px) {
+            #toolbar {
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px 10px;
+            }
+            #toolbar label {
+                font-size: 0.75rem;
+            }
+            #toolbar input[type="range"] {
+                width: 80px;
+            }
+            #toolbar button {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+            #dica {
+                font-size: 0.65rem;
+                padding: 2px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toolbar">
+        <span style="font-weight:600; color:#7aa9ff;">🎨 Barras Móveis</span>
+
+        <label>Velocidade:
+            <input type="range" id="speed" min="1" max="20" value="5" />
+        </label>
+
+        <label>Tamanho (barras):
+            <input type="range" id="size" min="4" max="40" value="20" />
+        </label>
+
+        <label>Direção:
+            <select id="direction">
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+                <option value="diagonal">Diagonal</option>
+            </select>
+        </label>
+
+        <button id="btnPattern">Padrão: vertical</button>
+        <button id="btnToggle">⏸ Pausar</button>
+        <button id="move-btn">⬇ Mover menu</button>
+        <button id="fullscreen-btn">⛶ Tela cheia</button>
+        <span id="dica">💡 Combine direção e padrão para movimento</span>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const speedSlider = document.getElementById('speed');
+            const sizeSlider = document.getElementById('size');
+            const directionSelect = document.getElementById('direction');
+            const btnPattern = document.getElementById('btnPattern');
+            const btnToggle = document.getElementById('btnToggle');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const moveBtn = document.getElementById('move-btn');
+            const dica = document.getElementById('dica');
+
+            let width = 0,
+                height = 0;
+            let offset = 0;
+            let running = true;
+            let patternIndex = 0;
+            const patterns = ['vertical', 'horizontal', 'checkerboard'];
+
+            const colors = [
+                '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
+                '#FF8800', '#88FF00', '#0088FF', '#FF0088', '#8800FF', '#00FF88'
+            ];
+
+            // Menu móvel
+            let menuAtBottom = false;
+            moveBtn.addEventListener('click', function() {
+                menuAtBottom = !menuAtBottom;
+                document.body.classList.toggle('menu-bottom', menuAtBottom);
+                moveBtn.textContent = menuAtBottom ? '⬆ Mover menu' : '⬇ Mover menu';
+            });
+
+            function resize() {
+                const container = document.getElementById('canvas-container');
+                const rect = container.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = rect.height * window.devicePixelRatio;
+                width = canvas.width;
+                height = canvas.height;
+                ctx.imageSmoothingEnabled = false;
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+
+                const speed = parseInt(speedSlider.value, 10);
+                const dir = directionSelect.value;
+                const pattern = patterns[patternIndex];
+                const barCount = parseInt(sizeSlider.value, 10);
+
+                const barW = width / barCount;
+                const barH = height / barCount;
+
+                // Deslocamento conforme direção
+                let dx = 0,
+                    dy = 0;
+                if (dir === 'horizontal') dx = offset;
+                else if (dir === 'vertical') dy = offset;
+                else { // diagonal
+                    dx = offset * 0.7;
+                    dy = offset * 0.7;
+                }
+
+                // --- Desenho ---
+                if (pattern === 'vertical') {
+                    // Barras verticais: movimento em X
+                    for (let i = 0; i < barCount; i++) {
+                        const pos = (i * barW + dx) % (barCount * barW);
+                        const colorIndex = i % colors.length;
+                        ctx.fillStyle = colors[colorIndex];
+                        ctx.fillRect(pos, 0, barW + 1, height);
+                    }
+                } else if (pattern === 'horizontal') {
+                    // Barras horizontais
+                    if (dir === 'horizontal') {
+                        // Efeito de rolagem de cores (shift cíclico)
+                        const shift = Math.floor(dx / 10) % colors.length;
+                        for (let i = 0; i < barCount; i++) {
+                            const pos = (i * barH) % (barCount * barH);
+                            const colorIndex = (i + shift) % colors.length;
+                            ctx.fillStyle = colors[colorIndex];
+                            ctx.fillRect(0, pos, width, barH + 1);
+                        }
+                    } else {
+                        // Movimento vertical normal (dy)
+                        for (let i = 0; i < barCount; i++) {
+                            const pos = (i * barH + dy) % (barCount * barH);
+                            const colorIndex = i % colors.length;
+                            ctx.fillStyle = colors[colorIndex];
+                            ctx.fillRect(0, pos, width, barH + 1);
+                        }
+                    }
+                } else if (pattern === 'checkerboard') {
+                    // Xadrez: movimento em X e Y
+                    for (let row = 0; row < barCount; row++) {
+                        for (let col = 0; col < barCount; col++) {
+                            const x = (col * barW + dx) % width;
+                            const y = (row * barH + dy) % height;
+                            const idx = (row + col) % colors.length;
+                            ctx.fillStyle = colors[idx];
+                            ctx.fillRect(x, y, barW + 1, barH + 1);
+                        }
+                    }
+                }
+
+                if (running) {
+                    offset += speed * 0.5;
+                    if (offset > 1000) offset = 0;
+                }
+
+                // Dica dinâmica
+                const dirNome = dir === 'horizontal' ? 'Horizontal' : dir === 'vertical' ? 'Vertical' : 'Diagonal';
+                const patternNome = pattern === 'vertical' ? 'barras verticais' : pattern === 'horizontal' ? 'barras horizontais' :
+                    'xadrez';
+                let status = '';
+                if (pattern === 'vertical' && dir === 'horizontal') status = '✅ Movimento horizontal (barras deslocam)';
+                else if (pattern === 'horizontal' && dir === 'vertical') status = '✅ Movimento vertical (barras deslocam)';
+                else if (pattern === 'horizontal' && dir === 'horizontal') status = '✅ Movimento horizontal (cores deslizam)';
+                else if (pattern === 'checkerboard') status = '✅ Movimento em ambas direções';
+                else status = '⚠️ Pouco movimento (tente outra combinação)';
+                dica.textContent = `💡 ${dirNome} + ${patternNome} → ${status}`;
+
+                requestAnimationFrame(draw);
+            }
+
+            // Controles
+            btnPattern.addEventListener('click', function() {
+                patternIndex = (patternIndex + 1) % patterns.length;
+                this.textContent = `Padrão: ${patterns[patternIndex]}`;
+                offset = 0;
+            });
+
+            btnToggle.addEventListener('click', function() {
+                running = !running;
+                this.textContent = running ? '⏸ Pausar' : '▶ Executar';
+            });
+
+            fullscreenBtn.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen?.() ||
+                        document.documentElement.webkitRequestFullscreen?.();
+                } else {
+                    document.exitFullscreen?.() ||
+                        document.webkitExitFullscreen?.();
+                }
+            });
+
+            window.addEventListener('resize', resize);
+
+            // Iniciar
+            resize();
+            draw();
+            btnPattern.textContent = `Padrão: ${patterns[0]}`;
+        })();
+    </script>
+</body>
+</html>

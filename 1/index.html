@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+    background:#17191c;
+    color:#fff;
+}
+
+header{
+    background:#22272e;
+    padding:25px;
+    text-align:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+
+header h1{
+    font-size:2.3em;
+}
+
+header p{
+    color:#bbb;
+    margin-top:8px;
+}
+
+main{
+    max-width:1200px;
+    margin:50px auto;
+    padding:0 20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:30px;
+}
+
+.card{
+    text-decoration:none;
+    color:white;
+    background:#2b3138;
+    border-radius:18px;
+    padding:35px 25px;
+    transition:.25s;
+    border:2px solid transparent;
+    text-align:center;
+}
+
+.card:hover{
+    transform:translateY(-8px);
+    background:#363d45;
+    border-color:#4da3ff;
+    box-shadow:0 15px 30px rgba(0,0,0,.35);
+}
+
+.icon{
+    font-size:70px;
+    margin-bottom:20px;
+}
+
+.card h2{
+    margin-bottom:12px;
+}
+
+.card p{
+    color:#c9c9c9;
+    line-height:1.5;
+}
+
+footer{
+    text-align:center;
+    color:#888;
+    padding:40px;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+    <h1>🌐 Portal</h1>
+    <p>Escolha uma categoria.</p>
+</header>
+
+<main>
+
+<div class="grid">
+
+<a class="card" href="jogos/">
+    <div class="icon">🎮</div>
+    <h2>Jogos</h2>
+    <p>Jogos em HTML para diversão e entretenimento.</p>
+</a>
+
+<a class="card" href="gicanas/">
+    <div class="icon">🏆</div>
+    <h2>Gincanas</h2>
+    <p>Ferramentas para eventos, competições e atividades.</p>
+</a>
+
+<a class="card" href="passa-tempo/">
+    <div class="icon">🧩</div>
+    <h2>Passatempos</h2>
+    <p>Quebra-cabeças, desafios e atividades recreativas.</p>
+</a>
+
+<a class="card" href="tec/">
+    <div class="icon">💻</div>
+    <h2>Tecnologia</h2>
+    <p>Ferramentas, utilitários e recursos técnicos.</p>
+</a>
+
+</div>
+
+</main>
+
+<footer>
+    © 2026 • Portal de Ferramentas
+</footer>
+
+</body>
+</html>

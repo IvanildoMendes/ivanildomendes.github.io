@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔶 Q*bert</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px;
+            border-radius: 30px;
+            border: 1px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+            max-width: 100%;
+        }
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #a0a0c0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .info-bar span {
+            background: #0f0f1a;
+            padding: 4px 16px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+        }
+        .info-bar .lives { color: #ff6b6b; }
+        .info-bar .score { color: #ffd700; }
+        .info-bar .level { color: #6c6cff; }
+
+        #gameCanvas {
+            background: #0b0b16;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 520px;
+            height: auto;
+            aspect-ratio: 520 / 520;
+            touch-action: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 18px;
+        }
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            border: 1px solid transparent;
+        }
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+        }
+        .controls button:active { transform: scale(0.95); }
+
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+        }
+
+        /* Mobile D-Pad diagonal */
+        .mobile-dpad {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            max-width: 200px;
+            margin: 12px auto 0;
+        }
+        .mobile-dpad button {
+            background: #2a2a4a;
+            border: 1px solid #3a3a5a;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.2rem;
+            padding: 8px 0;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: 0.1s;
+            box-shadow: 0 4px 0 #0f0f1a;
+            font-weight: 600;
+        }
+        .mobile-dpad button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0f0f1a;
+        }
+        .mobile-dpad .center { visibility: hidden; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .info-bar { font-size: 0.9rem; }
+            .controls button { padding: 8px 18px; font-size: 0.8rem; }
+            .hint { font-size: 0.75rem; }
+            .mobile-dpad { display: grid; }
+        }
+        @media (pointer: coarse) { .mobile-dpad { display: grid; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔶 Q*BERT</h1>
+    <div class="info-bar">
+        <span class="score">🏆 <span id="scoreDisplay">0</span></span>
+        <span class="level">⚡ Nível <span id="levelDisplay">1</span></span>
+        <span class="lives">❤️ <span id="livesDisplay">3</span></span>
+    </div>
+    <canvas id="gameCanvas" width="520" height="520"></canvas>
+
+    <div class="mobile-dpad">
+        <button data-dir="up-left">↖</button>
+        <button data-dir="up-right">↗</button>
+        <button class="center"></button>
+        <button data-dir="down-left">↙</button>
+        <button data-dir="down-right">↘</button>
+    </div>
+
+    <div class="controls">
+        <button id="restartBtn">🔄 Reiniciar</button>
+        <button id="pauseBtn">⏸️ Pausar</button>
+    </div>
+    <div class="hint">
+        <kbd>Q</kbd> ↖ &nbsp; <kbd>W</kbd> ↗ &nbsp; <kbd>A</kbd> ↙ &nbsp; <kbd>S</kbd> ↘ &nbsp;·&nbsp; <kbd>P</kbd> pausa
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    //  1.  CONFIGURAÇÕES
+    // ================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const levelSpan = document.getElementById('levelDisplay');
+    const livesSpan = document.getElementById('livesDisplay');
+    const restartBtn = document.getElementById('restartBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+
+    const W = 520, H = 520;
+    const GRID_SIZE = 7; // 7x7
+    const CUBE_W = 44;
+    const CUBE_H = 26;
+
+    // Cores dos cubos
+    const COLOR_START = '#f57c00'; // laranja
+    const COLOR_TARGET = '#1976d2'; // azul
+    const COLOR_DARK = '#bf6a00';
+    const COLOR_LIGHT = '#ffa726';
+
+    // ================================================================
+    //  2.  ESTADO DO JOGO
+    // ================================================================
+    let grid = [];            // 7x7: 0 = cor inicial, 1 = cor alvo
+    let qbert = { x: 3, y: 0 }; // coordenadas no grid (0-6)
+    let enemies = [];
+    let particles = [];
+    let score = 0;
+    let lives = 3;
+    let level = 1;
+    let gameOver = false;
+    let paused = false;
+    let animationId = null;
+    let moveCooldown = 0;
+    const MOVE_DELAY = 10; // frames entre movimentos
+    let winAnimation = 0;
+
+    // Cores dos cubos (para desenho)
+    const cubeColors = {};
+
+    // ================================================================
+    //  3.  FUNÇÕES AUXILIARES
+    // ================================================================
+
+    function isValid(x, y) {
+        // Losango de 7x7: |x-3| + |y-3| <= 3
+        return Math.abs(x - 3) + Math.abs(y - 3) <= 3;
+    }
+
+    function initGrid() {
+        grid = [];
+        for (let y = 0; y < GRID_SIZE; y++) {
+            grid[y] = [];
+            for (let x = 0; x < GRID_SIZE; x++) {
+                if (isValid(x, y)) {
+                    grid[y][x] = 0; // começa com cor inicial
+                } else {
+                    grid[y][x] = -1; // vazio
+                }
+            }
+        }
+    }
+
+    function getCubeColor(x, y) {
+        if (!isValid(x, y)) return null;
+        return grid[y][x] === 0 ? COLOR_START : COLOR_TARGET;
+    }
+
+    function isAllTarget() {
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                if (isValid(x, y) && grid[y][x] === 0) return false;
+            }
+        }
+        return true;
+    }
+
+    function countTarget() {
+        let count = 0;
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                if (isValid(x, y) && grid[y][x] === 1) count++;
+            }
+        }
+        return count;
+    }
+
+    function countTotal() {
+        let count = 0;
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                if (isValid(x, y)) count++;
+            }
+        }
+        return count;
+    }
+
+    function spawnParticles(x, y, color, count = 15) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * 2 * Math.PI;
+            const speed = 1 + Math.random() * 3;
+            particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 0.5,
+                life: 1,
+                decay: 0.02 + Math.random() * 0.03,
+                size: 2 + Math.random() * 4,
+                color
+            });
+        }
+    }
+
+    function updateUI() {
+        scoreSpan.textContent = score;
+        levelSpan.textContent = level;
+        livesSpan.textContent = lives;
+    }
+
+    // ================================================================
+    //  4.  MAPEAMENTO ISOMÉTRICO
+    // ================================================================
+
+    function gridToScreen(gx, gy) {
+        const offsetX = W / 2;
+        const offsetY = 80;
+        const sx = offsetX + (gx - gy) * CUBE_W / 2;
+        const sy = offsetY + (gx + gy) * CUBE_H / 2;
+        return { x: sx, y: sy };
+    }
+
+    function drawCube(gx, gy, color, highlight = false) {
+        const pos = gridToScreen(gx, gy);
+        const cx = pos.x, cy = pos.y;
+        const w = CUBE_W, h = CUBE_H;
+
+        // Topo (losango)
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - h/2);
+        ctx.lineTo(cx + w/2, cy);
+        ctx.lineTo(cx, cy + h/2);
+        ctx.lineTo(cx - w/2, cy);
+        ctx.closePath();
+
+        // Sombra
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Borda
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Face esquerda (mais escura)
+        ctx.beginPath();
+        ctx.moveTo(cx - w/2, cy);
+        ctx.lineTo(cx, cy + h/2);
+        ctx.lineTo(cx, cy + h/2 + 8);
+        ctx.lineTo(cx - w/2, cy + 8);
+        ctx.closePath();
+        ctx.fillStyle = darkenColor(color, 30);
+        ctx.fill();
+
+        // Face direita (mais clara)
+        ctx.beginPath();
+        ctx.moveTo(cx + w/2, cy);
+        ctx.lineTo(cx, cy + h/2);
+        ctx.lineTo(cx, cy + h/2 + 8);
+        ctx.lineTo(cx + w/2, cy + 8);
+        ctx.closePath();
+        ctx.fillStyle = lightenColor(color, 20);
+        ctx.fill();
+
+        // Brilho no topo (se highlight)
+        if (highlight) {
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            ctx.moveTo(cx - w/4, cy - h/4);
+            ctx.lineTo(cx, cy - h/2 + 4);
+            ctx.lineTo(cx + w/4, cy - h/4);
+            ctx.lineTo(cx, cy);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    function darkenColor(hex, amount) {
+        let r = parseInt(hex.slice(1,3), 16);
+        let g = parseInt(hex.slice(3,5), 16);
+        let b = parseInt(hex.slice(5,7), 16);
+        r = Math.max(0, r - amount);
+        g = Math.max(0, g - amount);
+        b = Math.max(0, b - amount);
+        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    }
+
+    function lightenColor(hex, amount) {
+        let r = parseInt(hex.slice(1,3), 16);
+        let g = parseInt(hex.slice(3,5), 16);
+        let b = parseInt(hex.slice(5,7), 16);
+        r = Math.min(255, r + amount);
+        g = Math.min(255, g + amount);
+        b = Math.min(255, b + amount);
+        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    }
+
+    // ================================================================
+    //  5.  LÓGICA DO Q*BERT
+    // ================================================================
+
+    function moveQbert(dx, dy) {
+        if (gameOver || paused) return;
+        if (moveCooldown > 0) return;
+        const nx = qbert.x + dx;
+        const ny = qbert.y + dy;
+        if (!isValid(nx, ny)) return;
+
+        // Move
+        qbert.x = nx;
+        qbert.y = ny;
+        moveCooldown = MOVE_DELAY;
+
+        // Muda a cor do cubo
+        if (grid[ny][nx] === 0) {
+            grid[ny][nx] = 1;
+            score += 10;
+            spawnParticles(
+                gridToScreen(nx, ny).x,
+                gridToScreen(nx, ny).y,
+                '#ffd700', 8
+            );
+        } else {
+            // Já está na cor alvo, não muda (mas ainda ganha pontos? Não no original)
+            // Vamos dar 5 pontos por visitar de novo?
+            score += 5;
+        }
+        updateUI();
+
+        // Verifica se todos os cubos estão na cor alvo
+        if (isAllTarget()) {
+            // Venceu o nível!
+            winAnimation = 30;
+            score += 100 * level;
+            updateUI();
+            spawnParticles(W/2, H/2, '#ffd700', 50);
+            // Próximo nível
+            setTimeout(() => {
+                if (!gameOver) nextLevel();
+            }, 500);
+        }
+    }
+
+    function nextLevel() {
+        level++;
+        initGrid();
+        qbert.x = 3;
+        qbert.y = 0;
+        enemies = [];
+        // Cria inimigos baseado no nível
+        const enemyCount = Math.min(level, 4);
+        for (let i = 0; i < enemyCount; i++) {
+            let ex, ey;
+            do {
+                ex = Math.floor(Math.random() * GRID_SIZE);
+                ey = Math.floor(Math.random() * GRID_SIZE);
+            } while (!isValid(ex, ey) || (ex === qbert.x && ey === qbert.y));
+            enemies.push({
+                x: ex,
+                y: ey,
+                moveTimer: 0,
+                moveInterval: Math.max(20, 60 - level * 3)
+            });
+        }
+        updateUI();
+        winAnimation = 0;
+    }
+
+    // ================================================================
+    //  6.  INIMIGOS (COILY)
+    // ================================================================
+
+    function updateEnemies() {
+        for (const e of enemies) {
+            e.moveTimer++;
+            if (e.moveTimer >= e.moveInterval) {
+                e.moveTimer = 0;
+                // Move em direção a Q*bert (diagonal)
+                const dx = qbert.x - e.x;
+                const dy = qbert.y - e.y;
+                let moveX = 0, moveY = 0;
+                if (dx !== 0) moveX = dx > 0 ? 1 : -1;
+                if (dy !== 0) moveY = dy > 0 ? 1 : -1;
+                // Tenta mover na diagonal (prioriza o eixo com maior distância)
+                if (Math.abs(dx) >= Math.abs(dy)) {
+                    // Tenta mover em X primeiro
+                    const nx = e.x + moveX;
+                    if (isValid(nx, e.y)) {
+                        e.x = nx;
+                        continue;
+                    } else if (moveY !== 0 && isValid(e.x, e.y + moveY)) {
+                        e.y += moveY;
+                        continue;
+                    }
+                } else {
+                    const ny = e.y + moveY;
+                    if (isValid(e.x, ny)) {
+                        e.y = ny;
+                        continue;
+                    } else if (moveX !== 0 && isValid(e.x + moveX, e.y)) {
+                        e.x += moveX;
+                        continue;
+                    }
+                }
+                // Se não conseguiu, fica parado
+            }
+        }
+
+        // Verifica colisão com Q*bert
+        for (const e of enemies) {
+            if (e.x === qbert.x && e.y === qbert.y) {
+                // Perdeu vida!
+                spawnParticles(
+                    gridToScreen(qbert.x, qbert.y).x,
+                    gridToScreen(qbert.x, qbert.y).y,
+                    '#ff6b6b', 30
+                );
+                lives--;
+                updateUI();
+                if (lives <= 0) {
+                    gameOver = true;
+                    return;
+                }
+                // Reseta posição do Q*bert
+                qbert.x = 3;
+                qbert.y = 0;
+                // Reseta inimigos para posições aleatórias
+                for (const e2 of enemies) {
+                    let ex, ey;
+                    do {
+                        ex = Math.floor(Math.random() * GRID_SIZE);
+                        ey = Math.floor(Math.random() * GRID_SIZE);
+                    } while (!isValid(ex, ey) || (ex === qbert.x && ey === qbert.y));
+                    e2.x = ex;
+                    e2.y = ey;
+                    e2.moveTimer = 0;
+                }
+                break;
+            }
+        }
+    }
+
+    // ================================================================
+    //  7.  ATUALIZAÇÃO
+    // ================================================================
+
+    function update() {
+        if (paused || gameOver) return;
+
+        if (moveCooldown > 0) moveCooldown--;
+
+        if (winAnimation > 0) {
+            winAnimation--;
+            return;
+        }
+
+        updateEnemies();
+
+        // Atualiza partículas
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.05;
+            p.life -= p.decay;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        // Verifica se Q*bert caiu para fora (não é possível)
+    }
+
+    // ================================================================
+    //  8.  RENDERIZAÇÃO
+    // ================================================================
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // --- Fundo gradiente ---
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, '#0b0b2a');
+        grad.addColorStop(1, '#1a1a3a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // --- Desenha cubos ---
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                if (!isValid(x, y)) continue;
+                const color = getCubeColor(x, y);
+                const highlight = (x === qbert.x && y === qbert.y);
+                drawCube(x, y, color, highlight);
+            }
+        }
+
+        // --- Desenha Q*bert (personagem) ---
+        const qpos = gridToScreen(qbert.x, qbert.y);
+        // Corpo (bola)
+        ctx.shadowColor = '#ffd93d';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#ffd93d';
+        ctx.beginPath();
+        ctx.arc(qpos.x, qpos.y - 12, 14, 0, Math.PI * 2);
+        ctx.fill();
+        // Olhos
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(qpos.x - 6, qpos.y - 16, 5, 0, Math.PI * 2);
+        ctx.arc(qpos.x + 6, qpos.y - 16, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0b0b16';
+        ctx.beginPath();
+        ctx.arc(qpos.x - 8, qpos.y - 16, 2.5, 0, Math.PI * 2);
+        ctx.arc(qpos.x + 4, qpos.y - 16, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Boca (sorriso)
+        ctx.strokeStyle = '#0b0b16';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(qpos.x, qpos.y - 10, 6, 0.1, Math.PI - 0.1);
+        ctx.stroke();
+        // Nariz
+        ctx.fillStyle = '#ff8a65';
+        ctx.beginPath();
+        ctx.arc(qpos.x, qpos.y - 11, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // Pés (pequenos cilindros)
+        ctx.fillStyle = '#1a3a8a';
+        ctx.fillRect(qpos.x - 8, qpos.y - 4, 6, 4);
+        ctx.fillRect(qpos.x + 2, qpos.y - 4, 6, 4);
+
+        // --- Inimigos (Coily) ---
+        for (const e of enemies) {
+            const epos = gridToScreen(e.x, e.y);
+            // Corpo (cobra)
+            ctx.shadowColor = '#4d96ff';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#4d96ff';
+            ctx.beginPath();
+            ctx.arc(epos.x, epos.y - 10, 12, 0, Math.PI * 2);
+            ctx.fill();
+            // Olhos vermelhos
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(epos.x - 5, epos.y - 13, 4, 0, Math.PI * 2);
+            ctx.arc(epos.x + 5, epos.y - 13, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0b0b16';
+            ctx.beginPath();
+            ctx.arc(epos.x - 6, epos.y - 13, 2, 0, Math.PI * 2);
+            ctx.arc(epos.x + 4, epos.y - 13, 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Língua
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(epos.x, epos.y - 6);
+            ctx.lineTo(epos.x + 4, epos.y - 2);
+            ctx.stroke();
+        }
+
+        // --- Partículas ---
+        for (const p of particles) {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+        }
+        ctx.globalAlpha = 1;
+
+        // --- Progresso ---
+        const total = countTotal();
+        const done = countTarget();
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(10, 10, 120, 14);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(12, 12, (done / total) * 116, 10);
+        ctx.fillStyle = '#a0a0c0';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`${done}/${total}`, 14, 28);
+
+        // --- Win animation overlay ---
+        if (winAnimation > 0) {
+            ctx.fillStyle = `rgba(255,215,0,${winAnimation / 30 * 0.2})`;
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🎉 NÍVEL CONCLUÍDO!', W/2, H/2 - 20);
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px sans-serif';
+            ctx.fillText(`+${100 * level} pontos!`, W/2, H/2 + 40);
+        }
+
+        // --- Game Over ---
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 48px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const msg = lives <= 0 ? '💀 GAME OVER' : '🏆 VOCÊ VENCEU!';
+            ctx.fillText(msg, W/2, H/2 - 20);
+            ctx.fillStyle = '#a0a0c0';
+            ctx.font = '20px sans-serif';
+            ctx.fillText('Clique em "Reiniciar"', W/2, H/2 + 50);
+        }
+
+        // --- Pausa ---
+        if (paused && !gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 44px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⏸ PAUSADO', W/2, H/2);
+        }
+    }
+
+    // ================================================================
+    //  9.  LOOP PRINCIPAL
+    // ================================================================
+
+    function gameLoop() {
+        update();
+        draw();
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // ================================================================
+    //  10. EVENTOS
+    // ================================================================
+
+    // --- Teclado ---
+    document.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase();
+        if (['q', 'w', 'a', 's', 'p'].includes(key)) e.preventDefault();
+        if (key === 'q') moveQbert(-1, -1);
+        else if (key === 'w') moveQbert(1, -1);
+        else if (key === 'a') moveQbert(-1, 1);
+        else if (key === 's') moveQbert(1, 1);
+        else if (key === 'p') togglePause();
+    });
+
+    // --- Botões mobile ---
+    document.querySelectorAll('[data-dir]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const dir = btn.dataset.dir;
+            if (dir === 'up-left') moveQbert(-1, -1);
+            else if (dir === 'up-right') moveQbert(1, -1);
+            else if (dir === 'down-left') moveQbert(-1, 1);
+            else if (dir === 'down-right') moveQbert(1, 1);
+        });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const dir = btn.dataset.dir;
+            if (dir === 'up-left') moveQbert(-1, -1);
+            else if (dir === 'up-right') moveQbert(1, -1);
+            else if (dir === 'down-left') moveQbert(-1, 1);
+            else if (dir === 'down-right') moveQbert(1, 1);
+        });
+    });
+
+    // --- Botões principais ---
+    function togglePause() {
+        if (gameOver) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? '▶️ Retomar' : '⏸️ Pausar';
+        draw();
+    }
+
+    function restartGame() {
+        lives = 3;
+        level = 1;
+        score = 0;
+        gameOver = false;
+        paused = false;
+        pauseBtn.textContent = '⏸️ Pausar';
+        particles = [];
+        winAnimation = 0;
+        initGrid();
+        qbert.x = 3;
+        qbert.y = 0;
+        enemies = [];
+        // Cria inimigos iniciais
+        for (let i = 0; i < 1; i++) {
+            let ex, ey;
+            do {
+                ex = Math.floor(Math.random() * GRID_SIZE);
+                ey = Math.floor(Math.random() * GRID_SIZE);
+            } while (!isValid(ex, ey) || (ex === qbert.x && ey === qbert.y));
+            enemies.push({
+                x: ex,
+                y: ey,
+                moveTimer: 0,
+                moveInterval: 60
+            });
+        }
+        updateUI();
+        draw();
+    }
+
+    restartBtn.addEventListener('click', restartGame);
+    pauseBtn.addEventListener('click', togglePause);
+
+    // ================================================================
+    //  11. INICIALIZAR
+    // ================================================================
+
+    initGrid();
+    qbert.x = 3;
+    qbert.y = 0;
+    // Inimigo inicial
+    enemies.push({
+        x: 2,
+        y: 3,
+        moveTimer: 0,
+        moveInterval: 60
+    });
+    updateUI();
+    gameLoop();
+</script>
+</body>
+</html>

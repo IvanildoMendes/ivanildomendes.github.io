@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagnóstico de Cosmovisão</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #f6f8fa;
+            --surface: #ffffff;
+            --surface2: #f0f2f5;
+            --text: #1a1a2e;
+            --text2: #4a4a6a;
+            --text3: #7a7a9a;
+            --border: #dce0e8;
+            --primary: #4a6cf7;
+            --primary-hover: #3a5cd7;
+            --primary-light: #e8edfe;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s ease;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --maxw: 820px;
+            --header-h: 64px;
+        }
+        .dark {
+            --bg: #0d0d1a;
+            --surface: #18182b;
+            --surface2: #22223a;
+            --text: #eaeaf0;
+            --text2: #b0b0cc;
+            --text3: #7878a0;
+            --border: #2e2e4a;
+            --primary: #6a8cff;
+            --primary-hover: #5a7cef;
+            --primary-light: #1a1a3a;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            transition: background var(--transition), color var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 16px 40px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text3);
+        }
+
+        /* ── Header ── */
+        .header {
+            width: 100%;
+            max-width: var(--maxw);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 50;
+            transition: background var(--transition);
+        }
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo span {
+            color: var(--primary);
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle,
+        .reset-btn {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--text2);
+            transition: background var(--transition), color var(--transition), transform 0.15s;
+        }
+        .theme-toggle:hover,
+        .reset-btn:hover {
+            background: var(--border);
+            color: var(--text);
+            transform: scale(1.04);
+        }
+        .reset-btn {
+            font-size: 0.9rem;
+        }
+
+        /* ── Container ── */
+        .app {
+            width: 100%;
+            max-width: var(--maxw);
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px 32px 36px;
+            transition: background var(--transition), box-shadow var(--transition);
+            position: relative;
+            min-height: 520px;
+        }
+        @media (max-width: 640px) {
+            .app {
+                padding: 20px 16px 28px;
+                border-radius: 12px;
+            }
+            .header {
+                padding: 12px 0 10px;
+            }
+            .logo {
+                font-size: 1rem;
+            }
+        }
+
+        /* ── Progress ── */
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), #8aafff);
+            border-radius: 8px;
+            transition: width 0.4s ease;
+        }
+        .progress-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text2);
+            min-width: 44px;
+            text-align: right;
+            letter-spacing: 0.2px;
+        }
+
+        /* ── Screens ── */
+        .screen {
+            display: none;
+            animation: fadeUp 0.35s ease;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Welcome ── */
+        .welcome h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        .welcome h1 span {
+            color: var(--primary);
+        }
+        .welcome p {
+            color: var(--text2);
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin-bottom: 16px;
+        }
+        .welcome .highlight-box {
+            background: var(--primary-light);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 18px 0 24px;
+            border-left: 4px solid var(--primary);
+            color: var(--text2);
+            font-size: 0.95rem;
+        }
+        .welcome .highlight-box strong {
+            color: var(--text);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            border-radius: var(--radius-sm);
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition), transform 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 12px 28px;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text2);
+            border: 1px solid var(--border);
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background var(--transition), color var(--transition);
+        }
+        .btn-outline:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        /* ── Question ── */
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            color: var(--text3);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            line-height: 1.5;
+            min-height: 3.6rem;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 500px) {
+            .options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .opt-btn {
+            background: var(--surface2);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text2);
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition), color var(--transition), transform 0.12s;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .opt-btn:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        .opt-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .opt-btn.special {
+            background: transparent;
+            border-color: var(--border);
+            font-weight: 400;
+            color: var(--text3);
+            font-size: 0.85rem;
+        }
+        .opt-btn.special:hover {
+            background: var(--surface2);
+        }
+        .opt-btn.special.selected {
+            border-color: var(--text3);
+            background: var(--surface2);
+            color: var(--text2);
+        }
+        .question-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .question-nav .left {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ── Results ── */
+        .results-header {
+            margin-bottom: 20px;
+        }
+        .results-header h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+        .results-header p {
+            color: var(--text2);
+            font-size: 1rem;
+            margin-top: 4px;
+        }
+        .result-section {
+            margin-top: 28px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+        .result-section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .result-section .sub {
+            color: var(--text2);
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 12px 0 8px;
+        }
+        @media (max-width: 700px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .chart-box {
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 16px 14px 12px;
+            position: relative;
+            min-height: 220px;
+        }
+        .chart-box h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .chart-box canvas {
+            max-height: 240px;
+            max-width: 100%;
+        }
+
+        .top-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 24px;
+            margin-top: 6px;
+        }
+        @media (max-width: 500px) {
+            .top-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        .top-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--surface2);
+            border-radius: 8px;
+            font-size: 0.92rem;
+        }
+        .top-item .name {
+            font-weight: 500;
+        }
+        .top-item .pct {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .top-item .pct.dim {
+            color: var(--text3);
+            font-weight: 400;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 10px 0 4px;
+        }
+        .table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .table-wrap th,
+        .table-wrap td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .table-wrap th {
+            font-weight: 600;
+            color: var(--text2);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .table-wrap td:last-child {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .explain-box {
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 10px 0 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text2);
+        }
+        .explain-box strong {
+            color: var(--text);
+        }
+        .explain-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+            margin: 8px 0 4px;
+        }
+        @media (max-width: 500px) {
+            .explain-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .explain-grid .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .explain-grid .item .lbl {
+            color: var(--text2);
+        }
+        .explain-grid .item .val {
+            font-weight: 500;
+        }
+
+        .share-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+            align-items: center;
+        }
+        .share-row .btn-outline {
+            font-size: 0.85rem;
+        }
+
+        .footnote {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--text3);
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            text-align: center;
+        }
+        .footnote a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* ── Loading / empty ── */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text3);
+        }
+
+        /* ── Misc ── */
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mt-16 {
+            margin-top: 16px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .text-center {
+            text-align: center;
+        }
+
+        /* ── Tooltip ── */
+        .badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.2px;
+        }
+
+        /* ── Responsive tweaks ── */
+        @media (max-width: 480px) {
+            .question-text {
+                font-size: 1.05rem;
+            }
+            .opt-btn {
+                padding: 10px 10px;
+                font-size: 0.8rem;
+            }
+            .btn-primary {
+                padding: 12px 28px;
+                font-size: 0.95rem;
+            }
+            .results-header h2 {
+                font-size: 1.3rem;
+            }
+            .chart-box {
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">🧭 <span>Cosmovisão</span></div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">🌙</button>
+            <button class="reset-btn" id="resetBtn" aria-label="Reiniciar" title="Reiniciar diagnóstico">↺</button>
+        </div>
+    </header>
+
+    <div class="app" id="app">
+
+        <!-- ─── WELCOME ─── -->
+        <div class="screen active" id="screenWelcome">
+            <div class="welcome">
+                <h1>Diagnóstico de <span>Cosmovisão</span></h1>
+                <p>Um instrumento de autoconhecimento para explorar como você enxerga o mundo — em várias dimensões.</p>
+                <div class="highlight-box">
+                    <strong>🧠 Não é um teste político.</strong><br />
+                    Não há respostas certas ou erradas. O sistema identifica padrões nas suas respostas e mostra quais conjuntos de ideias mais se aproximam do seu perfil. A maioria das pessoas é uma mistura de várias correntes.
+                </div>
+                <p style="font-size:0.95rem; color:var(--text3);">
+                    <span>📊 80 perguntas · ~10 minutos · 30+ dimensões</span>
+                </p>
+                <button class="btn-primary" id="startBtn">▶ Iniciar diagnóstico</button>
+            </div>
+        </div>
+
+        <!-- ─── QUESTION ─── -->
+        <div class="screen" id="screenQuestion">
+            <div class="progress-wrap">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-label" id="progressLabel">0%</span>
+            </div>
+            <div class="question-header">
+                <span id="qNum">Pergunta 1 / 80</span>
+                <span class="badge" id="qDimTag">Múltiplas dimensões</span>
+            </div>
+            <div class="question-text" id="qText">Carregando…</div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="question-nav">
+                <div class="left">
+                    <button class="btn-outline" id="prevBtn" disabled>← Anterior</button>
+                </div>
+                <div>
+                    <button class="btn-primary" id="nextBtn" style="padding:10px 28px; font-size:0.95rem;">Próxima →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── RESULTS ─── -->
+        <div class="screen" id="screenResults">
+            <div class="results-header">
+                <h2>Seu perfil de cosmovisão</h2>
+                <p>Com base nas suas respostas, veja a seguir as principais afinidades e dimensões.</p>
+            </div>
+
+            <!-- Radar + Bar -->
+            <div class="chart-grid">
+                <div class="chart-box">
+                    <h4>📡 Mapa de afinidades</h4>
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h4>📊 Proximidade por corrente</h4>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top 10 correntes -->
+            <div class="result-section">
+                <h3>🏷️ Top 10 correntes</h3>
+                <div class="top-list" id="topIdeologies"></div>
+            </div>
+
+            <!-- Top valores e divergências -->
+            <div class="result-section">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div>
+                        <h3>⭐ Top 5 valores</h3>
+                        <div class="top-list" id="topValues" style="grid-template-columns:1fr;"></div>
+                    </div>
+                    <div>
+                        <h3>⚡ Top 5 divergências</h3>
+                        <div class="top-list" id="topDivergences" style="grid-template-columns:1fr;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela completa -->
+            <div class="result-section">
+                <h3>📋 Proximidade completa</h3>
+                <div class="table-wrap">
+                    <table id="fullTable">
+                        <thead><tr><th>Corrente</th><th>Proximidade</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Explicação detalhada -->
+            <div class="result-section">
+                <h3>📖 Explicação detalhada</h3>
+                <div class="explain-box" id="explainBox"></div>
+            </div>
+
+            <!-- Eixos -->
+            <div class="result-section">
+                <h3>🧩 Mapa completo dos eixos</h3>
+                <div class="sub">Cada eixo varia de -100 a +100. Valores positivos indicam inclinação à direita do eixo.</div>
+                <div class="explain-grid" id="axesGrid"></div>
+            </div>
+
+            <!-- Índices -->
+            <div class="result-section">
+                <div style="display:flex; flex-wrap:wrap; gap:16px 32px;">
+                    <div><strong>Índice de coerência:</strong> <span id="coherenceIdx">—</span></div>
+                    <div><strong>Margem de confiança:</strong> <span id="confidenceIdx">—</span></div>
+                </div>
+            </div>
+
+            <!-- Compartilhar -->
+            <div class="result-section">
+                <h3>🔗 Compartilhar</h3>
+                <div class="share-row">
+                    <button class="btn-outline" id="shareLinkBtn">Copiar link</button>
+                    <button class="btn-outline" id="shareImgBtn">Gerar imagem</button>
+                    <span style="font-size:0.85rem; color:var(--text3);" id="shareStatus"></span>
+                </div>
+            </div>
+
+            <div class="footnote">
+                Este diagnóstico é uma ferramenta educativa de autoconhecimento. Nenhuma resposta é pública.
+                <br />As afinidades são calculadas por padrões estatísticos — não definem sua identidade.
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ════════════════════════════════════════════════════════════════
+        //  DATA — Dimensões, Perguntas, Ideologias
+        // ════════════════════════════════════════════════════════════════
+
+        const DIMS = [
+            'FreeMarket', 'EconomicPlanning', 'PropertyRights', 'IncomeEquality',
+            'Welfare', 'PublicServices', 'Regulation', 'Taxation',
+            'StateAuthority', 'Decentralization', 'Federalism', 'Democracy',
+            'Participation', 'Representation', 'IndividualRights', 'CollectiveRights',
+            'FreeSpeech', 'Privacy', 'PersonalFreedom', 'SocialConformity',
+            'Tradition', 'SocialChange', 'Religion', 'Multiculturalism',
+            'Nationalism', 'Internationalism', 'Globalism', 'Immigration',
+            'Sovereignty', 'Justice', 'Security', 'Military',
+            'Environmentalism', 'Technology', 'Science', 'Education',
+            'Culture', 'LocalCommunities', 'Cooperativism'
+        ];
+
+        const DIM_LABELS = {
+            FreeMarket: 'Livre mercado',
+            EconomicPlanning: 'Planejamento econômico',
+            PropertyRights: 'Direito de propriedade',
+            IncomeEquality: 'Igualdade de renda',
+            Welfare: 'Estado de bem-estar',
+            PublicServices: 'Serviços públicos',
+            Regulation: 'Regulação estatal',
+            Taxation: 'Tributação',
+            StateAuthority: 'Autoridade estatal',
+            Decentralization: 'Descentralização',
+            Federalism: 'Federalismo',
+            Democracy: 'Democracia',
+            Participation: 'Participação popular',
+            Representation: 'Representatividade',
+            IndividualRights: 'Direitos individuais',
+            CollectiveRights: 'Direitos coletivos',
+            FreeSpeech: 'Liberdade de expressão',
+            Privacy: 'Privacidade',
+            PersonalFreedom: 'Liberdade pessoal',
+            SocialConformity: 'Conformidade social',
+            Tradition: 'Tradição',
+            SocialChange: 'Mudança social',
+            Religion: 'Religião',
+            Multiculturalism: 'Multiculturalismo',
+            Nationalism: 'Nacionalismo',
+            Internationalism: 'Internacionalismo',
+            Globalism: 'Globalismo',
+            Immigration: 'Imigração',
+            Sovereignty: 'Soberania',
+            Justice: 'Justiça',
+            Security: 'Segurança',
+            Military: 'Militarismo',
+            Environmentalism: 'Ambientalismo',
+            Technology: 'Tecnologia',
+            Science: 'Ciência',
+            Education: 'Educação',
+            Culture: 'Cultura',
+            LocalCommunities: 'Comunidades locais',
+            Cooperativism: 'Cooperativismo'
+        };
+
+        // ─── Perguntas ───
+        // Cada pergunta: { id, text, dims: [ {name, weight}, ... ] }
+        // weight: positivo = concordar aumenta o eixo, negativo = concordar diminui
+        // 80 perguntas, cobrindo todas as dimensões
+
+        function q(text, dims) { return { text, dims }; }
+
+        const QUESTIONS = [
+            // 1-10: Economia / Estado
+            q('Serviços considerados essenciais deveriam permanecer sob administração pública.', [
+                { name: 'PublicServices', weight: 0.8 }, { name: 'FreeMarket', weight: -0.5 },
+                { name: 'StateAuthority', weight: 0.4 }, { name: 'EconomicPlanning', weight: 0.6 }
+            ]),
+            q('Empresas muito grandes costumam gerar mais benefícios do que problemas.', [
+                { name: 'FreeMarket', weight: 0.7 }, { name: 'Regulation', weight: -0.5 },
+                { name: 'PropertyRights', weight: 0.4 }, { name: 'EconomicPlanning', weight: -0.3 }
+            ]),
+            q('O governo deveria garantir um nível mínimo de renda para todos os cidadãos.', [
+                { name: 'Welfare', weight: 0.9 }, { name: 'IncomeEquality', weight: 0.7 },
+                { name: 'Taxation', weight: 0.5 }, { name: 'FreeMarket', weight: -0.4 }
+            ]),
+            q('A propriedade privada é um pilar fundamental de qualquer sociedade livre.', [
+                { name: 'PropertyRights', weight: 0.9 }, { name: 'FreeMarket', weight: 0.7 },
+                { name: 'EconomicPlanning', weight: -0.5 }, { name: 'CollectiveRights', weight: -0.3 }
+            ]),
+            q('O planejamento centralizado é mais eficiente que o mercado livre para alocar recursos.', [
+                { name: 'EconomicPlanning', weight: 0.8 }, { name: 'FreeMarket', weight: -0.7 },
+                { name: 'StateAuthority', weight: 0.5 }, { name: 'Regulation', weight: 0.5 }
+            ]),
+            q('A tributação sobre os mais ricos deveria ser significativamente mais alta.', [
+                { name: 'Taxation', weight: 0.8 }, { name: 'IncomeEquality', weight: 0.7 },
+                { name: 'Welfare', weight: 0.5 }, { name: 'PropertyRights', weight: -0.4 }
+            ]),
+            q('O mercado deve ser livre para operar sem intervenção do governo.', [
+                { name: 'FreeMarket', weight: 0.9 }, { name: 'Regulation', weight: -0.8 },
+                { name: 'EconomicPlanning', weight: -0.6 }, { name: 'StateAuthority', weight: -0.4 }
+            ]),
+            q('O Estado deve atuar fortemente na redução das desigualdades sociais.', [
+                { name: 'IncomeEquality', weight: 0.8 }, { name: 'Welfare', weight: 0.6 },
+                { name: 'Taxation', weight: 0.5 }, { name: 'StateAuthority', weight: 0.4 }
+            ]),
+            q('Empresas estatais são menos eficientes que empresas privadas na maioria dos setores.', [
+                { name: 'FreeMarket', weight: 0.6 }, { name: 'PublicServices', weight: -0.5 },
+                { name: 'EconomicPlanning', weight: -0.5 }, { name: 'Regulation', weight: -0.3 }
+            ]),
+            q('O sistema de saúde deveria ser universal e gratuito, financiado por impostos.', [
+                { name: 'PublicServices', weight: 0.8 }, { name: 'Welfare', weight: 0.7 },
+                { name: 'Taxation', weight: 0.5 }, { name: 'FreeMarket', weight: -0.4 }
+            ]),
+
+            // 11-20: Liberdade / Autoridade
+            q('O cidadão deve poder dizer praticamente qualquer coisa, mesmo quando ofende outras pessoas.', [
+                { name: 'FreeSpeech', weight: 0.9 }, { name: 'IndividualRights', weight: 0.7 },
+                { name: 'SocialConformity', weight: -0.5 }, { name: 'StateAuthority', weight: -0.4 }
+            ]),
+            q('Em momentos de crise, decisões rápidas podem ser mais importantes do que longos debates.', [
+                { name: 'StateAuthority', weight: 0.7 }, { name: 'Democracy', weight: -0.5 },
+                { name: 'Participation', weight: -0.4 }, { name: 'Security', weight: 0.5 }
+            ]),
+            q('A tradição merece ser preservada mesmo quando limita mudanças.', [
+                { name: 'Tradition', weight: 0.9 }, { name: 'SocialChange', weight: -0.7 },
+                { name: 'SocialConformity', weight: 0.5 }, { name: 'Culture', weight: 0.5 }
+            ]),
+            q('A liberdade individual é mais importante que a ordem social.', [
+                { name: 'IndividualRights', weight: 0.8 }, { name: 'PersonalFreedom', weight: 0.8 },
+                { name: 'StateAuthority', weight: -0.5 }, { name: 'SocialConformity', weight: -0.5 }
+            ]),
+            q('O governo deve ter autoridade para restringir liberdades em nome da segurança nacional.', [
+                { name: 'Security', weight: 0.8 }, { name: 'StateAuthority', weight: 0.7 },
+                { name: 'IndividualRights', weight: -0.6 }, { name: 'Privacy', weight: -0.5 }
+            ]),
+            q('A privacidade dos cidadãos deve ser protegida mesmo contra investigações criminais.', [
+                { name: 'Privacy', weight: 0.9 }, { name: 'IndividualRights', weight: 0.7 },
+                { name: 'StateAuthority', weight: -0.5 }, { name: 'Security', weight: -0.4 }
+            ]),
+            q('A sociedade precisa de valores morais compartilhados para funcionar bem.', [
+                { name: 'SocialConformity', weight: 0.7 }, { name: 'Tradition', weight: 0.5 },
+                { name: 'Religion', weight: 0.4 }, { name: 'Culture', weight: 0.5 }
+            ]),
+            q('As pessoas devem ter total liberdade para viver como quiserem, sem julgamento social.', [
+                { name: 'PersonalFreedom', weight: 0.9 }, { name: 'IndividualRights', weight: 0.7 },
+                { name: 'SocialConformity', weight: -0.6 }, { name: 'Tradition', weight: -0.4 }
+            ]),
+            q('A religião tem um papel importante na vida pública e na política.', [
+                { name: 'Religion', weight: 0.9 }, { name: 'Tradition', weight: 0.6 },
+                { name: 'SocialConformity', weight: 0.4 }, { name: 'Culture', weight: 0.5 }
+            ]),
+            q('O Estado deve ser laico e separado de qualquer crença religiosa.', [
+                { name: 'Religion', weight: -0.8 }, { name: 'StateAuthority', weight: -0.3 },
+                { name: 'Tradition', weight: -0.4 }, { name: 'Culture', weight: -0.3 }
+            ]),
+
+            // 21-30: Democracia / Participação
+            q('A democracia representativa é a melhor forma de governo.', [
+                { name: 'Democracy', weight: 0.7 }, { name: 'Representation', weight: 0.7 },
+                { name: 'Participation', weight: -0.3 }, { name: 'StateAuthority', weight: -0.3 }
+            ]),
+            q('Os cidadãos deveriam participar diretamente das decisões políticas, não apenas via representantes.', [
+                { name: 'Participation', weight: 0.9 }, { name: 'Democracy', weight: 0.6 },
+                { name: 'Representation', weight: -0.5 }, { name: 'Decentralization', weight: 0.4 }
+            ]),
+            q('O poder deve ser descentralizado, com mais autonomia para estados e municípios.', [
+                { name: 'Decentralization', weight: 0.8 }, { name: 'Federalism', weight: 0.7 },
+                { name: 'StateAuthority', weight: -0.5 }, { name: 'Centralization', weight: -0.5 }
+            ]),
+            // Note: Centralization não está na lista, mas usaremos StateAuthority como proxy
+            q('Um governo forte e centralizado é necessário para manter a ordem e o progresso.', [
+                { name: 'StateAuthority', weight: 0.8 }, { name: 'Decentralization', weight: -0.6 },
+                { name: 'Federalism', weight: -0.5 }, { name: 'Security', weight: 0.4 }
+            ]),
+            q('As decisões políticas devem ser tomadas pelos representantes eleitos, não por referendos populares.', [
+                { name: 'Representation', weight: 0.7 }, { name: 'Participation', weight: -0.6 },
+                { name: 'Democracy', weight: 0.3 }, { name: 'StateAuthority', weight: 0.3 }
+            ]),
+            q('A participação popular em conselhos e assembleias fortalece a democracia.', [
+                { name: 'Participation', weight: 0.8 }, { name: 'Democracy', weight: 0.5 },
+                { name: 'Representation', weight: -0.3 }, { name: 'LocalCommunities', weight: 0.5 }
+            ]),
+            q('O federalismo é essencial para garantir a diversidade e a autonomia regional.', [
+                { name: 'Federalism', weight: 0.8 }, { name: 'Decentralization', weight: 0.7 },
+                { name: 'StateAuthority', weight: -0.4 }, { name: 'LocalCommunities', weight: 0.4 }
+            ]),
+            q('A democracia direta é inviável em sociedades complexas.', [
+                { name: 'Participation', weight: -0.6 }, { name: 'Representation', weight: 0.5 },
+                { name: 'Democracy', weight: -0.3 }, { name: 'StateAuthority', weight: 0.3 }
+            ]),
+            q('As instituições democráticas devem ser reformadas para serem mais participativas.', [
+                { name: 'Participation', weight: 0.7 }, { name: 'Democracy', weight: 0.5 },
+                { name: 'SocialChange', weight: 0.4 }, { name: 'Representation', weight: -0.3 }
+            ]),
+            q('A soberania popular é a base legítima de qualquer governo.', [
+                { name: 'Democracy', weight: 0.7 }, { name: 'Participation', weight: 0.6 },
+                { name: 'StateAuthority', weight: -0.3 }, { name: 'Sovereignty', weight: 0.4 }
+            ]),
+
+            // 31-40: Justiça / Segurança / Militar
+            q('O sistema penal deveria ser mais severo para reduzir a criminalidade.', [
+                { name: 'Justice', weight: -0.5 }, { name: 'Security', weight: 0.7 },
+                { name: 'StateAuthority', weight: 0.4 }, { name: 'IndividualRights', weight: -0.4 }
+            ]),
+            q('A justiça deve ter foco na reabilitação, não na punição.', [
+                { name: 'Justice', weight: 0.8 }, { name: 'Security', weight: -0.4 },
+                { name: 'IndividualRights', weight: 0.4 }, { name: 'SocialChange', weight: 0.3 }
+            ]),
+            q('As Forças Armadas devem ter um papel ativo na defesa da soberania nacional.', [
+                { name: 'Military', weight: 0.8 }, { name: 'Nationalism', weight: 0.6 },
+                { name: 'Sovereignty', weight: 0.5 }, { name: 'Security', weight: 0.5 }
+            ]),
+            q('O país deve evitar intervenções militares no exterior.', [
+                { name: 'Military', weight: -0.7 }, { name: 'Internationalism', weight: 0.4 },
+                { name: 'Nationalism', weight: -0.3 }, { name: 'Security', weight: -0.3 }
+            ]),
+            q('A segurança pública deve ser prioridade máxima do governo.', [
+                { name: 'Security', weight: 0.8 }, { name: 'StateAuthority', weight: 0.5 },
+                { name: 'Justice', weight: -0.3 }, { name: 'IndividualRights', weight: -0.3 }
+            ]),
+            q('O sistema carcerário atual é ineficaz e deveria ser reformado.', [
+                { name: 'Justice', weight: 0.6 }, { name: 'SocialChange', weight: 0.5 },
+                { name: 'Security', weight: -0.3 }, { name: 'IndividualRights', weight: 0.3 }
+            ]),
+            q('A defesa nacional deve ser fortalecida com investimento em tecnologia militar.', [
+                { name: 'Military', weight: 0.7 }, { name: 'Security', weight: 0.6 },
+                { name: 'Nationalism', weight: 0.4 }, { name: 'Sovereignty', weight: 0.4 }
+            ]),
+            q('A polícia deve ter autonomia para agir sem interferência política.', [
+                { name: 'StateAuthority', weight: 0.4 }, { name: 'Security', weight: 0.6 },
+                { name: 'Justice', weight: -0.3 }, { name: 'IndividualRights', weight: -0.3 }
+            ]),
+            q('A justiça social é mais importante que a lei e a ordem.', [
+                { name: 'Justice', weight: 0.7 }, { name: 'IncomeEquality', weight: 0.5 },
+                { name: 'Security', weight: -0.4 }, { name: 'StateAuthority', weight: -0.3 }
+            ]),
+            q('O país deve ter uma política externa independente e soberana.', [
+                { name: 'Sovereignty', weight: 0.8 }, { name: 'Nationalism', weight: 0.5 },
+                { name: 'Internationalism', weight: -0.4 }, { name: 'Globalism', weight: -0.4 }
+            ]),
+
+            // 41-50: Nacionalismo / Globalismo / Imigração
+            q('A imigração deve ser restrita para proteger a cultura e o emprego locais.', [
+                { name: 'Immigration', weight: -0.7 }, { name: 'Nationalism', weight: 0.6 },
+                { name: 'Multiculturalism', weight: -0.5 }, { name: 'Globalism', weight: -0.4 }
+            ]),
+            q('A diversidade cultural traz mais benefícios do que desafios para a sociedade.', [
+                { name: 'Multiculturalism', weight: 0.9 }, { name: 'Immigration', weight: 0.6 },
+                { name: 'Globalism', weight: 0.5 }, { name: 'Nationalism', weight: -0.4 }
+            ]),
+            q('O país deveria priorizar seus próprios cidadãos em vez de cooperar internacionalmente.', [
+                { name: 'Nationalism', weight: 0.8 }, { name: 'Sovereignty', weight: 0.6 },
+                { name: 'Internationalism', weight: -0.6 }, { name: 'Globalism', weight: -0.5 }
+            ]),
+            q('A cooperação internacional é essencial para resolver problemas globais.', [
+                { name: 'Internationalism', weight: 0.8 }, { name: 'Globalism', weight: 0.7 },
+                { name: 'Nationalism', weight: -0.6 }, { name: 'Sovereignty', weight: -0.3 }
+            ]),
+            q('As fronteiras nacionais devem ser abertas para livre circulação de pessoas.', [
+                { name: 'Immigration', weight: 0.7 }, { name: 'Globalism', weight: 0.6 },
+                { name: 'Nationalism', weight: -0.6 }, { name: 'Sovereignty', weight: -0.4 }
+            ]),
+            q('A cultura tradicional do país deve ser preservada acima de influências estrangeiras.', [
+                { name: 'Culture', weight: 0.6 }, { name: 'Nationalism', weight: 0.7 },
+                { name: 'Tradition', weight: 0.6 }, { name: 'Multiculturalism', weight: -0.5 }
+            ]),
+            q('A globalização é uma força positiva que conecta pessoas e economias.', [
+                { name: 'Globalism', weight: 0.8 }, { name: 'Internationalism', weight: 0.6 },
+                { name: 'Nationalism', weight: -0.5 }, { name: 'Immigration', weight: 0.4 }
+            ]),
+            q('A soberania nacional deve ser protegida mesmo que isso signifique menos cooperação internacional.', [
+                { name: 'Sovereignty', weight: 0.7 }, { name: 'Nationalism', weight: 0.6 },
+                { name: 'Globalism', weight: -0.5 }, { name: 'Internationalism', weight: -0.4 }
+            ]),
+            q('A imigração é benéfica para a economia e a inovação.', [
+                { name: 'Immigration', weight: 0.7 }, { name: 'Multiculturalism', weight: 0.5 },
+                { name: 'Globalism', weight: 0.4 }, { name: 'Nationalism', weight: -0.4 }
+            ]),
+            q('O orgulho nacional é uma virtude que deve ser cultivada.', [
+                { name: 'Nationalism', weight: 0.8 }, { name: 'Culture', weight: 0.5 },
+                { name: 'Tradition', weight: 0.4 }, { name: 'Internationalism', weight: -0.4 }
+            ]),
+
+            // 51-60: Meio ambiente / Tecnologia / Ciência
+            q('A proteção ambiental deve vir antes do crescimento econômico.', [
+                { name: 'Environmentalism', weight: 0.9 }, { name: 'EconomicPlanning', weight: 0.3 },
+                { name: 'FreeMarket', weight: -0.4 }, { name: 'Technology', weight: 0.3 }
+            ]),
+            q('A ciência deve orientar as políticas públicas, mesmo quando contraria crenças populares.', [
+                { name: 'Science', weight: 0.9 }, { name: 'Technology', weight: 0.6 },
+                { name: 'Tradition', weight: -0.4 }, { name: 'Religion', weight: -0.3 }
+            ]),
+            q('A tecnologia resolverá a maioria dos problemas da humanidade.', [
+                { name: 'Technology', weight: 0.8 }, { name: 'Science', weight: 0.6 },
+                { name: 'Environmentalism', weight: -0.3 }, { name: 'SocialChange', weight: 0.4 }
+            ]),
+            q('O desenvolvimento econômico deve ser sustentável e respeitar o meio ambiente.', [
+                { name: 'Environmentalism', weight: 0.7 }, { name: 'EconomicPlanning', weight: 0.4 },
+                { name: 'FreeMarket', weight: -0.3 }, { name: 'Technology', weight: 0.3 }
+            ]),
+            q('A ciência tem limites éticos que não devem ser ultrapassados.', [
+                { name: 'Science', weight: -0.5 }, { name: 'Tradition', weight: 0.4 },
+                { name: 'Religion', weight: 0.3 }, { name: 'Technology', weight: -0.4 }
+            ]),
+            q('O aquecimento global é a maior ameaça atual e exige ação imediata.', [
+                { name: 'Environmentalism', weight: 0.9 }, { name: 'Globalism', weight: 0.5 },
+                { name: 'EconomicPlanning', weight: 0.4 }, { name: 'Technology', weight: 0.3 }
+            ]),
+            q('A inovação tecnológica deve ser livre de regulações para prosperar.', [
+                { name: 'Technology', weight: 0.7 }, { name: 'FreeMarket', weight: 0.5 },
+                { name: 'Regulation', weight: -0.5 }, { name: 'Science', weight: 0.3 }
+            ]),
+            q('O progresso científico deve ser acessível a todos, não apenas a elites.', [
+                { name: 'Science', weight: 0.6 }, { name: 'Education', weight: 0.6 },
+                { name: 'IncomeEquality', weight: 0.4 }, { name: 'Technology', weight: 0.3 }
+            ]),
+            q('A natureza tem valor intrínseco, independente de sua utilidade para os humanos.', [
+                { name: 'Environmentalism', weight: 0.8 }, { name: 'Tradition', weight: 0.3 },
+                { name: 'Religion', weight: 0.2 }, { name: 'EconomicPlanning', weight: -0.2 }
+            ]),
+            q('O crescimento econômico justifica algum dano ambiental.', [
+                { name: 'Environmentalism', weight: -0.8 }, { name: 'FreeMarket', weight: 0.5 },
+                { name: 'EconomicPlanning', weight: -0.3 }, { name: 'Technology', weight: 0.2 }
+            ]),
+
+            // 61-70: Educação / Cultura / Família
+            q('A educação básica deve ser universal e gratuita, financiada pelo Estado.', [
+                { name: 'Education', weight: 0.8 }, { name: 'PublicServices', weight: 0.6 },
+                { name: 'IncomeEquality', weight: 0.4 }, { name: 'FreeMarket', weight: -0.3 }
+            ]),
+            q('Os pais devem ter liberdade para escolher a escola dos filhos, inclusive com vouchers.', [
+                { name: 'Education', weight: -0.5 }, { name: 'FreeMarket', weight: 0.5 },
+                { name: 'PublicServices', weight: -0.4 }, { name: 'IndividualRights', weight: 0.4 }
+            ]),
+            q('A família tradicional é a base da sociedade e deve ser protegida.', [
+                { name: 'Tradition', weight: 0.7 }, { name: 'SocialConformity', weight: 0.6 },
+                { name: 'Culture', weight: 0.5 }, { name: 'SocialChange', weight: -0.4 }
+            ]),
+            q('A educação deve promover valores de tolerância e diversidade.', [
+                { name: 'Multiculturalism', weight: 0.7 }, { name: 'SocialChange', weight: 0.6 },
+                { name: 'Education', weight: 0.4 }, { name: 'Tradition', weight: -0.4 }
+            ]),
+            q('O currículo escolar deve priorizar disciplinas científicas e técnicas.', [
+                { name: 'Education', weight: 0.5 }, { name: 'Science', weight: 0.6 },
+                { name: 'Technology', weight: 0.5 }, { name: 'Culture', weight: -0.3 }
+            ]),
+            q('A cultura erudita é superior à cultura popular e deve ser incentivada.', [
+                { name: 'Culture', weight: 0.5 }, { name: 'Tradition', weight: 0.4 },
+                { name: 'SocialChange', weight: -0.3 }, { name: 'Education', weight: 0.3 }
+            ]),
+            q('A diversidade cultural deve ser celebrada e incentivada.', [
+                { name: 'Multiculturalism', weight: 0.8 }, { name: 'SocialChange', weight: 0.5 },
+                { name: 'Culture', weight: 0.3 }, { name: 'Tradition', weight: -0.4 }
+            ]),
+            q('A educação privada é geralmente melhor que a pública.', [
+                { name: 'Education', weight: -0.5 }, { name: 'FreeMarket', weight: 0.6 },
+                { name: 'PublicServices', weight: -0.5 }, { name: 'IncomeEquality', weight: -0.3 }
+            ]),
+            q('A escola deve formar cidadãos críticos, não apenas trabalhadores qualificados.', [
+                { name: 'Education', weight: 0.6 }, { name: 'Participation', weight: 0.5 },
+                { name: 'Democracy', weight: 0.4 }, { name: 'SocialChange', weight: 0.4 }
+            ]),
+            q('As artes e humanidades são tão importantes quanto as ciências na educação.', [
+                { name: 'Culture', weight: 0.7 }, { name: 'Education', weight: 0.4 },
+                { name: 'SocialChange', weight: 0.3 }, { name: 'Science', weight: -0.3 }
+            ]),
+
+            // 71-80: Comunidades / Cooperativismo / Misc
+            q('As comunidades locais devem ter poder para decidir sobre seus próprios assuntos.', [
+                { name: 'LocalCommunities', weight: 0.9 }, { name: 'Decentralization', weight: 0.6 },
+                { name: 'Participation', weight: 0.5 }, { name: 'StateAuthority', weight: -0.4 }
+            ]),
+            q('O cooperativismo é um modelo econômico superior à competição individualista.', [
+                { name: 'Cooperativism', weight: 0.9 }, { name: 'CollectiveRights', weight: 0.6 },
+                { name: 'FreeMarket', weight: -0.5 }, { name: 'LocalCommunities', weight: 0.4 }
+            ]),
+            q('A livre iniciativa e a competição são os melhores motores para o progresso.', [
+                { name: 'FreeMarket', weight: 0.8 }, { name: 'PropertyRights', weight: 0.6 },
+                { name: 'Cooperativism', weight: -0.5 }, { name: 'EconomicPlanning', weight: -0.4 }
+            ]),
+            q('A sociedade deve valorizar mais a cooperação do que a competição.', [
+                { name: 'Cooperativism', weight: 0.8 }, { name: 'CollectiveRights', weight: 0.6 },
+                { name: 'FreeMarket', weight: -0.5 }, { name: 'LocalCommunities', weight: 0.4 }
+            ]),
+            q('As decisões econômicas devem ser tomadas coletivamente, não por indivíduos isolados.', [
+                { name: 'CollectiveRights', weight: 0.7 }, { name: 'Cooperativism', weight: 0.6 },
+                { name: 'FreeMarket', weight: -0.5 }, { name: 'EconomicPlanning', weight: 0.4 }
+            ]),
+            q('A meritocracia é o princípio mais justo para distribuir oportunidades.', [
+                { name: 'PropertyRights', weight: 0.4 }, { name: 'FreeMarket', weight: 0.4 },
+                { name: 'IncomeEquality', weight: -0.6 }, { name: 'Justice', weight: 0.3 }
+            ]),
+            q('A desigualdade econômica é aceitável desde que haja mobilidade social.', [
+                { name: 'IncomeEquality', weight: -0.6 }, { name: 'FreeMarket', weight: 0.5 },
+                { name: 'PropertyRights', weight: 0.4 }, { name: 'Welfare', weight: -0.3 }
+            ]),
+            q('O governo deveria garantir empregos para todos que desejarem trabalhar.', [
+                { name: 'Welfare', weight: 0.7 }, { name: 'EconomicPlanning', weight: 0.6 },
+                { name: 'StateAuthority', weight: 0.4 }, { name: 'FreeMarket', weight: -0.4 }
+            ]),
+            q('A sociedade deve garantir um padrão mínimo de vida para todos, independentemente de mérito.', [
+                { name: 'Welfare', weight: 0.8 }, { name: 'IncomeEquality', weight: 0.7 },
+                { name: 'CollectiveRights', weight: 0.5 }, { name: 'FreeMarket', weight: -0.4 }
+            ]),
+            q('O progresso social exige rupturas com o passado, não apenas reformas graduais.', [
+                { name: 'SocialChange', weight: 0.8 }, { name: 'Tradition', weight: -0.7 },
+                { name: 'Culture', weight: -0.3 }, { name: 'Democracy', weight: 0.3 }
+            ])
+        ];
+
+        // ─── Ideologias: perfis de referência ───
+        // Cada ideologia tem um vetor de valores para cada dimensão (-100 a +100)
+        // Construído manualmente com base em descrições teóricas.
+
+        function makeProfile(values) {
+            const p = {};
+            DIMS.forEach(d => p[d] = 0);
+            Object.keys(values).forEach(k => { if (k in p) p[k] = values[k]; });
+            return p;
+        }
+
+        const IDEOLOGIES = {
+            'Libertário': makeProfile({
+                FreeMarket: 90,
+                EconomicPlanning: -90,
+                PropertyRights: 90,
+                IncomeEquality: -80,
+                Welfare: -85,
+                PublicServices: -70,
+                Regulation: -90,
+                Taxation: -85,
+                StateAuthority: -80,
+                Decentralization: 70,
+                Federalism: 60,
+                Democracy: 50,
+                Participation: 40,
+                Representation: 30,
+                IndividualRights: 95,
+                CollectiveRights: -70,
+                FreeSpeech: 95,
+                Privacy: 85,
+                PersonalFreedom: 95,
+                SocialConformity: -60,
+                Tradition: -30,
+                SocialChange: 40,
+                Religion: -20,
+                Multiculturalism: 30,
+                Nationalism: -30,
+                Internationalism: 40,
+                Globalism: 30,
+                Immigration: 50,
+                Sovereignty: 20,
+                Justice: 30,
+                Security: -20,
+                Military: -40,
+                Environmentalism: -20,
+                Technology: 70,
+                Science: 60,
+                Education: -30,
+                Culture: 10,
+                LocalCommunities: 40,
+                Cooperativism: -50
+            }),
+            'Liberal Clássico': makeProfile({
+                FreeMarket: 80,
+                EconomicPlanning: -75,
+                PropertyRights: 85,
+                IncomeEquality: -60,
+                Welfare: -60,
+                PublicServices: -50,
+                Regulation: -70,
+                Taxation: -65,
+                StateAuthority: -50,
+                Decentralization: 60,
+                Federalism: 50,
+                Democracy: 70,
+                Participation: 30,
+                Representation: 60,
+                IndividualRights: 80,
+                CollectiveRights: -50,
+                FreeSpeech: 85,
+                Privacy: 75,
+                PersonalFreedom: 80,
+                SocialConformity: -30,
+                Tradition: 20,
+                SocialChange: 30,
+                Religion: 0,
+                Multiculturalism: 20,
+                Nationalism: -10,
+                Internationalism: 40,
+                Globalism: 30,
+                Immigration: 40,
+                Sovereignty: 10,
+                Justice: 20,
+                Security: 10,
+                Military: -10,
+                Environmentalism: 0,
+                Technology: 60,
+                Science: 55,
+                Education: -10,
+                Culture: 10,
+                LocalCommunities: 30,
+                Cooperativism: -30
+            }),
+            'Liberal Social': makeProfile({
+                FreeMarket: 40,
+                EconomicPlanning: -20,
+                PropertyRights: 50,
+                IncomeEquality: 30,
+                Welfare: 50,
+                PublicServices: 50,
+                Regulation: 20,
+                Taxation: 30,
+                StateAuthority: 10,
+                Decentralization: 40,
+                Federalism: 40,
+                Democracy: 80,
+                Participation: 60,
+                Representation: 50,
+                IndividualRights: 70,
+                CollectiveRights: 20,
+                FreeSpeech: 80,
+                Privacy: 60,
+                PersonalFreedom: 70,
+                SocialConformity: -20,
+                Tradition: -10,
+                SocialChange: 50,
+                Religion: -10,
+                Multiculturalism: 50,
+                Nationalism: -20,
+                Internationalism: 50,
+                Globalism: 40,
+                Immigration: 50,
+                Sovereignty: -10,
+                Justice: 40,
+                Security: 0,
+                Military: -20,
+                Environmentalism: 40,
+                Technology: 50,
+                Science: 50,
+                Education: 30,
+                Culture: 20,
+                LocalCommunities: 30,
+                Cooperativism: 10
+            }),
+            'Conservador': makeProfile({
+                FreeMarket: 30,
+                EconomicPlanning: -30,
+                PropertyRights: 60,
+                IncomeEquality: -40,
+                Welfare: -20,
+                PublicServices: -10,
+                Regulation: -20,
+                Taxation: -30,
+                StateAuthority: 50,
+                Decentralization: 10,
+                Federalism: 30,
+                Democracy: 40,
+                Participation: -20,
+                Representation: 50,
+                IndividualRights: 20,
+                CollectiveRights: 10,
+                FreeSpeech: 30,
+                Privacy: 40,
+                PersonalFreedom: 10,
+                SocialConformity: 70,
+                Tradition: 85,
+                SocialChange: -70,
+                Religion: 70,
+                Multiculturalism: -50,
+                Nationalism: 60,
+                Internationalism: -40,
+                Globalism: -50,
+                Immigration: -60,
+                Sovereignty: 70,
+                Justice: -30,
+                Security: 60,
+                Military: 40,
+                Environmentalism: -20,
+                Technology: -10,
+                Science: 10,
+                Education: -10,
+                Culture: 60,
+                LocalCommunities: 40,
+                Cooperativism: -20
+            }),
+            'Conservador Liberal': makeProfile({
+                FreeMarket: 60,
+                EconomicPlanning: -50,
+                PropertyRights: 70,
+                IncomeEquality: -50,
+                Welfare: -40,
+                PublicServices: -30,
+                Regulation: -40,
+                Taxation: -40,
+                StateAuthority: 10,
+                Decentralization: 30,
+                Federalism: 40,
+                Democracy: 50,
+                Participation: 0,
+                Representation: 40,
+                IndividualRights: 50,
+                CollectiveRights: -20,
+                FreeSpeech: 50,
+                Privacy: 50,
+                PersonalFreedom: 40,
+                SocialConformity: 30,
+                Tradition: 50,
+                SocialChange: -30,
+                Religion: 30,
+                Multiculturalism: -20,
+                Nationalism: 30,
+                Internationalism: 0,
+                Globalism: -20,
+                Immigration: -20,
+                Sovereignty: 40,
+                Justice: 0,
+                Security: 30,
+                Military: 10,
+                Environmentalism: -10,
+                Technology: 30,
+                Science: 30,
+                Education: -10,
+                Culture: 30,
+                LocalCommunities: 30,
+                Cooperativism: -30
+            }),
+            'Nacional Conservador': makeProfile({
+                FreeMarket: 20,
+                EconomicPlanning: -10,
+                PropertyRights: 40,
+                IncomeEquality: -30,
+                Welfare: -10,
+                PublicServices: 0,
+                Regulation: 10,
+                Taxation: -10,
+                StateAuthority: 70,
+                Decentralization: -20,
+                Federalism: 10,
+                Democracy: 20,
+                Participation: -30,
+                Representation: 30,
+                IndividualRights: 0,
+                CollectiveRights: 30,
+                FreeSpeech: 10,
+                Privacy: 10,
+                PersonalFreedom: -20,
+                SocialConformity: 80,
+                Tradition: 85,
+                SocialChange: -80,
+                Religion: 70,
+                Multiculturalism: -70,
+                Nationalism: 90,
+                Internationalism: -80,
+                Globalism: -80,
+                Immigration: -80,
+                Sovereignty: 90,
+                Justice: -40,
+                Security: 80,
+                Military: 70,
+                Environmentalism: -30,
+                Technology: -10,
+                Science: 0,
+                Education: -20,
+                Culture: 70,
+                LocalCommunities: 20,
+                Cooperativism: -30
+            }),
+            'Democrata Cristão': makeProfile({
+                FreeMarket: 10,
+                EconomicPlanning: 10,
+                PropertyRights: 30,
+                IncomeEquality: 20,
+                Welfare: 40,
+                PublicServices: 40,
+                Regulation: 20,
+                Taxation: 20,
+                StateAuthority: 20,
+                Decentralization: 30,
+                Federalism: 40,
+                Democracy: 60,
+                Participation: 30,
+                Representation: 50,
+                IndividualRights: 30,
+                CollectiveRights: 30,
+                FreeSpeech: 30,
+                Privacy: 40,
+                PersonalFreedom: 10,
+                SocialConformity: 50,
+                Tradition: 60,
+                SocialChange: -20,
+                Religion: 80,
+                Multiculturalism: 0,
+                Nationalism: 20,
+                Internationalism: 30,
+                Globalism: 10,
+                Immigration: 10,
+                Sovereignty: 30,
+                Justice: 40,
+                Security: 30,
+                Military: 10,
+                Environmentalism: 30,
+                Technology: 10,
+                Science: 20,
+                Education: 20,
+                Culture: 40,
+                LocalCommunities: 50,
+                Cooperativism: 30
+            }),
+            'Centrista': makeProfile({
+                FreeMarket: 10,
+                EconomicPlanning: -10,
+                PropertyRights: 20,
+                IncomeEquality: 10,
+                Welfare: 10,
+                PublicServices: 10,
+                Regulation: 0,
+                Taxation: 0,
+                StateAuthority: 0,
+                Decentralization: 10,
+                Federalism: 20,
+                Democracy: 60,
+                Participation: 20,
+                Representation: 40,
+                IndividualRights: 20,
+                CollectiveRights: 10,
+                FreeSpeech: 30,
+                Privacy: 20,
+                PersonalFreedom: 20,
+                SocialConformity: 0,
+                Tradition: 10,
+                SocialChange: 10,
+                Religion: 0,
+                Multiculturalism: 10,
+                Nationalism: 0,
+                Internationalism: 10,
+                Globalism: 0,
+                Immigration: 10,
+                Sovereignty: 10,
+                Justice: 10,
+                Security: 10,
+                Military: -10,
+                Environmentalism: 10,
+                Technology: 20,
+                Science: 20,
+                Education: 10,
+                Culture: 10,
+                LocalCommunities: 20,
+                Cooperativism: 0
+            }),
+            'Social-Democrata': makeProfile({
+                FreeMarket: -20,
+                EconomicPlanning: 20,
+                PropertyRights: 10,
+                IncomeEquality: 70,
+                Welfare: 80,
+                PublicServices: 70,
+                Regulation: 40,
+                Taxation: 60,
+                StateAuthority: 20,
+                Decentralization: 30,
+                Federalism: 30,
+                Democracy: 80,
+                Participation: 60,
+                Representation: 40,
+                IndividualRights: 30,
+                CollectiveRights: 50,
+                FreeSpeech: 60,
+                Privacy: 40,
+                PersonalFreedom: 40,
+                SocialConformity: -10,
+                Tradition: -20,
+                SocialChange: 50,
+                Religion: -20,
+                Multiculturalism: 50,
+                Nationalism: -10,
+                Internationalism: 50,
+                Globalism: 40,
+                Immigration: 50,
+                Sovereignty: -10,
+                Justice: 50,
+                Security: 10,
+                Military: -30,
+                Environmentalism: 50,
+                Technology: 40,
+                Science: 50,
+                Education: 40,
+                Culture: 20,
+                LocalCommunities: 40,
+                Cooperativism: 40
+            }),
+            'Progressista': makeProfile({
+                FreeMarket: -30,
+                EconomicPlanning: 10,
+                PropertyRights: -10,
+                IncomeEquality: 60,
+                Welfare: 60,
+                PublicServices: 60,
+                Regulation: 40,
+                Taxation: 50,
+                StateAuthority: -10,
+                Decentralization: 40,
+                Federalism: 30,
+                Democracy: 80,
+                Participation: 70,
+                Representation: 20,
+                IndividualRights: 50,
+                CollectiveRights: 50,
+                FreeSpeech: 80,
+                Privacy: 50,
+                PersonalFreedom: 70,
+                SocialConformity: -60,
+                Tradition: -70,
+                SocialChange: 90,
+                Religion: -60,
+                Multiculturalism: 80,
+                Nationalism: -40,
+                Internationalism: 60,
+                Globalism: 50,
+                Immigration: 70,
+                Sovereignty: -30,
+                Justice: 60,
+                Security: -20,
+                Military: -50,
+                Environmentalism: 70,
+                Technology: 50,
+                Science: 60,
+                Education: 50,
+                Culture: 30,
+                LocalCommunities: 30,
+                Cooperativism: 40
+            }),
+            'Ecologista': makeProfile({
+                FreeMarket: -40,
+                EconomicPlanning: 30,
+                PropertyRights: -20,
+                IncomeEquality: 50,
+                Welfare: 50,
+                PublicServices: 50,
+                Regulation: 60,
+                Taxation: 50,
+                StateAuthority: 20,
+                Decentralization: 50,
+                Federalism: 40,
+                Democracy: 70,
+                Participation: 70,
+                Representation: 30,
+                IndividualRights: 20,
+                CollectiveRights: 60,
+                FreeSpeech: 60,
+                Privacy: 40,
+                PersonalFreedom: 30,
+                SocialConformity: -30,
+                Tradition: 10,
+                SocialChange: 40,
+                Religion: -10,
+                Multiculturalism: 40,
+                Nationalism: -20,
+                Internationalism: 60,
+                Globalism: 50,
+                Immigration: 50,
+                Sovereignty: -20,
+                Justice: 50,
+                Security: -10,
+                Military: -60,
+                Environmentalism: 95,
+                Technology: 30,
+                Science: 60,
+                Education: 30,
+                Culture: 20,
+                LocalCommunities: 60,
+                Cooperativism: 50
+            }),
+            'Socialista Democrático': makeProfile({
+                FreeMarket: -70,
+                EconomicPlanning: 60,
+                PropertyRights: -50,
+                IncomeEquality: 90,
+                Welfare: 90,
+                PublicServices: 85,
+                Regulation: 70,
+                Taxation: 80,
+                StateAuthority: 30,
+                Decentralization: 10,
+                Federalism: 20,
+                Democracy: 80,
+                Participation: 80,
+                Representation: 20,
+                IndividualRights: 20,
+                CollectiveRights: 80,
+                FreeSpeech: 60,
+                Privacy: 30,
+                PersonalFreedom: 20,
+                SocialConformity: -20,
+                Tradition: -50,
+                SocialChange: 80,
+                Religion: -40,
+                Multiculturalism: 60,
+                Nationalism: -30,
+                Internationalism: 60,
+                Globalism: 50,
+                Immigration: 60,
+                Sovereignty: -20,
+                Justice: 70,
+                Security: -10,
+                Military: -50,
+                Environmentalism: 60,
+                Technology: 40,
+                Science: 60,
+                Education: 60,
+                Culture: 10,
+                LocalCommunities: 30,
+                Cooperativism: 70
+            }),
+            'Socialista': makeProfile({
+                FreeMarket: -85,
+                EconomicPlanning: 80,
+                PropertyRights: -70,
+                IncomeEquality: 95,
+                Welfare: 90,
+                PublicServices: 90,
+                Regulation: 80,
+                Taxation: 85,
+                StateAuthority: 60,
+                Decentralization: -10,
+                Federalism: 0,
+                Democracy: 40,
+                Participation: 40,
+                Representation: 10,
+                IndividualRights: -10,
+                CollectiveRights: 90,
+                FreeSpeech: 30,
+                Privacy: 10,
+                PersonalFreedom: -20,
+                SocialConformity: 10,
+                Tradition: -50,
+                SocialChange: 85,
+                Religion: -50,
+                Multiculturalism: 50,
+                Nationalism: -20,
+                Internationalism: 50,
+                Globalism: 40,
+                Immigration: 50,
+                Sovereignty: -10,
+                Justice: 70,
+                Security: 10,
+                Military: -30,
+                Environmentalism: 50,
+                Technology: 40,
+                Science: 60,
+                Education: 60,
+                Culture: -10,
+                LocalCommunities: 20,
+                Cooperativism: 80
+            }),
+            'Marxista': makeProfile({
+                FreeMarket: -95,
+                EconomicPlanning: 90,
+                PropertyRights: -90,
+                IncomeEquality: 100,
+                Welfare: 80,
+                PublicServices: 85,
+                Regulation: 85,
+                Taxation: 90,
+                StateAuthority: 70,
+                Decentralization: -30,
+                Federalism: -20,
+                Democracy: 10,
+                Participation: 20,
+                Representation: -10,
+                IndividualRights: -50,
+                CollectiveRights: 95,
+                FreeSpeech: 10,
+                Privacy: -10,
+                PersonalFreedom: -40,
+                SocialConformity: 20,
+                Tradition: -70,
+                SocialChange: 95,
+                Religion: -70,
+                Multiculturalism: 40,
+                Nationalism: -30,
+                Internationalism: 60,
+                Globalism: 50,
+                Immigration: 40,
+                Sovereignty: -20,
+                Justice: 80,
+                Security: 20,
+                Military: -10,
+                Environmentalism: 40,
+                Technology: 50,
+                Science: 70,
+                Education: 70,
+                Culture: -30,
+                LocalCommunities: 10,
+                Cooperativism: 85
+            }),
+            'Comunista': makeProfile({
+                FreeMarket: -100,
+                EconomicPlanning: 95,
+                PropertyRights: -95,
+                IncomeEquality: 100,
+                Welfare: 85,
+                PublicServices: 90,
+                Regulation: 90,
+                Taxation: 95,
+                StateAuthority: 85,
+                Decentralization: -40,
+                Federalism: -30,
+                Democracy: -10,
+                Participation: 10,
+                Representation: -20,
+                IndividualRights: -60,
+                CollectiveRights: 100,
+                FreeSpeech: -10,
+                Privacy: -20,
+                PersonalFreedom: -50,
+                SocialConformity: 30,
+                Tradition: -80,
+                SocialChange: 100,
+                Religion: -80,
+                Multiculturalism: 30,
+                Nationalism: -40,
+                Internationalism: 70,
+                Globalism: 60,
+                Immigration: 30,
+                Sovereignty: -30,
+                Justice: 85,
+                Security: 30,
+                Military: 10,
+                Environmentalism: 30,
+                Technology: 50,
+                Science: 70,
+                Education: 75,
+                Culture: -40,
+                LocalCommunities: 0,
+                Cooperativism: 90
+            }),
+            'Anarquista': makeProfile({
+                FreeMarket: -60,
+                EconomicPlanning: -40,
+                PropertyRights: -30,
+                IncomeEquality: 70,
+                Welfare: 40,
+                PublicServices: -30,
+                Regulation: -70,
+                Taxation: -90,
+                StateAuthority: -100,
+                Decentralization: 95,
+                Federalism: -30,
+                Democracy: 30,
+                Participation: 90,
+                Representation: -80,
+                IndividualRights: 80,
+                CollectiveRights: 60,
+                FreeSpeech: 95,
+                Privacy: 90,
+                PersonalFreedom: 95,
+                SocialConformity: -80,
+                Tradition: -50,
+                SocialChange: 85,
+                Religion: -60,
+                Multiculturalism: 60,
+                Nationalism: -50,
+                Internationalism: 60,
+                Globalism: 30,
+                Immigration: 70,
+                Sovereignty: -70,
+                Justice: 70,
+                Security: -70,
+                Military: -90,
+                Environmentalism: 60,
+                Technology: 40,
+                Science: 50,
+                Education: 30,
+                Culture: 10,
+                LocalCommunities: 90,
+                Cooperativism: 80
+            }),
+            'Anarcocapitalista': makeProfile({
+                FreeMarket: 100,
+                EconomicPlanning: -100,
+                PropertyRights: 100,
+                IncomeEquality: -100,
+                Welfare: -100,
+                PublicServices: -100,
+                Regulation: -100,
+                Taxation: -100,
+                StateAuthority: -100,
+                Decentralization: 90,
+                Federalism: -20,
+                Democracy: -30,
+                Participation: 40,
+                Representation: -70,
+                IndividualRights: 100,
+                CollectiveRights: -100,
+                FreeSpeech: 100,
+                Privacy: 100,
+                PersonalFreedom: 100,
+                SocialConformity: -90,
+                Tradition: -40,
+                SocialChange: 30,
+                Religion: -80,
+                Multiculturalism: 20,
+                Nationalism: -60,
+                Internationalism: 50,
+                Globalism: 40,
+                Immigration: 80,
+                Sovereignty: -60,
+                Justice: 20,
+                Security: -80,
+                Military: -90,
+                Environmentalism: -50,
+                Technology: 80,
+                Science: 70,
+                Education: -60,
+                Culture: -30,
+                LocalCommunities: 40,
+                Cooperativism: -90
+            }),
+            'Mutualista': makeProfile({
+                FreeMarket: -30,
+                EconomicPlanning: -10,
+                PropertyRights: 20,
+                IncomeEquality: 60,
+                Welfare: 30,
+                PublicServices: 10,
+                Regulation: -20,
+                Taxation: -40,
+                StateAuthority: -60,
+                Decentralization: 80,
+                Federalism: 30,
+                Democracy: 60,
+                Participation: 80,
+                Representation: -20,
+                IndividualRights: 60,
+                CollectiveRights: 60,
+                FreeSpeech: 80,
+                Privacy: 60,
+                PersonalFreedom: 70,
+                SocialConformity: -40,
+                Tradition: -20,
+                SocialChange: 50,
+                Religion: -30,
+                Multiculturalism: 40,
+                Nationalism: -30,
+                Internationalism: 50,
+                Globalism: 30,
+                Immigration: 50,
+                Sovereignty: -30,
+                Justice: 60,
+                Security: -30,
+                Military: -60,
+                Environmentalism: 50,
+                Technology: 40,
+                Science: 50,
+                Education: 30,
+                Culture: 10,
+                LocalCommunities: 80,
+                Cooperativism: 90
+            }),
+            'Sindicalista': makeProfile({
+                FreeMarket: -50,
+                EconomicPlanning: 30,
+                PropertyRights: -40,
+                IncomeEquality: 75,
+                Welfare: 50,
+                PublicServices: 40,
+                Regulation: 40,
+                Taxation: 50,
+                StateAuthority: -10,
+                Decentralization: 50,
+                Federalism: 20,
+                Democracy: 60,
+                Participation: 90,
+                Representation: -30,
+                IndividualRights: 30,
+                CollectiveRights: 80,
+                FreeSpeech: 60,
+                Privacy: 30,
+                PersonalFreedom: 30,
+                SocialConformity: -20,
+                Tradition: -40,
+                SocialChange: 70,
+                Religion: -40,
+                Multiculturalism: 40,
+                Nationalism: -20,
+                Internationalism: 50,
+                Globalism: 30,
+                Immigration: 40,
+                Sovereignty: -10,
+                Justice: 60,
+                Security: -20,
+                Military: -50,
+                Environmentalism: 40,
+                Technology: 30,
+                Science: 40,
+                Education: 40,
+                Culture: 0,
+                LocalCommunities: 60,
+                Cooperativism: 80
+            }),
+            'Minarquista': makeProfile({
+                FreeMarket: 85,
+                EconomicPlanning: -85,
+                PropertyRights: 90,
+                IncomeEquality: -80,
+                Welfare: -85,
+                PublicServices: -80,
+                Regulation: -85,
+                Taxation: -85,
+                StateAuthority: -70,
+                Decentralization: 70,
+                Federalism: 40,
+                Democracy: 40,
+                Participation: 20,
+                Representation: 30,
+                IndividualRights: 90,
+                CollectiveRights: -80,
+                FreeSpeech: 90,
+                Privacy: 85,
+                PersonalFreedom: 90,
+                SocialConformity: -60,
+                Tradition: -20,
+                SocialChange: 20,
+                Religion: -30,
+                Multiculturalism: 10,
+                Nationalism: -20,
+                Internationalism: 30,
+                Globalism: 20,
+                Immigration: 40,
+                Sovereignty: 10,
+                Justice: 10,
+                Security: -10,
+                Military: -30,
+                Environmentalism: -20,
+                Technology: 70,
+                Science: 60,
+                Education: -40,
+                Culture: 0,
+                LocalCommunities: 40,
+                Cooperativism: -50
+            }),
+            'Populista': makeProfile({
+                FreeMarket: -10,
+                EconomicPlanning: 10,
+                PropertyRights: 10,
+                IncomeEquality: 30,
+                Welfare: 40,
+                PublicServices: 30,
+                Regulation: 20,
+                Taxation: 30,
+                StateAuthority: 60,
+                Decentralization: -30,
+                Federalism: -10,
+                Democracy: 30,
+                Participation: 70,
+                Representation: -40,
+                IndividualRights: 10,
+                CollectiveRights: 40,
+                FreeSpeech: 30,
+                Privacy: 10,
+                PersonalFreedom: 0,
+                SocialConformity: 30,
+                Tradition: 40,
+                SocialChange: 10,
+                Religion: 30,
+                Multiculturalism: -30,
+                Nationalism: 70,
+                Internationalism: -50,
+                Globalism: -60,
+                Immigration: -60,
+                Sovereignty: 70,
+                Justice: 10,
+                Security: 50,
+                Military: 40,
+                Environmentalism: -20,
+                Technology: 10,
+                Science: 10,
+                Education: -10,
+                Culture: 30,
+                LocalCommunities: 10,
+                Cooperativism: -10
+            }),
+            'Tecnocrata': makeProfile({
+                FreeMarket: 0,
+                EconomicPlanning: 40,
+                PropertyRights: 30,
+                IncomeEquality: 20,
+                Welfare: 20,
+                PublicServices: 30,
+                Regulation: 40,
+                Taxation: 30,
+                StateAuthority: 60,
+                Decentralization: -40,
+                Federalism: -10,
+                Democracy: -10,
+                Participation: -50,
+                Representation: 20,
+                IndividualRights: 10,
+                CollectiveRights: 30,
+                FreeSpeech: 20,
+                Privacy: -10,
+                PersonalFreedom: -10,
+                SocialConformity: 30,
+                Tradition: -40,
+                SocialChange: 60,
+                Religion: -50,
+                Multiculturalism: 10,
+                Nationalism: 10,
+                Internationalism: 40,
+                Globalism: 50,
+                Immigration: 40,
+                Sovereignty: 10,
+                Justice: 10,
+                Security: 40,
+                Military: 30,
+                Environmentalism: 30,
+                Technology: 90,
+                Science: 90,
+                Education: 70,
+                Culture: -20,
+                LocalCommunities: -30,
+                Cooperativism: -10
+            }),
+            'Monarquista': makeProfile({
+                FreeMarket: -10,
+                EconomicPlanning: 10,
+                PropertyRights: 40,
+                IncomeEquality: -30,
+                Welfare: -20,
+                PublicServices: -10,
+                Regulation: 0,
+                Taxation: -10,
+                StateAuthority: 80,
+                Decentralization: -50,
+                Federalism: -20,
+                Democracy: -60,
+                Participation: -70,
+                Representation: -60,
+                IndividualRights: -10,
+                CollectiveRights: 30,
+                FreeSpeech: -20,
+                Privacy: 10,
+                PersonalFreedom: -40,
+                SocialConformity: 80,
+                Tradition: 90,
+                SocialChange: -90,
+                Religion: 80,
+                Multiculturalism: -60,
+                Nationalism: 70,
+                Internationalism: -60,
+                Globalism: -70,
+                Immigration: -70,
+                Sovereignty: 80,
+                Justice: -20,
+                Security: 60,
+                Military: 50,
+                Environmentalism: -10,
+                Technology: -20,
+                Science: -10,
+                Education: -30,
+                Culture: 70,
+                LocalCommunities: 10,
+                Cooperativism: -40
+            }),
+            'Federalista': makeProfile({
+                FreeMarket: 0,
+                EconomicPlanning: -10,
+                PropertyRights: 20,
+                IncomeEquality: 10,
+                Welfare: 10,
+                PublicServices: 10,
+                Regulation: 0,
+                Taxation: 0,
+                StateAuthority: -20,
+                Decentralization: 70,
+                Federalism: 95,
+                Democracy: 60,
+                Participation: 40,
+                Representation: 40,
+                IndividualRights: 30,
+                CollectiveRights: 20,
+                FreeSpeech: 40,
+                Privacy: 30,
+                PersonalFreedom: 30,
+                SocialConformity: 0,
+                Tradition: 10,
+                SocialChange: 10,
+                Religion: 0,
+                Multiculturalism: 20,
+                Nationalism: 10,
+                Internationalism: 20,
+                Globalism: 10,
+                Immigration: 20,
+                Sovereignty: 10,
+                Justice: 10,
+                Security: 10,
+                Military: 0,
+                Environmentalism: 20,
+                Technology: 20,
+                Science: 20,
+                Education: 20,
+                Culture: 10,
+                LocalCommunities: 60,
+                Cooperativism: 10
+            }),
+            'Globalista': makeProfile({
+                FreeMarket: 20,
+                EconomicPlanning: -10,
+                PropertyRights: 10,
+                IncomeEquality: 10,
+                Welfare: 10,
+                PublicServices: 10,
+                Regulation: 10,
+                Taxation: 10,
+                StateAuthority: -20,
+                Decentralization: 10,
+                Federalism: 10,
+                Democracy: 50,
+                Participation: 30,
+                Representation: 30,
+                IndividualRights: 30,
+                CollectiveRights: 20,
+                FreeSpeech: 50,
+                Privacy: 20,
+                PersonalFreedom: 30,
+                SocialConformity: -20,
+                Tradition: -40,
+                SocialChange: 40,
+                Religion: -30,
+                Multiculturalism: 60,
+                Nationalism: -80,
+                Internationalism: 90,
+                Globalism: 95,
+                Immigration: 80,
+                Sovereignty: -70,
+                Justice: 20,
+                Security: -10,
+                Military: -40,
+                Environmentalism: 40,
+                Technology: 60,
+                Science: 60,
+                Education: 30,
+                Culture: 10,
+                LocalCommunities: -30,
+                Cooperativism: -10
+            }),
+            'Nacionalista': makeProfile({
+                FreeMarket: -10,
+                EconomicPlanning: 10,
+                PropertyRights: 20,
+                IncomeEquality: -10,
+                Welfare: -10,
+                PublicServices: 0,
+                Regulation: 10,
+                Taxation: 0,
+                StateAuthority: 60,
+                Decentralization: -30,
+                Federalism: 10,
+                Democracy: 10,
+                Participation: -20,
+                Representation: 20,
+                IndividualRights: -10,
+                CollectiveRights: 30,
+                FreeSpeech: 0,
+                Privacy: 0,
+                PersonalFreedom: -30,
+                SocialConformity: 70,
+                Tradition: 70,
+                SocialChange: -70,
+                Religion: 50,
+                Multiculturalism: -70,
+                Nationalism: 95,
+                Internationalism: -85,
+                Globalism: -85,
+                Immigration: -85,
+                Sovereignty: 90,
+                Justice: -30,
+                Security: 70,
+                Military: 70,
+                Environmentalism: -10,
+                Technology: 0,
+                Science: 0,
+                Education: -20,
+                Culture: 70,
+                LocalCommunities: 20,
+                Cooperativism: -20
+            }),
+            'Religioso': makeProfile({
+                FreeMarket: -10,
+                EconomicPlanning: -10,
+                PropertyRights: 20,
+                IncomeEquality: 0,
+                Welfare: 20,
+                PublicServices: 10,
+                Regulation: 10,
+                Taxation: 0,
+                StateAuthority: 30,
+                Decentralization: 10,
+                Federalism: 20,
+                Democracy: 20,
+                Participation: 10,
+                Representation: 20,
+                IndividualRights: -10,
+                CollectiveRights: 30,
+                FreeSpeech: -10,
+                Privacy: 20,
+                PersonalFreedom: -30,
+                SocialConformity: 80,
+                Tradition: 90,
+                SocialChange: -85,
+                Religion: 100,
+                Multiculturalism: -40,
+                Nationalism: 30,
+                Internationalism: -20,
+                Globalism: -30,
+                Immigration: -30,
+                Sovereignty: 30,
+                Justice: -10,
+                Security: 40,
+                Military: 20,
+                Environmentalism: 10,
+                Technology: -30,
+                Science: -40,
+                Education: -30,
+                Culture: 60,
+                LocalCommunities: 40,
+                Cooperativism: 20
+            })
+        };
+
+        // ─── Utilitários ───
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        // ════════════════════════════════════════════════════════════════
+        //  APLICAÇÃO
+        // ════════════════════════════════════════════════════════════════
+
+        const app = {
+            currentQ: 0,
+            answers: {}, // índice da pergunta -> valor (-3..3) ou null
+            totalQ: QUESTIONS.length,
+            dims: DIMS,
+            dimValues: {},
+            ideologyScores: {},
+            chartInstances: {},
+            isDark: false,
+
+            init() {
+                // Tema
+                const saved = localStorage.getItem('cosmovisao_theme');
+                if (saved === 'dark') this.setTheme(true);
+                else if (saved === 'light') this.setTheme(false);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) this.setTheme(
+                true);
+
+                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetAll());
+                document.getElementById('startBtn').addEventListener('click', () => this.startDiagnostic());
+                document.getElementById('prevBtn').addEventListener('click', () => this.prevQuestion());
+                document.getElementById('nextBtn').addEventListener('click', () => this.nextQuestion());
+                document.getElementById('shareLinkBtn').addEventListener('click', () => this.shareLink());
+                document.getElementById('shareImgBtn').addEventListener('click', () => this.shareImage());
+
+                // Carregar progresso
+                this.loadProgress();
+
+                // Se já houver respostas, ir para a pergunta atual
+                const savedQ = localStorage.getItem('cosmovisao_currentQ');
+                if (savedQ !== null && parseInt(savedQ) > 0 && Object.keys(this.answers).length > 0) {
+                    this.currentQ = parseInt(savedQ);
+                    if (this.currentQ >= this.totalQ) {
+                        this.showResults();
+                    } else {
+                        this.showQuestion();
+                    }
+                } else {
+                    this.showWelcome();
+                }
+
+                // Teclado
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                        const next = document.getElementById('nextBtn');
+                        if (next && !next.disabled) next.click();
+                    }
+                    if (e.key === 'ArrowLeft') {
+                        const prev = document.getElementById('prevBtn');
+                        if (prev && !prev.disabled) prev.click();
+                    }
+                });
+            },
+
+            setTheme(dark) {
+                this.isDark = dark;
+                document.documentElement.classList.toggle('dark', dark);
+                document.getElementById('themeToggle').textContent = dark ? '☀️' : '🌙';
+                localStorage.setItem('cosmovisao_theme', dark ? 'dark' : 'light');
+            },
+
+            toggleTheme() {
+                this.setTheme(!this.isDark);
+            },
+
+            resetAll() {
+                if (!confirm('Tem certeza que deseja reiniciar o diagnóstico? Todo o progresso será perdido.')) return;
+                this.answers = {};
+                this.currentQ = 0;
+                localStorage.removeItem('cosmovisao_answers');
+                localStorage.removeItem('cosmovisao_currentQ');
+                this.showWelcome();
+                Object.values(this.chartInstances).forEach(c => { if (c) c.destroy(); });
+                this.chartInstances = {};
+            },
+
+            loadProgress() {
+                try {
+                    const data = localStorage.getItem('cosmovisao_answers');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        if (typeof parsed === 'object') this.answers = parsed;
+                    }
+                } catch (_) { /* ignore */ }
+            },
+
+            saveProgress() {
+                localStorage.setItem('cosmovisao_answers', JSON.stringify(this.answers));
+                localStorage.setItem('cosmovisao_currentQ', String(this.currentQ));
+            },
+
+            showWelcome() {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById('screenWelcome').classList.add('active');
+            },
+
+            showQuestion() {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById('screenQuestion').classList.add('active');
+                this.renderQuestion();
+                this.saveProgress();
+            },
+
+            startDiagnostic() {
+                this.currentQ = 0;
+                this.answers = {};
+                this.saveProgress();
+                this.showQuestion();
+            },
+
+            renderQuestion() {
+                const q = QUESTIONS[this.currentQ];
+                if (!q) return;
+
+                document.getElementById('qNum').textContent = `Pergunta ${this.currentQ+1} / ${this.totalQ}`;
+                document.getElementById('qText').textContent = q.text;
+                document.getElementById('progressFill').style.width = `${((this.currentQ)/this.totalQ)*100}%`;
+                document.getElementById('progressLabel').textContent = `${Math.round((this.currentQ/this.totalQ)*100)}%`;
+
+                // Tag de dimensões
+                const dimNames = q.dims.map(d => DIM_LABELS[d.name] || d.name);
+                document.getElementById('qDimTag').textContent = dimNames.slice(0, 3).join(' · ') + (dimNames.length > 3 ?
+                    ' …' : '');
+
+                // Opções
+                const container = document.getElementById('optionsContainer');
+                const labels = [
+                    'Discordo totalmente', 'Discordo', 'Discordo parcialmente',
+                    'Neutro', 'Concordo parcialmente', 'Concordo', 'Concordo totalmente'
+                ];
+                const values = [-3, -2, -1, 0, 1, 2, 3];
+                const special = [
+                    { label: 'Não sei', value: null },
+                    { label: 'Prefiro não responder', value: null }
+                ];
+
+                const currentVal = this.answers[this.currentQ] !== undefined ? this.answers[this.currentQ] : null;
+
+                let html = '';
+                labels.forEach((label, i) => {
+                    const sel = (currentVal !== null && currentVal === values[i]) ? 'selected' : '';
+                    html +=
+                        `<button class="opt-btn ${sel}" data-value="${values[i]}">${label}</button>`;
+                });
+                // Botões especiais
+                special.forEach((s, idx) => {
+                    const sel = (currentVal === null && this.answers[this.currentQ] === undefined) ? '' : '';
+                    // Se o valor for null e a resposta for null (escolheu especial)
+                    const isSpecial = (this.answers[this.currentQ] === null && currentVal === null);
+                    const cls = isSpecial ? 'selected special' : 'special';
+                    html += `<button class="opt-btn ${cls}" data-value="null" data-special="true">${s.label}</button>`;
+                });
+
+                container.innerHTML = html;
+
+                // Eventos
+                container.querySelectorAll('.opt-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const val = btn.dataset.value === 'null' ? null : parseInt(btn.dataset.value);
+                        this.answers[this.currentQ] = val;
+                        this.saveProgress();
+                        this.renderQuestion();
+                        // Auto-avançar?
+                    });
+                });
+
+                // Navegação
+                document.getElementById('prevBtn').disabled = (this.currentQ === 0);
+                const nextBtn = document.getElementById('nextBtn');
+                const hasAnswer = this.answers[this.currentQ] !== undefined;
+                if (this.currentQ === this.totalQ - 1) {
+                    nextBtn.textContent = hasAnswer ? '📊 Ver resultados' : 'Pular →';
+                    nextBtn.disabled = false;
+                } else {
+                    nextBtn.textContent = 'Próxima →';
+                    nextBtn.disabled = false;
+                }
+            },
+
+            prevQuestion() {
+                if (this.currentQ > 0) {
+                    this.currentQ--;
+                    this.showQuestion();
+                }
+            },
+
+            nextQuestion() {
+                // Se não respondeu, permite pular (resposta fica undefined)
+                if (this.currentQ === this.totalQ - 1) {
+                    // Verifica se pelo menos 50% das perguntas foram respondidas
+                    const answered = Object.keys(this.answers).filter(k => this.answers[k] !== undefined).length;
+                    if (answered < this.totalQ * 0.3) {
+                        if (!confirm('Você respondeu menos de 30% das perguntas. Deseja continuar mesmo assim? Os resultados podem não ser precisos.'))
+                            return;
+                    }
+                    this.showResults();
+                    return;
+                }
+                if (this.currentQ < this.totalQ - 1) {
+                    this.currentQ++;
+                    this.showQuestion();
+                }
+            },
+
+            // ─── RESULTADOS ───
+
+            showResults() {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById('screenResults').classList.add('active');
+                this.computeResults();
+                this.renderResults();
+                this.saveProgress();
+            },
+
+            computeResults() {
+                // Inicializar dimensões
+                const dims = this.dims;
+                const dimSums = {};
+                const dimCounts = {};
+                dims.forEach(d => { dimSums[d] = 0;
+                    dimCounts[d] = 0; });
+
+                // Para cada pergunta respondida
+                QUESTIONS.forEach((q, idx) => {
+                    const ans = this.answers[idx];
+                    if (ans === undefined || ans === null) return;
+                    q.dims.forEach(({ name, weight }) => {
+                        if (name in dimSums) {
+                            dimSums[name] += ans * weight;
+                            dimCounts[name]++;
+                        }
+                    });
+                });
+
+                // Média por dimensão, normalizada para -100..+100
+                const dimAvg = {};
+                dims.forEach(d => {
+                    if (dimCounts[d] > 0) {
+                        let avg = dimSums[d] / dimCounts[d];
+                        // weight máximo teórico: cada pergunta pode ter peso até ~1.0, 3 respostas * ~1 = 3
+                        // Normalizar para -100..100
+                        avg = clamp(avg * 33, -100, 100);
+                        dimAvg[d] = avg;
+                    } else {
+                        dimAvg[d] = 0;
+                    }
+                });
+                this.dimValues = dimAvg;
+
+                // Similaridade com ideologias (cosine similarity)
+                const ideologyNames = Object.keys(IDEOLOGIES);
+                const scores = {};
+                const userVec = dims.map(d => dimAvg[d] || 0);
+                const userNorm = Math.sqrt(userVec.reduce((s, v) => s + v * v, 0)) || 1;
+
+                ideologyNames.forEach(name => {
+                    const profile = IDEOLOGIES[name];
+                    const profVec = dims.map(d => profile[d] || 0);
+                    const profNorm = Math.sqrt(profVec.reduce((s, v) => s + v * v, 0)) || 1;
+                    let dot = 0;
+                    for (let i = 0; i < dims.length; i++) {
+                        dot += userVec[i] * profVec[i];
+                    }
+                    // Normalizar para 0..100
+                    let sim = (dot / (userNorm * profNorm) + 1) / 2; // 0..1
+                    sim = clamp(sim * 100, 0, 100);
+                    scores[name] = sim;
+                });
+
+                this.ideologyScores = scores;
+
+                // Ordenar
+                this.sortedIdeologies = Object.entries(scores)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([name, score]) => ({ name, score }));
+
+                // Coerência: desvio padrão das respostas normalizadas
+                const allAns = Object.values(this.answers).filter(v => v !== undefined && v !== null);
+                if (allAns.length > 2) {
+                    const mean = allAns.reduce((s, v) => s + v, 0) / allAns.length;
+                    const variance = allAns.reduce((s, v) => s + (v - mean) ** 2, 0) / allAns.length;
+                    const std = Math.sqrt(variance);
+                    // coerência = 100 - std * 12 (std médio ~0.5 -> 94, std ~1.5 -> 82)
+                    const coherence = clamp(100 - std * 14, 0, 100);
+                    this.coherence = Math.round(coherence);
+                } else {
+                    this.coherence = 50;
+                }
+
+                // Confiança: baseado no número de respostas
+                const answered = Object.keys(this.answers).filter(k => this.answers[k] !== undefined && this.answers[k] !==
+                    null).length;
+                const ratio = answered / this.totalQ;
+                this.confidence = Math.round(clamp(ratio * 95 + 5, 0, 100));
+            },
+
+            renderResults() {
+                const scores = this.ideologyScores;
+                const sorted = this.sortedIdeologies;
+
+                // ── Top 10 ──
+                const top10 = sorted.slice(0, 10);
+                const container = document.getElementById('topIdeologies');
+                container.innerHTML = top10.map(({ name, score }) =>
+                    `<div class="top-item"><span class="name">${name}</span><span class="pct">${Math.round(score)}%</span></div>`
+                ).join('');
+
+                // ── Top 5 valores (dimensões mais altas) ──
+                const dimEntries = Object.entries(this.dimValues)
+                    .filter(([_, v]) => v !== 0)
+                    .sort((a, b) => b[1] - a[1]);
+                const topVals = dimEntries.slice(0, 5);
+                const divVals = document.getElementById('topValues');
+                divVals.innerHTML = topVals.map(([d, v]) =>
+                    `<div class="top-item"><span class="name">${DIM_LABELS[d]||d}</span><span class="pct dim">${Math.round(v)}</span></div>`
+                ).join('') || '<div style="color:var(--text3);font-size:0.9rem;">Nenhum valor predominante</div>';
+
+                // ── Top 5 divergências (mais negativas) ──
+                const topDiv = dimEntries.slice(-5).reverse();
+                const divDiv = document.getElementById('topDivergences');
+                divDiv.innerHTML = topDiv.map(([d, v]) =>
+                    `<div class="top-item"><span class="name">${DIM_LABELS[d]||d}</span><span class="pct dim">${Math.round(v)}</span></div>`
+                ).join('') || '<div style="color:var(--text3);font-size:0.9rem;">Nenhuma divergência significativa</div>';
+
+                // ── Tabela completa ──
+                const tbody = document.querySelector('#fullTable tbody');
+                tbody.innerHTML = sorted.map(({ name, score }) =>
+                    `<tr><td>${name}</td><td>${Math.round(score)}%</td></tr>`
+                ).join('');
+
+                // ── Eixos ──
+                const axesGrid = document.getElementById('axesGrid');
+                const dimSorted = Object.entries(this.dimValues)
+                    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+                axesGrid.innerHTML = dimSorted.map(([d, v]) =>
+                    `<div class="item"><span class="lbl">${DIM_LABELS[d]||d}</span><span class="val">${Math.round(v)}</span></div>`
+                ).join('');
+
+                // ── Índices ──
+                document.getElementById('coherenceIdx').textContent = `${this.coherence}%`;
+                document.getElementById('confidenceIdx').textContent = `${this.confidence}%`;
+
+                // ── Explicação ──
+                const top3 = sorted.slice(0, 3);
+                const explain = document.getElementById('explainBox');
+                let expText = `<strong>Seu perfil se aproxima principalmente de:</strong> `;
+                expText += top3.map(({ name, score }) => `${name} (${Math.round(score)}%)`).join(', ');
+                expText +=
+                    `.<br /><br />Isso significa que suas respostas refletem valores que, em conjunto, se alinham com essas correntes de pensamento. Lembre-se: este é um diagnóstico de padrões, não uma definição de identidade. Cada pessoa é única e pode transitar entre diferentes visões de mundo.`;
+
+                // Adicionar um resumo personalizado baseado nas dimensões principais
+                const topDim = dimEntries.slice(0, 3);
+                if (topDim.length > 0) {
+                    expText += `<br /><br /><strong>Dimensões que mais pesaram:</strong> `;
+                    expText += topDim.map(([d, v]) =>
+                        `${DIM_LABELS[d]||d} (${v > 0 ? 'inclinação positiva' : 'inclinação negativa'}, ${Math.round(v)})`
+                    ).join('; ');
+                }
+
+                const extremas = ['Nazismo', 'Fascismo'];
+                const hasExtrema = top3.some(({ name }) => extremas.includes(name));
+                if (hasExtrema) {
+                    expText +=
+                        `<br /><br /><span style="color:var(--text3);">⚠️ Algumas de suas respostas apresentam maior proximidade com traços historicamente associados a autoritarismo ou ultranacionalismo. Este diagnóstico mede padrões de respostas, não identidade pessoal. Recomendamos refletir sobre as implicações históricas dessas posições.</span>`;
+                }
+
+                expText +=
+                    `<br /><br /><span style="color:var(--text3);font-size:0.9rem;">O diagnóstico foi gerado com base em ${Object.keys(this.answers).filter(k=>this.answers[k]!==undefined&&this.answers[k]!==null).length} respostas. A margem de confiança reflete a quantidade de perguntas respondidas.</span>`;
+
+                explain.innerHTML = expText;
+
+                // ── Gráficos ──
+                this.renderCharts(sorted);
+            },
+
+            renderCharts(sorted) {
+                const topN = Math.min(12, sorted.length);
+                const labels = sorted.slice(0, topN).map(d => d.name);
+                const data = sorted.slice(0, topN).map(d => Math.round(d.score));
+
+                // Radar (top 8)
+                const radarLabels = sorted.slice(0, 8).map(d => d.name);
+                const radarData = sorted.slice(0, 8).map(d => Math.round(d.score));
+
+                // Bar chart
+                const barCtx = document.getElementById('barChart').getContext('2d');
+                if (this.chartInstances.bar) this.chartInstances.bar.destroy();
+                this.chartInstances.bar = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Proximidade (%)',
+                            data: data,
+                            backgroundColor: 'rgba(74, 108, 247, 0.7)',
+                            borderColor: 'rgba(74, 108, 247, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { min: 0, max: 100, ticks: { font: { size: 9 } } },
+                            x: { ticks: { font: { size: 8 }, maxRotation: 30 } }
+                        }
+                    }
+                });
+
+                // Radar
+                const radarCtx = document.getElementById('radarChart').getContext('2d');
+                if (this.chartInstances.radar) this.chartInstances.radar.destroy();
+                this.chartInstances.radar = new Chart(radarCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: radarLabels,
+                        datasets: [{
+                            label: 'Afinidade',
+                            data: radarData,
+                            backgroundColor: 'rgba(74, 108, 247, 0.25)',
+                            borderColor: 'rgba(74, 108, 247, 0.9)',
+                            pointBackgroundColor: 'rgba(74, 108, 247, 0.8)',
+                            pointRadius: 3,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            r: {
+                                min: 0,
+                                max: 100,
+                                ticks: { stepSize: 25, font: { size: 8 } },
+                                grid: { color: 'rgba(0,0,0,0.07)' }
+                            }
+                        }
+                    }
+                });
+
+                // Ajustar cores no dark mode
+                this.updateChartColors();
+            },
+
+            updateChartColors() {
+                const isDark = this.isDark;
+                const color = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+                const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
+                Object.values(this.chartInstances).forEach(chart => {
+                    if (chart && chart.options) {
+                        if (chart.options.scales) {
+                            if (chart.options.scales.r) {
+                                chart.options.scales.r.grid.color = gridColor;
+                                chart.options.scales.r.ticks.color = color;
+                            }
+                            if (chart.options.scales.y) {
+                                chart.options.scales.y.grid.color = gridColor;
+                                chart.options.scales.y.ticks.color = color;
+                            }
+                            if (chart.options.scales.x) {
+                                chart.options.scales.x.grid.color = gridColor;
+                                chart.options.scales.x.ticks.color = color;
+                            }
+                        }
+                        chart.update();
+                    }
+                });
+            },
+
+            // ─── Compartilhar ───
+
+            shareLink() {
+                const url = window.location.href;
+                if (navigator.share) {
+                    navigator.share({ title: 'Meu diagnóstico de cosmovisão', text: 'Descubra seu perfil!', url: url })
+                        .catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(url).then(() => {
+                        document.getElementById('shareStatus').textContent = '✅ Link copiado!';
+                        setTimeout(() => document.getElementById('shareStatus').textContent = '', 3000);
+                    }).catch(() => {
+                        document.getElementById('shareStatus').textContent = '❌ Erro ao copiar';
+                        setTimeout(() => document.getElementById('shareStatus').textContent = '', 3000);
+                    });
+                }
+            },
+
+            shareImage() {
+                // Gerar imagem simples com canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 500;
+                const ctx = canvas.getContext('2d');
+
+                const isDark = this.isDark;
+                const bg = isDark ? '#0d0d1a' : '#f6f8fa';
+                const text = isDark ? '#eaeaf0' : '#1a1a2e';
+                const text2 = isDark ? '#b0b0cc' : '#4a4a6a';
+                const primary = '#4a6cf7';
+
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Título
+                ctx.fillStyle = primary;
+                ctx.font = 'bold 32px Segoe UI, system-ui, sans-serif';
+                ctx.fillText('🧭 Cosmovisão', 40, 70);
+
+                ctx.fillStyle = text;
+                ctx.font = '22px Segoe UI, system-ui, sans-serif';
+                ctx.fillText('Diagnóstico de cosmovisão', 40, 120);
+
+                // Top 3
+                const top3 = this.sortedIdeologies.slice(0, 3);
+                ctx.font = '18px Segoe UI, system-ui, sans-serif';
+                ctx.fillStyle = text2;
+                ctx.fillText('Principais afinidades:', 40, 175);
+                ctx.fillStyle = text;
+                let y = 210;
+                top3.forEach(({ name, score }) => {
+                    ctx.fillStyle = primary;
+                    ctx.font = 'bold 20px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(`${Math.round(score)}%`, 40, y);
+                    ctx.fillStyle = text;
+                    ctx.font = '18px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(name, 120, y);
+                    y += 40;
+                });
+
+                // Barras simples
+                const barData = this.sortedIdeologies.slice(0, 6);
+                const barX = 400,
+                    barY = 160,
+                    barW = 320,
+                    barH = 20,
+                    gap = 10;
+                barData.forEach(({ name, score }, i) => {
+                    const yy = barY + i * (barH + gap);
+                    ctx.fillStyle = text2;
+                    ctx.font = '13px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(name.substring(0, 14), barX, yy + 14);
+                    ctx.fillStyle = 'rgba(74,108,247,0.2)';
+                    ctx.fillRect(barX + 110, yy, barW, barH);
+                    ctx.fillStyle = primary;
+                    ctx.fillRect(barX + 110, yy, (score / 100) * barW, barH);
+                    ctx.fillStyle = text;
+                    ctx.font = 'bold 12px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(`${Math.round(score)}%`, barX + 110 + (score / 100) * barW + 6, yy + 14);
+                });
+
+                // Rodapé
+                ctx.fillStyle = text2;
+                ctx.font = '13px Segoe UI, system-ui, sans-serif';
+                ctx.fillText('Gerado por cosmovisao.diagnostico — ferramenta de autoconhecimento', 40, 460);
+
+                // Baixar
+                const link = document.createElement('a');
+                link.download = 'cosmovisao_perfil.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        };
+
+        // ─── Inicializar ───
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Ferramentas</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+    background:#1d1f21;
+    color:white;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.container{
+    width:95%;
+    max-width:1100px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:40px;
+    font-size:2.2em;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:25px;
+}
+
+.card{
+    background:#2d3136;
+    border-radius:15px;
+    padding:30px 20px;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    transition:.25s;
+    border:2px solid transparent;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+    background:#3a4047;
+    border-color:#4da3ff;
+    box-shadow:0 10px 25px rgba(0,0,0,.4);
+}
+
+.icone{
+    font-size:55px;
+    margin-bottom:15px;
+}
+
+.titulo{
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.descricao{
+    font-size:14px;
+    color:#cfcfcf;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>📋 Central de Ferramentas</h1>
+
+<div class="grid">
+
+<a class="card" href="placar gicanas.html">
+<div class="icone">🏆</div>
+<div class="titulo">Placar de Gincanas</div>
+<div class="descricao">Controle de pontuação em tempo real.</div>
+</a>
+
+<a class="card" href="Buzzer de Quiz.html">
+<div class="icone">🔔</div>
+<div class="titulo">Buzzer de Quiz</div>
+<div class="descricao">Sistema de resposta rápida.</div>
+</a>
+
+<a class="card" href="sorteio de sequencia.html">
+<div class="icone">🎲</div>
+<div class="titulo">Sorteio de Sequência</div>
+<div class="descricao">Gerador de ordem aleatória.</div>
+</a>
+
+<a class="card" href="cartelas.html">
+<div class="icone">🎫</div>
+<div class="titulo">Cartelas</div>
+<div class="descricao">Gerador de cartelas.</div>
+</a>
+
+<a class="card" href="bingo.html">
+<div class="icone">🎱</div>
+<div class="titulo">Bingo</div>
+<div class="descricao">Sistema completo de bingo.</div>
+</a>
+
+</div>
+
+</div>
+
+</body>
+</html>

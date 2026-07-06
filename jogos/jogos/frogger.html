@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🐸 Frogger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 1px solid #2a2a4a;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #a0a0c0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .info-bar span {
+            background: #0f0f1a;
+            padding: 4px 16px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+        }
+
+        .info-bar .lives {
+            color: #ff6b6b;
+        }
+        .info-bar .score {
+            color: #ffd700;
+        }
+        .info-bar .level {
+            color: #6c6cff;
+        }
+
+        #gameCanvas {
+            background: #0b0b16;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            aspect-ratio: 600 / 700;
+            image-rendering: pixelated;
+            touch-action: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 18px;
+        }
+
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            letter-spacing: 0.5px;
+            border: 1px solid transparent;
+        }
+
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(108, 108, 255, 0.15);
+        }
+
+        .controls button:active {
+            transform: scale(0.95);
+        }
+
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* Controles mobile (setas) */
+        .mobile-dpad {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            max-width: 200px;
+            margin: 12px auto 0;
+        }
+        .mobile-dpad button {
+            background: #2a2a4a;
+            border: 1px solid #3a3a5a;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.8rem;
+            padding: 10px 0;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: 0.1s;
+            box-shadow: 0 4px 0 #0f0f1a;
+        }
+        .mobile-dpad button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0f0f1a;
+        }
+        .mobile-dpad .center {
+            visibility: hidden;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .info-bar { font-size: 0.9rem; }
+            .controls button { padding: 8px 18px; font-size: 0.8rem; }
+            .hint { font-size: 0.75rem; }
+            .mobile-dpad { display: grid; }
+        }
+        @media (pointer: coarse) {
+            .mobile-dpad { display: grid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🐸 FROGGER</h1>
+
+        <div class="info-bar">
+            <span class="score">🏆 <span id="scoreDisplay">0</span></span>
+            <span class="level">⚡ Nível <span id="levelDisplay">1</span></span>
+            <span class="lives">❤️ <span id="livesDisplay">3</span></span>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="700"></canvas>
+
+        <div class="mobile-dpad" id="mobileDpad">
+            <button data-dir="up">▲</button>
+            <button data-dir="left">◀</button>
+            <button data-dir="down">▼</button>
+            <button data-dir="right">▶</button>
+        </div>
+
+        <div class="controls">
+            <button id="restartBtn">🔄 Reiniciar</button>
+            <button id="pauseBtn">⏸️ Pausar</button>
+        </div>
+
+        <div class="hint">
+            <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> mover o sapo &nbsp;·&nbsp; <kbd>P</kbd> pausa
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        //  1.  CONFIGURAÇÕES E ELEMENTOS
+        // ================================================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreSpan = document.getElementById('scoreDisplay');
+        const levelSpan = document.getElementById('levelDisplay');
+        const livesSpan = document.getElementById('livesDisplay');
+        const restartBtn = document.getElementById('restartBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        const W = 600,
+            H = 700;
+        const CELL = 40; // cada célula tem 40x40
+        const COLS = 15; // 600/40 = 15
+        const ROWS = 17; // 700/40 = 17.5, mas usamos 17 linhas úteis (0~16)
+
+        // Posições das faixas (linhas de 0 a 16)
+        // 0: grama superior (início)
+        // 1-5: rio (com troncos/tartarugas)
+        // 6-10: rua (com carros)
+        // 11-16: grama inferior (base)
+
+        // ================================================================
+        //  2.  ESTADO DO JOGO
+        // ================================================================
+        let frog = { x: 7, y: 15 }; // posição em células (coluna, linha)
+        let homes = []; // casas seguras no topo (5 casas)
+        let cars = [];
+        let logs = [];
+        let turtles = [];
+        let particles = [];
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let gameOver = false;
+        let paused = false;
+        let animationId = null;
+
+        // Controle de movimento (evita múltiplos movimentos por frame)
+        let moveCooldown = 0;
+
+        // ================================================================
+        //  3.  FUNÇÕES AUXILIARES
+        // ================================================================
+
+        function initHomes() {
+            homes = [];
+            for (let i = 0; i < 5; i++) {
+                const col = 1 + i * 3; // colunas 1,4,7,10,13
+                homes.push({
+                    x: col,
+                    y: 0,
+                    occupied: false,
+                    color: '#2d8a4e'
+                });
+            }
+        }
+
+        function spawnCars(level) {
+            cars = [];
+            const configs = [
+                { row: 11, speed: 1.2, direction: 1, count: 3 },
+                { row: 12, speed: -1.8, direction: -1, count: 4 },
+                { row: 13, speed: 2.0, direction: 1, count: 3 },
+                { row: 14, speed: -2.5, direction: -1, count: 4 },
+                { row: 15, speed: 1.5, direction: 1, count: 3 },
+                { row: 16, speed: -2.0, direction: -1, count: 4 },
+            ];
+            // Aumenta velocidade com o nível
+            const speedMult = 1 + (level - 1) * 0.15;
+            for (const cfg of configs) {
+                const baseSpeed = cfg.speed * speedMult;
+                const dir = cfg.direction;
+                const count = cfg.count + Math.floor((level - 1) / 2);
+                const maxCount = Math.min(count, 6);
+                for (let i = 0; i < maxCount; i++) {
+                    const col = 1 + Math.random() * 12;
+                    const w = 30 + Math.random() * 20;
+                    const h = 24;
+                    const color = ['#ff6b6b', '#ffa94d', '#ffd93d', '#6bcb77', '#4d96ff', '#9b59b6'][Math.floor(Math.random() * 6)];
+                    cars.push({
+                        x: col * CELL,
+                        y: cfg.row * CELL + (CELL - h) / 2,
+                        w: w,
+                        h: h,
+                        speed: baseSpeed * dir,
+                        color: color,
+                        row: cfg.row
+                    });
+                }
+            }
+        }
+
+        function spawnLogs(level) {
+            logs = [];
+            turtles = [];
+            // Linhas do rio: 1 a 5
+            const speedMult = 1 + (level - 1) * 0.12;
+            const logConfigs = [
+                { row: 1, speed: 1.0, count: 4, type: 'log' },
+                { row: 2, speed: -1.3, count: 3, type: 'log' },
+                { row: 3, speed: 1.5, count: 4, type: 'turtle' },
+                { row: 4, speed: -1.6, count: 3, type: 'log' },
+                { row: 5, speed: 1.2, count: 4, type: 'log' },
+            ];
+            for (const cfg of logConfigs) {
+                const baseSpeed = cfg.speed * speedMult;
+                const count = cfg.count + Math.floor((level - 1) / 2);
+                const maxCount = Math.min(count, 6);
+                for (let i = 0; i < maxCount; i++) {
+                    const col = 0 + Math.random() * 12;
+                    const w = 60 + Math.random() * 40;
+                    const h = 28;
+                    if (cfg.type === 'log') {
+                        logs.push({
+                            x: col * CELL,
+                            y: cfg.row * CELL + (CELL - h) / 2,
+                            w: w,
+                            h: h,
+                            speed: baseSpeed,
+                            row: cfg.row,
+                            color: '#8B6B4D'
+                        });
+                    } else {
+                        // tartaruga
+                        const submerge = Math.random() > 0.5;
+                        turtles.push({
+                            x: col * CELL,
+                            y: cfg.row * CELL + (CELL - h) / 2,
+                            w: w,
+                            h: h,
+                            speed: baseSpeed,
+                            row: cfg.row,
+                            submerge: submerge,
+                            timer: 0,
+                            visible: true
+                        });
+                    }
+                }
+            }
+        }
+
+        function resetFrog() {
+            frog.x = 7;
+            frog.y = 15;
+            moveCooldown = 0;
+        }
+
+        function loseLife() {
+            lives--;
+            updateUI();
+            if (lives <= 0) {
+                gameOver = true;
+                return;
+            }
+            resetFrog();
+            // Remove ocupação das casas (para não travar)
+            for (const home of homes) home.occupied = false;
+        }
+
+        function updateUI() {
+            scoreSpan.textContent = score;
+            levelSpan.textContent = level;
+            livesSpan.textContent = lives;
+        }
+
+        function spawnParticles(x, y, color = '#ffd700', count = 15) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const speed = 1 + Math.random() * 3;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 1,
+                    life: 1,
+                    decay: 0.02 + Math.random() * 0.03,
+                    size: 2 + Math.random() * 4,
+                    color: color
+                });
+            }
+        }
+
+        // ================================================================
+        //  4.  LÓGICA DE MOVIMENTO DO SAPO
+        // ================================================================
+
+        function moveFrog(dx, dy) {
+            if (gameOver || paused) return;
+            if (moveCooldown > 0) return;
+
+            const newX = frog.x + dx;
+            const newY = frog.y + dy;
+            if (newX < 0 || newX >= COLS || newY < 0 || newY >= ROWS) {
+                // Tentou sair da tela
+                return;
+            }
+
+            // Verifica se a célula de destino é uma casa segura no topo
+            if (newY === 0) {
+                // Verifica se é uma casa disponível
+                const home = homes.find(h => h.x === newX && !h.occupied);
+                if (home) {
+                    // Salvo!
+                    home.occupied = true;
+                    score += 50 * level;
+                    updateUI();
+                    spawnParticles(home.x * CELL + CELL / 2, 20, '#ffd700', 25);
+                    // Verifica se todas as casas estão ocupadas
+                    if (homes.every(h => h.occupied)) {
+                        // Próximo nível
+                        level++;
+                        updateUI();
+                        // Reseta as casas
+                        initHomes();
+                        // Recria carros e troncos com nova dificuldade
+                        spawnCars(level);
+                        spawnLogs(level);
+                        resetFrog();
+                        // Bônus de nível
+                        score += 100;
+                        updateUI();
+                        spawnParticles(W / 2, 50, '#6c6cff', 40);
+                    } else {
+                        resetFrog();
+                    }
+                    return;
+                } else {
+                    // Tentou pousar em casa ocupada ou inválida - cai na água?
+                    // Vamos considerar que caiu e perde vida
+                    spawnParticles(newX * CELL + CELL / 2, 10, '#ff6b6b', 20);
+                    loseLife();
+                    return;
+                }
+            }
+
+            // Se estiver no rio (linhas 1 a 5), precisa estar em cima de um tronco ou tartaruga
+            if (newY >= 1 && newY <= 5) {
+                // Verifica se há um tronco ou tartaruga na posição
+                const onLog = logs.some(log =>
+                    log.row === newY &&
+                    newX * CELL + CELL / 2 >= log.x &&
+                    newX * CELL + CELL / 2 <= log.x + log.w
+                );
+                const onTurtle = turtles.some(t =>
+                    t.row === newY &&
+                    t.visible &&
+                    newX * CELL + CELL / 2 >= t.x &&
+                    newX * CELL + CELL / 2 <= t.x + t.w
+                );
+                if (!onLog && !onTurtle) {
+                    // Caiu na água
+                    spawnParticles(newX * CELL + CELL / 2, newY * CELL + CELL / 2, '#4d96ff', 25);
+                    loseLife();
+                    return;
+                }
+            }
+
+            // Movimento válido
+            frog.x = newX;
+            frog.y = newY;
+            moveCooldown = 6; // impede movimento muito rápido
+            // Pequeno efeito de pulo
+            spawnParticles(frog.x * CELL + CELL / 2, frog.y * CELL + CELL / 2, '#6c6cff', 4);
+        }
+
+        // ================================================================
+        //  5.  ATUALIZAÇÃO DO JOGO
+        // ================================================================
+
+        function update() {
+            if (paused || gameOver) return;
+
+            if (moveCooldown > 0) moveCooldown--;
+
+            // --- Atualiza carros ---
+            for (const car of cars) {
+                car.x += car.speed;
+                // Wrap-around
+                if (car.speed > 0 && car.x > W + 50) car.x = -car.w - 20;
+                if (car.speed < 0 && car.x < -car.w - 50) car.x = W + 20;
+            }
+
+            // --- Atualiza troncos ---
+            for (const log of logs) {
+                log.x += log.speed;
+                if (log.speed > 0 && log.x > W + 50) log.x = -log.w - 20;
+                if (log.speed < 0 && log.x < -log.w - 50) log.x = W + 20;
+            }
+
+            // --- Atualiza tartarugas ---
+            for (const t of turtles) {
+                t.x += t.speed;
+                if (t.speed > 0 && t.x > W + 50) t.x = -t.w - 20;
+                if (t.speed < 0 && t.x < -t.w - 50) t.x = W + 20;
+                // Timer para submergir/emergir
+                if (t.submerge) {
+                    t.timer++;
+                    if (t.timer > 90) {
+                        t.visible = !t.visible;
+                        t.timer = 0;
+                        if (!t.visible) {
+                            // Se o sapo estiver em cima quando submergir, ele cai
+                            const frogCellX = frog.x * CELL + CELL / 2;
+                            const frogCellY = frog.y * CELL + CELL / 2;
+                            if (frog.y === t.row &&
+                                frogCellX >= t.x && frogCellX <= t.x + t.w) {
+                                // O sapo está em cima desta tartaruga que submergiu
+                                spawnParticles(frog.x * CELL + CELL / 2, frog.y * CELL + CELL / 2, '#4d96ff', 20);
+                                loseLife();
+                            }
+                        }
+                    }
+                } else {
+                    // Tartaruga normal (sempre visível)
+                    t.visible = true;
+                }
+            }
+
+            // --- Atualiza partículas ---
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05;
+                p.life -= p.decay;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // --- Verifica colisão do sapo com carros ---
+            if (frog.y >= 6 && frog.y <= 16) {
+                const frogX = frog.x * CELL + CELL / 2;
+                const frogY = frog.y * CELL + CELL / 2;
+                for (const car of cars) {
+                    if (car.row === frog.y &&
+                        frogX > car.x && frogX < car.x + car.w &&
+                        frogY > car.y && frogY < car.y + car.h) {
+                        // Atropelado!
+                        spawnParticles(frogX, frogY, '#ff6b6b', 30);
+                        loseLife();
+                        break;
+                    }
+                }
+            }
+
+            // --- Se o sapo está no rio, ele deve se mover com os troncos/tartarugas ---
+            if (frog.y >= 1 && frog.y <= 5) {
+                const frogX = frog.x * CELL + CELL / 2;
+                // Verifica se está em cima de um tronco
+                let moved = false;
+                for (const log of logs) {
+                    if (log.row === frog.y &&
+                        frogX >= log.x && frogX <= log.x + log.w) {
+                        // Move o sapo junto com o tronco
+                        const dx = log.speed;
+                        frog.x += dx / CELL;
+                        // Se sair da tela, morre
+                        if (frog.x < 0 || frog.x >= COLS) {
+                            spawnParticles(frog.x * CELL + CELL / 2, frog.y * CELL + CELL / 2, '#4d96ff', 20);
+                            loseLife();
+                            return;
+                        }
+                        moved = true;
+                        break;
+                    }
+                }
+                if (!moved) {
+                    for (const t of turtles) {
+                        if (t.row === frog.y && t.visible &&
+                            frogX >= t.x && frogX <= t.x + t.w) {
+                            const dx = t.speed;
+                            frog.x += dx / CELL;
+                            if (frog.x < 0 || frog.x >= COLS) {
+                                spawnParticles(frog.x * CELL + CELL / 2, frog.y * CELL + CELL / 2, '#4d96ff', 20);
+                                loseLife();
+                                return;
+                            }
+                            moved = true;
+                            break;
+                        }
+                    }
+                }
+                // Se não está em cima de nada, já foi tratado no movimento
+            }
+
+            // --- Se o sapo está na grama inferior (linhas 11-16) e não está em casa ---
+            // nada especial
+        }
+
+        // ================================================================
+        //  6.  RENDERIZAÇÃO
+        // ================================================================
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // --- Fundo por zonas ---
+            // Grama superior (linha 0)
+            ctx.fillStyle = '#2d6a2d';
+            ctx.fillRect(0, 0, W, CELL);
+            // Rio (linhas 1 a 5)
+            for (let r = 1; r <= 5; r++) {
+                ctx.fillStyle = (r % 2 === 0) ? '#1a4a6a' : '#1a5a7a';
+                ctx.fillRect(0, r * CELL, W, CELL);
+            }
+            // Rua (linhas 6 a 10)
+            for (let r = 6; r <= 10; r++) {
+                ctx.fillStyle = (r % 2 === 0) ? '#2a2a3a' : '#1a1a2a';
+                ctx.fillRect(0, r * CELL, W, CELL);
+                // Faixa central
+                if (r % 2 === 0) {
+                    ctx.fillStyle = '#4a4a5a';
+                    for (let c = 0; c < COLS; c += 2) {
+                        ctx.fillRect(c * CELL + 10, r * CELL + CELL / 2 - 2, 20, 4);
+                    }
+                }
+            }
+            // Grama inferior (linhas 11 a 16)
+            for (let r = 11; r <= 16; r++) {
+                ctx.fillStyle = (r % 2 === 0) ? '#2d6a2d' : '#3a7a3a';
+                ctx.fillRect(0, r * CELL, W, CELL);
+            }
+
+            // --- Casas seguras (topo) ---
+            for (const home of homes) {
+                ctx.fillStyle = home.occupied ? '#ffd700' : '#2d8a4e';
+                ctx.shadowColor = home.occupied ? '#ffd700' : 'transparent';
+                ctx.shadowBlur = home.occupied ? 20 : 0;
+                ctx.fillRect(home.x * CELL + 4, 4, CELL - 8, CELL - 8);
+                ctx.shadowBlur = 0;
+                if (home.occupied) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🐸', home.x * CELL + CELL / 2, CELL / 2 + 2);
+                }
+            }
+
+            // --- Troncos ---
+            for (const log of logs) {
+                ctx.fillStyle = log.color;
+                ctx.shadowColor = '#8B6B4D';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.roundRect(log.x, log.y, log.w, log.h, 6);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                // Detalhes da madeira
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                for (let i = 0; i < log.w; i += 12) {
+                    ctx.fillRect(log.x + i, log.y + 4, 4, log.h - 8);
+                }
+            }
+
+            // --- Tartarugas ---
+            for (const t of turtles) {
+                if (!t.visible) continue;
+                ctx.fillStyle = '#2d8a4e';
+                ctx.shadowColor = '#2d8a4e';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.roundRect(t.x, t.y, t.w, t.h, 10);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                // Cabeça
+                ctx.fillStyle = '#3a9a5e';
+                ctx.beginPath();
+                ctx.arc(t.x + t.w + 6, t.y + t.h / 2, 6, 0, Math.PI * 2);
+                ctx.fill();
+                // Olhos
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(t.x + t.w + 8, t.y + t.h / 2 - 3, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#111';
+                ctx.beginPath();
+                ctx.arc(t.x + t.w + 9, t.y + t.h / 2 - 3, 1, 0, Math.PI * 2);
+                ctx.fill();
+                // Padrão do casco
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                for (let i = 0; i < t.w; i += 10) {
+                    ctx.fillRect(t.x + i, t.y + 4, 4, t.h - 8);
+                }
+            }
+
+            // --- Carros ---
+            for (const car of cars) {
+                ctx.shadowColor = car.color;
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = car.color;
+                ctx.beginPath();
+                ctx.roundRect(car.x, car.y, car.w, car.h, 6);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                // Janelas
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(car.x + 4, car.y + 4, car.w * 0.3, car.h * 0.4);
+                ctx.fillRect(car.x + car.w * 0.5, car.y + 4, car.w * 0.3, car.h * 0.4);
+                // Faróis
+                ctx.fillStyle = '#ffd700';
+                const dir = car.speed > 0 ? 1 : -1;
+                if (dir > 0) {
+                    ctx.fillRect(car.x + car.w - 4, car.y + 4, 4, 6);
+                    ctx.fillRect(car.x + car.w - 4, car.y + car.h - 10, 4, 6);
+                } else {
+                    ctx.fillRect(car.x, car.y + 4, 4, 6);
+                    ctx.fillRect(car.x, car.y + car.h - 10, 4, 6);
+                }
+            }
+
+            // --- Sapo ---
+            if (!gameOver || lives > 0) {
+                const fx = frog.x * CELL + CELL / 2;
+                const fy = frog.y * CELL + CELL / 2;
+                ctx.shadowColor = '#6c6cff';
+                ctx.shadowBlur = 20;
+                ctx.font = '32px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🐸', fx, fy + 2);
+                ctx.shadowBlur = 0;
+            }
+
+            // --- Partículas ---
+            for (const p of particles) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+            }
+            ctx.globalAlpha = 1;
+
+            // --- Game Over ---
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 48px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const msg = lives <= 0 ? '💀 GAME OVER' : '🏆 VOCÊ VENCEU!';
+                ctx.fillText(msg, W / 2, H / 2 - 20);
+                ctx.fillStyle = '#a0a0c0';
+                ctx.font = '20px sans-serif';
+                ctx.fillText('Clique em "Reiniciar" para jogar novamente', W / 2, H / 2 + 50);
+            }
+
+            // --- Pausa ---
+            if (paused && !gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 44px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⏸ PAUSADO', W / 2, H / 2);
+            }
+        }
+
+        // ================================================================
+        //  7.  LOOP PRINCIPAL
+        // ================================================================
+
+        function gameLoop() {
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // ================================================================
+        //  8.  EVENTOS
+        // ================================================================
+
+        // --- Teclado ---
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'p', 'P'].includes(key)) {
+                e.preventDefault();
+            }
+            if (key === 'ArrowUp') moveFrog(0, -1);
+            else if (key === 'ArrowDown') moveFrog(0, 1);
+            else if (key === 'ArrowLeft') moveFrog(-1, 0);
+            else if (key === 'ArrowRight') moveFrog(1, 0);
+            else if (key === 'p' || key === 'P') togglePause();
+        });
+
+        // --- Botões mobile ---
+        document.querySelectorAll('[data-dir]').forEach(btn => {
+            const dir = btn.dataset.dir;
+            btn.addEventListener('click', () => {
+                if (dir === 'up') moveFrog(0, -1);
+                else if (dir === 'down') moveFrog(0, 1);
+                else if (dir === 'left') moveFrog(-1, 0);
+                else if (dir === 'right') moveFrog(1, 0);
+            });
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (dir === 'up') moveFrog(0, -1);
+                else if (dir === 'down') moveFrog(0, 1);
+                else if (dir === 'left') moveFrog(-1, 0);
+                else if (dir === 'right') moveFrog(1, 0);
+            });
+        });
+
+        // --- Botões principais ---
+        function togglePause() {
+            if (gameOver) return;
+            paused = !paused;
+            pauseBtn.textContent = paused ? '▶️ Retomar' : '⏸️ Pausar';
+            draw();
+        }
+
+        function restartGame() {
+            // Reseta tudo
+            score = 0;
+            lives = 3;
+            level = 1;
+            gameOver = false;
+            paused = false;
+            pauseBtn.textContent = '⏸️ Pausar';
+            particles = [];
+            initHomes();
+            spawnCars(level);
+            spawnLogs(level);
+            resetFrog();
+            updateUI();
+            draw();
+        }
+
+        restartBtn.addEventListener('click', restartGame);
+        pauseBtn.addEventListener('click', togglePause);
+
+        // ================================================================
+        //  9.  POLYFILL E INICIALIZAÇÃO
+        // ================================================================
+
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (r > w / 2) r = w / 2;
+                if (r > h / 2) r = h / 2;
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                return this;
+            };
+        }
+
+        initHomes();
+        spawnCars(level);
+        spawnLogs(level);
+        resetFrog();
+        updateUI();
+        draw();
+        gameLoop();
+    </script>
+
+</body>
+</html>

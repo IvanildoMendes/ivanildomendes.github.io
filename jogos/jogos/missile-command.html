@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🚀 Missile Command</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px;
+            border-radius: 30px;
+            border: 1px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+            max-width: 100%;
+        }
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #a0a0c0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .info-bar span {
+            background: #0f0f1a;
+            padding: 4px 16px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+        }
+        .info-bar .lives { color: #ff6b6b; }
+        .info-bar .score { color: #ffd700; }
+        .info-bar .level { color: #6c6cff; }
+        .info-bar .missiles { color: #6bcb77; }
+
+        #gameCanvas {
+            background: #0b0b16;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 700px;
+            height: auto;
+            aspect-ratio: 700 / 500;
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 18px;
+        }
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            border: 1px solid transparent;
+        }
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(108,108,255,0.15);
+        }
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .info-bar { font-size: 0.9rem; }
+            .controls button { padding: 8px 18px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚀 MISSILE COMMAND</h1>
+    <div class="info-bar">
+        <span class="score">🏆 <span id="scoreDisplay">0</span></span>
+        <span class="level">⚡ Nível <span id="levelDisplay">1</span></span>
+        <span class="lives">🏙️ <span id="citiesDisplay">6</span></span>
+        <span class="missiles">💥 <span id="missilesDisplay">15</span></span>
+    </div>
+    <canvas id="gameCanvas" width="700" height="500"></canvas>
+    <div class="controls">
+        <button id="restartBtn">🔄 Reiniciar</button>
+        <button id="pauseBtn">⏸️ Pausar</button>
+    </div>
+    <div class="hint">
+        <kbd>Clique</kbd> na tela para lançar míssil interceptador &nbsp;·&nbsp; <kbd>P</kbd> pausa
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  CONFIGURAÇÕES
+    // ============================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const levelSpan = document.getElementById('levelDisplay');
+    const citiesSpan = document.getElementById('citiesDisplay');
+    const missilesSpan = document.getElementById('missilesDisplay');
+    const restartBtn = document.getElementById('restartBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+
+    const W = 700, H = 500;
+    // Posições das cidades (6 cidades)
+    const CITY_POSITIONS = [80, 155, 230, 470, 545, 620];
+    // Bases de mísseis (3 bases, cada uma com 5 mísseis)
+    const BASE_POSITIONS = [130, 350, 570];
+    const MISSILES_PER_BASE = 5;
+
+    // ============================================================
+    //  ESTADO
+    // ============================================================
+    let cities = [];
+    let bases = [];
+    let enemyMissiles = [];
+    let interceptors = [];
+    let explosions = [];
+    let particles = [];
+    let score = 0;
+    let level = 1;
+    let gameOver = false;
+    let paused = false;
+    let animationId = null;
+    let enemySpawnTimer = 0;
+    const ENEMY_SPAWN_INTERVAL = 50; // frames
+    let enemyWaveCount = 0;
+    let totalEnemiesInWave = 0;
+    let enemiesSpawned = 0;
+
+    // ============================================================
+    //  FUNÇÕES AUXILIARES
+    // ============================================================
+    function initCities() {
+        cities = CITY_POSITIONS.map(x => ({
+            x: x,
+            y: H - 20,
+            alive: true,
+            radius: 12
+        }));
+    }
+
+    function initBases() {
+        bases = BASE_POSITIONS.map(x => ({
+            x: x,
+            y: H - 35,
+            missiles: MISSILES_PER_BASE,
+            maxMissiles: MISSILES_PER_BASE,
+            alive: true
+        }));
+    }
+
+    function resetGame() {
+        initCities();
+        initBases();
+        enemyMissiles = [];
+        interceptors = [];
+        explosions = [];
+        particles = [];
+        score = 0;
+        level = 1;
+        gameOver = false;
+        paused = false;
+        pauseBtn.textContent = '⏸️ Pausar';
+        enemySpawnTimer = 0;
+        enemyWaveCount = 0;
+        enemiesSpawned = 0;
+        totalEnemiesInWave = 5 + level * 2;
+        updateUI();
+        draw();
+    }
+
+    function updateUI() {
+        scoreSpan.textContent = score;
+        levelSpan.textContent = level;
+        const aliveCities = cities.filter(c => c.alive).length;
+        citiesSpan.textContent = aliveCities;
+        const totalMissiles = bases.reduce((sum, b) => sum + (b.alive ? b.missiles : 0), 0);
+        missilesSpan.textContent = totalMissiles;
+    }
+
+    function spawnParticles(x, y, color, count = 20) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * 2 * Math.PI;
+            const speed = 1 + Math.random() * 4;
+            particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 0.5,
+                life: 1,
+                decay: 0.015 + Math.random() * 0.025,
+                size: 2 + Math.random() * 4,
+                color
+            });
+        }
+    }
+
+    // ============================================================
+    //  LÓGICA DOS MÍSSEIS INIMIGOS
+    // ============================================================
+    function spawnEnemyMissile() {
+        // Escolhe um alvo: uma cidade viva ou aleatório
+        const aliveCities = cities.filter(c => c.alive);
+        let targetX, targetY;
+        if (aliveCities.length > 0 && Math.random() < 0.7) {
+            const city = aliveCities[Math.floor(Math.random() * aliveCities.length)];
+            targetX = city.x + (Math.random() - 0.5) * 20;
+            targetY = city.y + (Math.random() - 0.5) * 10;
+        } else {
+            targetX = 50 + Math.random() * (W - 100);
+            targetY = H - 40 + Math.random() * 30;
+        }
+        const startX = 20 + Math.random() * (W - 40);
+        const startY = -10;
+        const speed = 2.5 + level * 0.2 + Math.random() * 0.5;
+        enemyMissiles.push({
+            x: startX,
+            y: startY,
+            targetX: targetX,
+            targetY: targetY,
+            speed: speed,
+            alive: true,
+            trail: []
+        });
+    }
+
+    // ============================================================
+    //  LANÇAR MÍSSIL INTERCEPTADOR
+    // ============================================================
+    function launchInterceptor(targetX, targetY) {
+        // Encontra a base com mais mísseis disponível
+        let bestBase = null;
+        let bestCount = -1;
+        for (const base of bases) {
+            if (base.alive && base.missiles > 0) {
+                if (base.missiles > bestCount) {
+                    bestCount = base.missiles;
+                    bestBase = base;
+                }
+            }
+        }
+        if (!bestBase) return false; // sem mísseis
+
+        const startX = bestBase.x;
+        const startY = bestBase.y;
+        const dx = targetX - startX;
+        const dy = targetY - startY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const speed = 6 + level * 0.2;
+        const vx = (dx / dist) * speed;
+        const vy = (dy / dist) * speed;
+
+        interceptors.push({
+            x: startX,
+            y: startY,
+            targetX: targetX,
+            targetY: targetY,
+            vx: vx,
+            vy: vy,
+            speed: speed,
+            alive: true,
+            trail: []
+        });
+        bestBase.missiles--;
+        updateUI();
+        return true;
+    }
+
+    // ============================================================
+    //  ATUALIZAÇÃO DO JOGO
+    // ============================================================
+    function update() {
+        if (paused || gameOver) return;
+
+        // --- Spawn de inimigos ---
+        enemySpawnTimer++;
+        const aliveCitiesCount = cities.filter(c => c.alive).length;
+        if (aliveCitiesCount === 0) {
+            gameOver = true;
+            return;
+        }
+
+        if (enemiesSpawned < totalEnemiesInWave) {
+            if (enemySpawnTimer >= ENEMY_SPAWN_INTERVAL) {
+                enemySpawnTimer = 0;
+                spawnEnemyMissile();
+                enemiesSpawned++;
+                // Às vezes spawna múltiplos
+                if (level > 2 && Math.random() < 0.3) spawnEnemyMissile();
+            }
+        } else {
+            // Verifica se todos os inimigos foram destruídos
+            const remaining = enemyMissiles.filter(m => m.alive).length;
+            if (remaining === 0) {
+                // Próximo nível
+                level++;
+                totalEnemiesInWave = 5 + level * 2;
+                enemiesSpawned = 0;
+                enemySpawnTimer = 0;
+                // Recarrega mísseis das bases
+                for (const base of bases) {
+                    if (base.alive) {
+                        base.missiles = Math.min(base.maxMissiles, base.missiles + 2 + level);
+                    }
+                }
+                updateUI();
+                spawnParticles(W/2, H/2, '#ffd700', 40);
+                // Adiciona uma cidade extra se perdeu alguma (bônus)
+                const lostCities = cities.filter(c => !c.alive);
+                if (lostCities.length > 0 && cities.filter(c => c.alive).length < 6) {
+                    const dead = cities.find(c => !c.alive);
+                    if (dead) {
+                        dead.alive = true;
+                        spawnParticles(dead.x, dead.y, '#6bcb77', 15);
+                    }
+                }
+                updateUI();
+            }
+        }
+
+        // --- Atualiza mísseis inimigos ---
+        for (let i = enemyMissiles.length - 1; i >= 0; i--) {
+            const m = enemyMissiles[i];
+            if (!m.alive) {
+                enemyMissiles.splice(i, 1);
+                continue;
+            }
+            // Move em direção ao alvo
+            const dx = m.targetX - m.x;
+            const dy = m.targetY - m.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 3) {
+                // Chegou! Explode
+                m.alive = false;
+                const explosionRadius = 15 + level * 2;
+                spawnParticles(m.x, m.y, '#ff6b6b', 30);
+                // Verifica se atingiu uma cidade
+                for (const city of cities) {
+                    if (!city.alive) continue;
+                    const cdx = city.x - m.x;
+                    const cdy = city.y - m.y;
+                    if (Math.sqrt(cdx*cdx + cdy*cdy) < explosionRadius + city.radius) {
+                        city.alive = false;
+                        spawnParticles(city.x, city.y, '#ff6b6b', 25);
+                        updateUI();
+                        // Verifica game over
+                        if (cities.filter(c => c.alive).length === 0) {
+                            gameOver = true;
+                            return;
+                        }
+                    }
+                }
+                // Também pode destruir bases
+                for (const base of bases) {
+                    if (!base.alive) continue;
+                    const bdx = base.x - m.x;
+                    const bdy = base.y - m.y;
+                    if (Math.sqrt(bdx*bdx + bdy*bdy) < explosionRadius + 10) {
+                        base.alive = false;
+                        spawnParticles(base.x, base.y, '#ffa94d', 20);
+                        updateUI();
+                    }
+                }
+                enemyMissiles.splice(i, 1);
+                continue;
+            }
+            const step = Math.min(m.speed, dist);
+            m.x += (dx / dist) * step;
+            m.y += (dy / dist) * step;
+            // Rastro
+            m.trail.push({x: m.x, y: m.y, life: 1});
+            if (m.trail.length > 12) m.trail.shift();
+        }
+
+        // --- Atualiza mísseis interceptadores ---
+        for (let i = interceptors.length - 1; i >= 0; i--) {
+            const m = interceptors[i];
+            if (!m.alive) {
+                interceptors.splice(i, 1);
+                continue;
+            }
+            m.x += m.vx;
+            m.y += m.vy;
+            m.trail.push({x: m.x, y: m.y, life: 1});
+            if (m.trail.length > 10) m.trail.shift();
+
+            // Verifica se chegou ao alvo
+            const dx = m.targetX - m.x;
+            const dy = m.targetY - m.y;
+            if (Math.sqrt(dx*dx + dy*dy) < 8) {
+                m.alive = false;
+                // Explode!
+                const explosionRadius = 35 + level * 3;
+                spawnParticles(m.x, m.y, '#ffd700', 35);
+                // Destroi mísseis inimigos próximos
+                for (const em of enemyMissiles) {
+                    if (!em.alive) continue;
+                    const edx = em.x - m.x;
+                    const edy = em.y - m.y;
+                    if (Math.sqrt(edx*edx + edy*edy) < explosionRadius) {
+                        em.alive = false;
+                        spawnParticles(em.x, em.y, '#ff6b6b', 15);
+                        score += 10 * level;
+                        updateUI();
+                    }
+                }
+                // Também pode destruir cidades? Não, só inimigos.
+                interceptors.splice(i, 1);
+                continue;
+            }
+        }
+
+        // --- Atualiza partículas e rastros ---
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.06;
+            p.life -= p.decay;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        // Atualiza rastros dos inimigos
+        for (const m of enemyMissiles) {
+            for (let j = m.trail.length - 1; j >= 0; j--) {
+                m.trail[j].life -= 0.04;
+                if (m.trail[j].life <= 0) m.trail.splice(j, 1);
+            }
+        }
+        for (const m of interceptors) {
+            for (let j = m.trail.length - 1; j >= 0; j--) {
+                m.trail[j].life -= 0.04;
+                if (m.trail[j].life <= 0) m.trail.splice(j, 1);
+            }
+        }
+
+        // Verifica game over por falta de cidades
+        if (cities.filter(c => c.alive).length === 0) {
+            gameOver = true;
+        }
+    }
+
+    // ============================================================
+    //  RENDERIZAÇÃO
+    // ============================================================
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // --- Fundo estrelado simples ---
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        for (let i = 0; i < 60; i++) {
+            const sx = (i * 137 + 50) % W;
+            const sy = (i * 269 + 30) % H;
+            ctx.fillRect(sx, sy, 1, 1);
+        }
+
+        // --- Cidades ---
+        for (const city of cities) {
+            if (!city.alive) continue;
+            ctx.shadowColor = '#6bcb77';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#6bcb77';
+            ctx.beginPath();
+            // Desenha prédios
+            const cx = city.x, cy = city.y;
+            ctx.fillRect(cx - 12, cy - 12, 6, 12);
+            ctx.fillRect(cx - 4, cy - 18, 6, 18);
+            ctx.fillRect(cx + 4, cy - 10, 6, 10);
+            ctx.fillRect(cx + 10, cy - 8, 6, 8);
+            ctx.shadowBlur = 0;
+            // Brilho
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fillRect(cx - 12, cy - 12, 6, 4);
+            ctx.fillRect(cx - 4, cy - 18, 6, 4);
+            ctx.fillRect(cx + 4, cy - 10, 6, 4);
+            ctx.fillRect(cx + 10, cy - 8, 6, 4);
+        }
+
+        // --- Bases de mísseis ---
+        for (const base of bases) {
+            if (!base.alive) continue;
+            ctx.shadowColor = '#6c6cff';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = '#4a4a8a';
+            const bx = base.x, by = base.y;
+            ctx.fillRect(bx - 8, by - 4, 16, 8);
+            ctx.fillRect(bx - 4, by - 10, 8, 6);
+            // Quantidade de mísseis
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#a0a0ff';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('💥' + base.missiles, bx, by - 12);
+        }
+
+        // --- Rastros dos mísseis inimigos ---
+        for (const m of enemyMissiles) {
+            for (const t of m.trail) {
+                ctx.globalAlpha = t.life * 0.5;
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(t.x - 2, t.y - 2, 4, 4);
+            }
+        }
+        ctx.globalAlpha = 1;
+
+        // --- Mísseis inimigos ---
+        for (const m of enemyMissiles) {
+            if (!m.alive) continue;
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            // Rastro de fumaça
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255,107,107,0.2)';
+            ctx.beginPath();
+            ctx.arc(m.x - m.vx * 2, m.y - m.vy * 2, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // --- Rastros dos interceptadores ---
+        for (const m of interceptors) {
+            for (const t of m.trail) {
+                ctx.globalAlpha = t.life * 0.4;
+                ctx.fillStyle = '#6c6cff';
+                ctx.fillRect(t.x - 2, t.y - 2, 4, 4);
+            }
+        }
+        ctx.globalAlpha = 1;
+
+        // --- Mísseis interceptadores ---
+        for (const m of interceptors) {
+            if (!m.alive) continue;
+            ctx.shadowColor = '#6c6cff';
+            ctx.shadowBlur = 25;
+            ctx.fillStyle = '#6c6cff';
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Rastro
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(108,108,255,0.2)';
+            ctx.beginPath();
+            ctx.arc(m.x - m.vx * 2, m.y - m.vy * 2, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // --- Partículas ---
+        for (const p of particles) {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+        }
+        ctx.globalAlpha = 1;
+
+        // --- Game Over ---
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 48px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const msg = cities.filter(c => c.alive).length === 0 ? '💀 GAME OVER' : '🏆 VOCÊ VENCEU!';
+            ctx.fillText(msg, W/2, H/2 - 20);
+            ctx.fillStyle = '#a0a0c0';
+            ctx.font = '20px sans-serif';
+            ctx.fillText('Clique em "Reiniciar"', W/2, H/2 + 50);
+        }
+
+        // --- Pausa ---
+        if (paused && !gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 44px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⏸ PAUSADO', W/2, H/2);
+        }
+    }
+
+    // ============================================================
+    //  LOOP
+    // ============================================================
+    function gameLoop() {
+        update();
+        draw();
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // ============================================================
+    //  EVENTOS
+    // ============================================================
+    canvas.addEventListener('click', (e) => {
+        if (gameOver || paused) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        launchInterceptor(x, y);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameOver || paused) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const touch = e.touches[0];
+        const x = (touch.clientX - rect.left) * scaleX;
+        const y = (touch.clientY - rect.top) * scaleY;
+        launchInterceptor(x, y);
+    }, { passive: false });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'p' || e.key === 'P') togglePause();
+    });
+
+    function togglePause() {
+        if (gameOver) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? '▶️ Retomar' : '⏸️ Pausar';
+        draw();
+    }
+
+    restartBtn.addEventListener('click', () => {
+        resetGame();
+        draw();
+    });
+
+    pauseBtn.addEventListener('click', togglePause);
+
+    // ============================================================
+    //  INICIALIZAR
+    // ============================================================
+    resetGame();
+    gameLoop();
+</script>
+</body>
+</html>

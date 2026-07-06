@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Buzzer de Quiz – Placar com controle de negativos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f4f6fc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            color: #1a1a2e;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: #ffffff;
+            border-radius: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.8rem;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #16213e;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #546e7a;
+            margin-top: 0.3rem;
+        }
+
+        .setup-area {
+            background: #f0f4ff;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #37474f;
+        }
+
+        .qtd-input, .score-input {
+            width: 80px;
+            padding: 0.8rem 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 1rem;
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: inherit;
+            background: white;
+            transition: border 0.2s;
+        }
+
+        .qtd-input:focus, .score-input:focus {
+            border-color: #3a56e4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(58,86,228,0.2);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: white;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            color: #37474f;
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3a56e4;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .btn {
+            border: none;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 2.5rem;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-primary {
+            background: #3a56e4;
+            color: white;
+            border: 2px solid #3a56e4;
+            box-shadow: 0 4px 14px rgba(58, 86, 228, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #2c44c9;
+            border-color: #2c44c9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #cfd8dc;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #90a4ae;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.2);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        .btn-success:hover {
+            background: #388e3c;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .players-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .player-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 1.5rem;
+            padding: 1rem 1.2rem;
+            text-align: center;
+            min-width: 170px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .player-card.buzzed {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            box-shadow: 0 0 20px rgba(76,175,80,0.3);
+            transform: scale(1.02);
+        }
+
+        .player-score {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #3a56e4;
+            margin: 0.2rem 0;
+        }
+
+        .player-key-input {
+            width: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 2px solid #b0bec5;
+            border-radius: 0.8rem;
+            padding: 0.3rem;
+            font-family: inherit;
+            color: #3a56e4;
+            background: #f5f5f5;
+            transition: border 0.2s;
+            margin: 0 auto;
+        }
+
+        .player-key-input:focus {
+            border-color: #3a56e4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(58,86,228,0.2);
+        }
+
+        .player-name-input {
+            border: none;
+            border-bottom: 2px solid #b0bec5;
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 0.2rem 0.5rem;
+            width: 100%;
+            text-align: center;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .player-name-input:focus {
+            border-bottom-color: #3a56e4;
+        }
+
+        .score-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.2rem;
+        }
+
+        .round-status {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            padding: 0.8rem;
+            border-radius: 2rem;
+        }
+
+        .status-waiting {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+            animation: pulse 1s infinite;
+        }
+
+        .status-result {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .result-display {
+            background: #e3f2fd;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid #90caf9;
+        }
+
+        .result-display h2 {
+            font-size: 1.8rem;
+            color: #0d47a1;
+        }
+
+        .result-display .buzzer-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3a56e4;
+            margin: 0.5rem 0;
+        }
+
+        .reaction-time {
+            font-size: 1.2rem;
+            color: #546e7a;
+            margin-top: 0.3rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 1.2rem;
+            }
+            .title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">⚡ Buzzer de Quiz</h1>
+            <p class="subtitle">Configure teclas, pontuação e acompanhe o placar</p>
+        </header>
+
+        <!-- Configurações principais -->
+        <div class="setup-area">
+            <div class="input-group">
+                <label for="qtd-jogadores">Jogadores:</label>
+                <input type="number" id="qtd-jogadores" class="qtd-input" value="4" min="2" max="10">
+            </div>
+            <div class="input-group">
+                <label for="valor-acerto">Acerto (+):</label>
+                <input type="number" id="valor-acerto" class="score-input" value="10">
+            </div>
+            <div class="input-group">
+                <label for="valor-erro">Erro (−):</label>
+                <input type="number" id="valor-erro" class="score-input" value="5">
+            </div>
+            <div class="toggle-group">
+                <span class="toggle-label">Permitir negativos</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="permitir-negativos" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button id="btn-configurar" class="btn btn-outline btn-small">✏️ Aplicar</button>
+        </div>
+
+        <!-- Área dos jogadores (gerada dinamicamente) -->
+        <div id="players-area" class="players-grid"></div>
+
+        <!-- Mensagem de erro -->
+        <p id="error-msg" class="error-message hidden"></p>
+
+        <!-- Status da rodada -->
+        <div id="round-status" class="round-status status-waiting">
+            <span>🟡</span> <span id="status-text">Aguardando iniciar rodada</span>
+        </div>
+
+        <!-- Área de resultado -->
+        <div id="result-area" class="result-display hidden">
+            <h2>🔔 Quem bateu primeiro!</h2>
+            <div class="buzzer-name" id="winner-name"></div>
+            <p id="winner-key-display"></p>
+            <p class="reaction-time" id="reaction-time"></p>
+            <div class="actions">
+                <button id="btn-acerto" class="btn btn-success">✔ Acerto</button>
+                <button id="btn-erro" class="btn btn-danger">✘ Erro</button>
+                <button id="btn-nova-rodada" class="btn btn-primary">🔄 Nova Rodada</button>
+                <button id="btn-reset-result" class="btn btn-outline">↩ Limpar</button>
+            </div>
+        </div>
+
+        <!-- Botões de ação principais -->
+        <div class="actions">
+            <button id="btn-iniciar-rodada" class="btn btn-primary btn-large">🎯 Iniciar Rodada</button>
+            <button id="btn-reset" class="btn btn-outline">🧹 Resetar Tudo</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Elementos do DOM
+            const qtdJogadoresInput = document.getElementById('qtd-jogadores');
+            const valorAcertoInput = document.getElementById('valor-acerto');
+            const valorErroInput = document.getElementById('valor-erro');
+            const permitirNegativosCheck = document.getElementById('permitir-negativos');
+            const btnConfigurar = document.getElementById('btn-configurar');
+            const playersArea = document.getElementById('players-area');
+            const errorMsg = document.getElementById('error-msg');
+            const roundStatus = document.getElementById('round-status');
+            const statusText = document.getElementById('status-text');
+            const resultArea = document.getElementById('result-area');
+            const winnerName = document.getElementById('winner-name');
+            const winnerKeyDisplay = document.getElementById('winner-key-display');
+            const reactionTimeDisplay = document.getElementById('reaction-time');
+            const btnIniciarRodada = document.getElementById('btn-iniciar-rodada');
+            const btnReset = document.getElementById('btn-reset');
+            const btnNovaRodada = document.getElementById('btn-nova-rodada');
+            const btnResetResult = document.getElementById('btn-reset-result');
+            const btnAcerto = document.getElementById('btn-acerto');
+            const btnErro = document.getElementById('btn-erro');
+
+            // Teclas sugeridas
+            const teclasSugeridas = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'];
+
+            // Teclas bloqueadas
+            const teclasBloqueadas = new Set([
+                'escape', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12',
+                'tab', 'capslock', 'shift', 'control', 'alt', 'meta', 'os', 'contextmenu',
+                'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'home', 'end', 'pageup', 'pagedown',
+                'insert', 'delete', 'printscreen', 'scrolllock', 'pause', 'numlock',
+                'audio volume up', 'audio volume down', 'audio volume mute'
+            ]);
+
+            let jogadores = []; // { nome, tecla, pontos }
+            let rodadaAtiva = false;
+            let tempoInicioRodada = null;
+            let ultimoVencedorIndex = -1;
+
+            let valorAcerto = 10;
+            let valorErro = 5;
+
+            // Atualiza valores de pontuação e lê a opção de negativos
+            function atualizarValoresPontuacao() {
+                let acerto = parseInt(valorAcertoInput.value, 10);
+                let erro = parseInt(valorErroInput.value, 10);
+                if (isNaN(acerto)) acerto = 10;
+                if (isNaN(erro)) erro = 5;
+                valorAcerto = acerto;
+                valorErro = erro;
+                valorAcertoInput.value = acerto;
+                valorErroInput.value = erro;
+            }
+
+            // Gera a interface dos jogadores
+            function gerarInterfaceJogadores(quantidade) {
+                playersArea.innerHTML = '';
+                jogadores = [];
+                for (let i = 0; i < quantidade; i++) {
+                    const teclaPadrao = teclasSugeridas[i] || `?`;
+                    const nomePadrao = `Jogador ${i+1}`;
+                    jogadores.push({ nome: nomePadrao, tecla: teclaPadrao, pontos: 0 });
+
+                    const card = document.createElement('div');
+                    card.className = 'player-card';
+                    card.id = `player-${i}`;
+                    card.innerHTML = `
+                        <input type="text" class="player-name-input" value="${nomePadrao}" data-index="${i}" placeholder="Nome">
+                        <input type="text" class="player-key-input" value="${teclaPadrao.toUpperCase()}" data-index="${i}" maxlength="1" placeholder="?">
+                        <div class="player-score" id="score-${i}">0 pts</div>
+                        <div class="score-buttons">
+                            <button class="btn btn-success btn-small btn-acerto-ind" data-index="${i}" title="Acerto">✔</button>
+                            <button class="btn btn-danger btn-small btn-erro-ind" data-index="${i}" title="Erro">✘</button>
+                        </div>
+                    `;
+                    playersArea.appendChild(card);
+                }
+
+                // Listeners de nome
+                document.querySelectorAll('.player-name-input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const idx = parseInt(e.target.dataset.index, 10);
+                        if (!isNaN(idx) && jogadores[idx]) {
+                            jogadores[idx].nome = e.target.value.trim() || jogadores[idx].nome;
+                        }
+                    });
+                });
+
+                // Listeners de tecla
+                document.querySelectorAll('.player-key-input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const idx = parseInt(e.target.dataset.index, 10);
+                        if (isNaN(idx) || !jogadores[idx]) return;
+                        let valor = e.target.value.trim().toLowerCase();
+                        if (valor.length > 1) valor = valor.slice(-1);
+                        e.target.value = valor.toUpperCase();
+                        if (valor) {
+                            if (teclasBloqueadas.has(valor)) {
+                                errorMsg.textContent = `Tecla "${valor.toUpperCase()}" não é permitida.`;
+                                errorMsg.classList.remove('hidden');
+                                e.target.value = '';
+                                jogadores[idx].tecla = '';
+                                return;
+                            }
+                            errorMsg.classList.add('hidden');
+                            jogadores[idx].tecla = valor;
+                        } else {
+                            jogadores[idx].tecla = '';
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        e.preventDefault();
+                        const tecla = e.key.toLowerCase();
+                        if (tecla === 'tab' || tecla === 'escape' || tecla.length > 1) return;
+                        if (teclasBloqueadas.has(tecla)) {
+                            errorMsg.textContent = `Tecla "${tecla.toUpperCase()}" não é permitida.`;
+                            errorMsg.classList.remove('hidden');
+                            return;
+                        }
+                        errorMsg.classList.add('hidden');
+                        const idx = parseInt(e.target.dataset.index, 10);
+                        e.target.value = tecla.toUpperCase();
+                        if (!isNaN(idx) && jogadores[idx]) {
+                            jogadores[idx].tecla = tecla;
+                        }
+                    });
+                });
+
+                // Listeners dos botões individuais de acerto e erro
+                document.querySelectorAll('.btn-acerto-ind').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const idx = parseInt(e.target.dataset.index, 10);
+                        if (!isNaN(idx) && jogadores[idx]) {
+                            jogadores[idx].pontos += valorAcerto;
+                            atualizarPlacar(idx);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.btn-erro-ind').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const idx = parseInt(e.target.dataset.index, 10);
+                        if (!isNaN(idx) && jogadores[idx]) {
+                            aplicarPenalidade(idx);
+                        }
+                    });
+                });
+            }
+
+            // Função única para aplicar erro, respeitando o toggle de negativos
+            function aplicarPenalidade(index) {
+                if (!jogadores[index]) return;
+                jogadores[index].pontos -= valorErro;
+                if (!permitirNegativosCheck.checked && jogadores[index].pontos < 0) {
+                    jogadores[index].pontos = 0;
+                }
+                atualizarPlacar(index);
+            }
+
+            // Atualiza o placar visual
+            function atualizarPlacar(index) {
+                const scoreEl = document.getElementById(`score-${index}`);
+                if (scoreEl && jogadores[index]) {
+                    scoreEl.textContent = `${jogadores[index].pontos} pts`;
+                }
+            }
+
+            // Inicializa com 4 jogadores
+            gerarInterfaceJogadores(4);
+            atualizarValoresPontuacao();
+
+            // Configurar quantidade e aplicar valores de pontuação
+            btnConfigurar.addEventListener('click', () => {
+                let qtd = parseInt(qtdJogadoresInput.value, 10);
+                if (isNaN(qtd) || qtd < 2 || qtd > 10) {
+                    errorMsg.textContent = 'Escolha entre 2 e 10 jogadores.';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                errorMsg.classList.add('hidden');
+                atualizarValoresPontuacao();
+                resetarTudo(false);
+                gerarInterfaceJogadores(qtd);
+            });
+
+            // Beep
+            function tocarBeep() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                } catch (e) {}
+            }
+
+            // Handler de teclas
+            function handleKeyDown(e) {
+                if (!rodadaAtiva) return;
+                const tecla = e.key.toLowerCase();
+                if (teclasBloqueadas.has(tecla)) return;
+
+                const jogadorIndex = jogadores.findIndex(j => j.tecla === tecla);
+                if (jogadorIndex === -1) return;
+
+                e.preventDefault();
+                rodadaAtiva = false;
+                const tempoReacao = Date.now() - tempoInicioRodada;
+                ultimoVencedorIndex = jogadorIndex;
+
+                const card = document.getElementById(`player-${jogadorIndex}`);
+                if (card) card.classList.add('buzzed');
+
+                const nome = jogadores[jogadorIndex].nome;
+                winnerName.textContent = nome;
+                winnerKeyDisplay.textContent = `Tecla: ${tecla.toUpperCase()}`;
+                reactionTimeDisplay.textContent = `Tempo de reação: ${tempoReacao} ms`;
+                resultArea.classList.remove('hidden');
+
+                roundStatus.className = 'round-status status-result';
+                statusText.textContent = `🔔 ${nome} bateu primeiro! (${tempoReacao} ms)`;
+
+                tocarBeep();
+                document.removeEventListener('keydown', handleKeyDown);
+                btnIniciarRodada.disabled = true;
+            }
+
+            // Validação
+            function validarJogadores() {
+                if (jogadores.length < 2) {
+                    errorMsg.textContent = 'Configure ao menos 2 jogadores.';
+                    errorMsg.classList.remove('hidden');
+                    return false;
+                }
+                const vazias = jogadores.some(j => !j.tecla);
+                if (vazias) {
+                    errorMsg.textContent = 'Todos os jogadores precisam de uma tecla.';
+                    errorMsg.classList.remove('hidden');
+                    return false;
+                }
+                const teclas = jogadores.map(j => j.tecla);
+                if (new Set(teclas).size < teclas.length) {
+                    errorMsg.textContent = 'Teclas duplicadas.';
+                    errorMsg.classList.remove('hidden');
+                    return false;
+                }
+                errorMsg.classList.add('hidden');
+                return true;
+            }
+
+            function iniciarRodada() {
+                if (!validarJogadores()) return;
+                resetarVisual();
+                resultArea.classList.add('hidden');
+                rodadaAtiva = true;
+                tempoInicioRodada = Date.now();
+                ultimoVencedorIndex = -1;
+                roundStatus.className = 'round-status status-active';
+                statusText.textContent = '🟢 Rodada ativa – pressione sua tecla!';
+                document.addEventListener('keydown', handleKeyDown);
+                btnIniciarRodada.disabled = true;
+            }
+
+            function novaRodada() {
+                iniciarRodada();
+            }
+
+            function resetarRodada(iniciarApos = false) {
+                rodadaAtiva = false;
+                document.removeEventListener('keydown', handleKeyDown);
+                resetarVisual();
+                resultArea.classList.add('hidden');
+                roundStatus.className = 'round-status status-waiting';
+                statusText.textContent = 'Aguardando iniciar rodada';
+                btnIniciarRodada.disabled = false;
+                if (iniciarApos) iniciarRodada();
+            }
+
+            function resetarTudo(iniciarApos = false) {
+                rodadaAtiva = false;
+                document.removeEventListener('keydown', handleKeyDown);
+                resetarVisual();
+                resultArea.classList.add('hidden');
+                roundStatus.className = 'round-status status-waiting';
+                statusText.textContent = 'Aguardando iniciar rodada';
+                btnIniciarRodada.disabled = false;
+                jogadores.forEach((j, idx) => {
+                    j.pontos = 0;
+                    atualizarPlacar(idx);
+                });
+                if (iniciarApos) iniciarRodada();
+            }
+
+            function resetarVisual() {
+                document.querySelectorAll('.player-card').forEach(card => card.classList.remove('buzzed'));
+            }
+
+            // Eventos dos botões de resultado
+            btnAcerto.addEventListener('click', () => {
+                if (ultimoVencedorIndex >= 0 && jogadores[ultimoVencedorIndex]) {
+                    jogadores[ultimoVencedorIndex].pontos += valorAcerto;
+                    atualizarPlacar(ultimoVencedorIndex);
+                }
+            });
+
+            btnErro.addEventListener('click', () => {
+                if (ultimoVencedorIndex >= 0 && jogadores[ultimoVencedorIndex]) {
+                    aplicarPenalidade(ultimoVencedorIndex);
+                }
+            });
+
+            btnNovaRodada.addEventListener('click', novaRodada);
+            btnResetResult.addEventListener('click', () => resetarRodada(false));
+
+            btnIniciarRodada.addEventListener('click', iniciarRodada);
+            btnReset.addEventListener('click', () => resetarTudo(false));
+
+            qtdJogadoresInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') btnConfigurar.click();
+            });
+
+        })();
+    </script>
+</body>
+</html>

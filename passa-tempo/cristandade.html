@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagnóstico do Perfil Cristão</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #f6f8fa;
+            --surface: #ffffff;
+            --surface2: #f0f2f5;
+            --text: #1a1a2e;
+            --text2: #4a4a6a;
+            --text3: #7a7a9a;
+            --border: #dce0e8;
+            --primary: #6a4c9c;
+            --primary-hover: #5a3c8c;
+            --primary-light: #ede8f5;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s ease;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --maxw: 820px;
+            --header-h: 64px;
+        }
+        .dark {
+            --bg: #0d0d1a;
+            --surface: #18182b;
+            --surface2: #22223a;
+            --text: #eaeaf0;
+            --text2: #b0b0cc;
+            --text3: #7878a0;
+            --border: #2e2e4a;
+            --primary: #8a7acf;
+            --primary-hover: #7a6abf;
+            --primary-light: #1a1a3a;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            transition: background var(--transition), color var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 16px 40px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text3);
+        }
+
+        .header {
+            width: 100%;
+            max-width: var(--maxw);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 50;
+            transition: background var(--transition);
+        }
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo span {
+            color: var(--primary);
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle,
+        .reset-btn {
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--text2);
+            transition: background var(--transition), color var(--transition), transform 0.15s;
+        }
+        .theme-toggle:hover,
+        .reset-btn:hover {
+            background: var(--border);
+            color: var(--text);
+            transform: scale(1.04);
+        }
+        .reset-btn {
+            font-size: 0.9rem;
+        }
+
+        .app {
+            width: 100%;
+            max-width: var(--maxw);
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px 32px 36px;
+            transition: background var(--transition), box-shadow var(--transition);
+            position: relative;
+            min-height: 520px;
+        }
+        @media (max-width: 640px) {
+            .app {
+                padding: 20px 16px 28px;
+                border-radius: 12px;
+            }
+            .header {
+                padding: 12px 0 10px;
+            }
+            .logo {
+                font-size: 1rem;
+            }
+        }
+
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), #b8a5e0);
+            border-radius: 8px;
+            transition: width 0.4s ease;
+        }
+        .progress-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text2);
+            min-width: 44px;
+            text-align: right;
+            letter-spacing: 0.2px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeUp 0.35s ease;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        .welcome h1 span {
+            color: var(--primary);
+        }
+        .welcome p {
+            color: var(--text2);
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin-bottom: 16px;
+        }
+        .welcome .highlight-box {
+            background: var(--primary-light);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 18px 0 24px;
+            border-left: 4px solid var(--primary);
+            color: var(--text2);
+            font-size: 0.95rem;
+        }
+        .welcome .highlight-box strong {
+            color: var(--text);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            border-radius: var(--radius-sm);
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition), transform 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 12px 28px;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text2);
+            border: 1px solid var(--border);
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background var(--transition), color var(--transition);
+        }
+        .btn-outline:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            color: var(--text3);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            line-height: 1.5;
+            min-height: 3.6rem;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 500px) {
+            .options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .opt-btn {
+            background: var(--surface2);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text2);
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition), color var(--transition), transform 0.12s;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .opt-btn:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        .opt-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .opt-btn.special {
+            background: transparent;
+            border-color: var(--border);
+            font-weight: 400;
+            color: var(--text3);
+            font-size: 0.85rem;
+        }
+        .opt-btn.special:hover {
+            background: var(--surface2);
+        }
+        .opt-btn.special.selected {
+            border-color: var(--text3);
+            background: var(--surface2);
+            color: var(--text2);
+        }
+        .question-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .question-nav .left {
+            display: flex;
+            gap: 8px;
+        }
+
+        .results-header {
+            margin-bottom: 20px;
+        }
+        .results-header h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+        .results-header p {
+            color: var(--text2);
+            font-size: 1rem;
+            margin-top: 4px;
+        }
+        .result-section {
+            margin-top: 28px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+        .result-section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .result-section .sub {
+            color: var(--text2);
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 12px 0 8px;
+        }
+        @media (max-width: 700px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .chart-box {
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 16px 14px 12px;
+            position: relative;
+            min-height: 220px;
+        }
+        .chart-box h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .chart-box canvas {
+            max-height: 240px;
+            max-width: 100%;
+        }
+
+        .top-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 24px;
+            margin-top: 6px;
+        }
+        @media (max-width: 500px) {
+            .top-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        .top-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--surface2);
+            border-radius: 8px;
+            font-size: 0.92rem;
+        }
+        .top-item .name {
+            font-weight: 500;
+        }
+        .top-item .pct {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .top-item .pct.dim {
+            color: var(--text3);
+            font-weight: 400;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 10px 0 4px;
+        }
+        .table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .table-wrap th,
+        .table-wrap td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .table-wrap th {
+            font-weight: 600;
+            color: var(--text2);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .table-wrap td:last-child {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .explain-box {
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin: 10px 0 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text2);
+        }
+        .explain-box strong {
+            color: var(--text);
+        }
+        .explain-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+            margin: 8px 0 4px;
+        }
+        @media (max-width: 500px) {
+            .explain-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .explain-grid .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .explain-grid .item .lbl {
+            color: var(--text2);
+        }
+        .explain-grid .item .val {
+            font-weight: 500;
+        }
+
+        .share-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+            align-items: center;
+        }
+        .share-row .btn-outline {
+            font-size: 0.85rem;
+        }
+
+        .footnote {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--text3);
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            text-align: center;
+        }
+        .footnote a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text3);
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mt-16 {
+            margin-top: 16px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .text-center {
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.2px;
+        }
+
+        @media (max-width: 480px) {
+            .question-text {
+                font-size: 1.05rem;
+            }
+            .opt-btn {
+                padding: 10px 10px;
+                font-size: 0.8rem;
+            }
+            .btn-primary {
+                padding: 12px 28px;
+                font-size: 0.95rem;
+            }
+            .results-header h2 {
+                font-size: 1.3rem;
+            }
+            .chart-box {
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">✝️ <span>Perfil Cristão</span></div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">🌙</button>
+            <button class="reset-btn" id="resetBtn" aria-label="Reiniciar" title="Reiniciar diagnóstico">↺</button>
+        </div>
+    </header>
+
+    <div class="app" id="app">
+
+        <!-- ─── WELCOME ─── -->
+        <div class="screen active" id="screenWelcome">
+            <div class="welcome">
+                <h1>Diagnóstico do <span>Perfil Cristão</span></h1>
+                <p>Uma ferramenta de autoconhecimento para refletir sobre suas crenças, práticas e valores cristãos.</p>
+                <div class="highlight-box">
+                    <strong>🧭 Não é uma avaliação espiritual.</strong><br />
+                    O sistema não diz quem é "verdadeiro cristão" nem qual denominação é "correta". Ele mostra quais tradições cristãs mais se aproximam das suas respostas, respeitando a diversidade e incentivando a reflexão.
+                </div>
+                <p style="font-size:0.95rem; color:var(--text3);">
+                    <span>📊 85 perguntas · ~10 minutos · 30+ dimensões</span>
+                </p>
+                <button class="btn-primary" id="startBtn">▶ Iniciar diagnóstico</button>
+            </div>
+        </div>
+
+        <!-- ─── QUESTION ─── -->
+        <div class="screen" id="screenQuestion">
+            <div class="progress-wrap">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-label" id="progressLabel">0%</span>
+            </div>
+            <div class="question-header">
+                <span id="qNum">Pergunta 1 / 85</span>
+                <span class="badge" id="qDimTag">Múltiplas dimensões</span>
+            </div>
+            <div class="question-text" id="qText">Carregando…</div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="question-nav">
+                <div class="left">
+                    <button class="btn-outline" id="prevBtn" disabled>← Anterior</button>
+                </div>
+                <div>
+                    <button class="btn-primary" id="nextBtn" style="padding:10px 28px; font-size:0.95rem;">Próxima →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── RESULTS ─── -->
+        <div class="screen" id="screenResults">
+            <div class="results-header">
+                <h2>Seu perfil cristão</h2>
+                <p>Com base nas suas respostas, veja a seguir as principais afinidades com diferentes tradições.</p>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-box">
+                    <h4>📡 Mapa de afinidades</h4>
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h4>📊 Proximidade por tradição</h4>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>🏷️ Top 10 afinidades</h3>
+                <div class="top-list" id="topIdeologies"></div>
+            </div>
+
+            <div class="result-section">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div>
+                        <h3>⭐ Principais ênfases</h3>
+                        <div class="top-list" id="topValues" style="grid-template-columns:1fr;"></div>
+                    </div>
+                    <div>
+                        <h3>⚡ Divergências mais fortes</h3>
+                        <div class="top-list" id="topDivergences" style="grid-template-columns:1fr;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>📋 Proximidade completa</h3>
+                <div class="table-wrap">
+                    <table id="fullTable">
+                        <thead><tr><th>Tradição</th><th>Afinidade</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>📖 Explicação detalhada</h3>
+                <div class="explain-box" id="explainBox"></div>
+            </div>
+
+            <div class="result-section">
+                <h3>🧩 Mapa das dimensões</h3>
+                <div class="sub">Cada eixo varia de -100 a +100. Valores positivos indicam inclinação à direita do eixo.</div>
+                <div class="explain-grid" id="axesGrid"></div>
+            </div>
+
+            <div class="result-section">
+                <div style="display:flex; flex-wrap:wrap; gap:16px 32px;">
+                    <div><strong>Índice de coerência:</strong> <span id="coherenceIdx">—</span></div>
+                    <div><strong>Margem de confiança:</strong> <span id="confidenceIdx">—</span></div>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>🔗 Compartilhar</h3>
+                <div class="share-row">
+                    <button class="btn-outline" id="shareLinkBtn">Copiar link</button>
+                    <button class="btn-outline" id="shareImgBtn">Gerar imagem</button>
+                    <span style="font-size:0.85rem; color:var(--text3);" id="shareStatus"></span>
+                </div>
+            </div>
+
+            <div class="footnote">
+                Este diagnóstico é uma ferramenta educativa de autoconhecimento. Nenhuma resposta é pública.
+                <br />As afinidades são calculadas por padrões estatísticos — não definem sua identidade espiritual.
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ════════════════════════════════════════════════════════════════
+        //  DATA — Dimensões, Perguntas, Perfis
+        // ════════════════════════════════════════════════════════════════
+
+        const DIMS = [
+            'ScriptureAuthority',
+            'Tradition',
+            'InterpretationLiteral',
+            'SacramentsEucharist',
+            'SacramentsBaptism',
+            'BaptismInfant',
+            'BaptismBeliever',
+            'EucharistRealPresence',
+            'EucharistSymbolic',
+            'LiturgyFormal',
+            'WorshipSpontaneous',
+            'WorshipStyleTraditional',
+            'WorshipStyleContemporary',
+            'SpiritualityMystical',
+            'SpiritualityRational',
+            'PrayerFormal',
+            'PrayerSpontaneous',
+            'Miracles',
+            'CharismaticGifts',
+            'Evangelism',
+            'Missions',
+            'SocialAction',
+            'CommunityLife',
+            'ChurchGovernmentHierarchical',
+            'ChurchGovernmentCongregational',
+            'LocalAutonomy',
+            'Discipline',
+            'Ecumenism',
+            'DoctrinalConservatism',
+            'DoctrinalFlexibility',
+            'SocialJustice',
+            'EschatologyPremillennial',
+            'EschatologyAmillennial',
+            'GraceSovereign',
+            'FreeWill',
+            'Predestination',
+            'Sanctification',
+            'Holiness',
+            'Contemplative',
+            'Activist'
+        ];
+
+        const DIM_LABELS = {
+            ScriptureAuthority: 'Autoridade das Escrituras',
+            Tradition: 'Valor da Tradição',
+            InterpretationLiteral: 'Interpretação literal',
+            SacramentsEucharist: 'Sacramentos (Eucaristia)',
+            SacramentsBaptism: 'Sacramentos (Batismo)',
+            BaptismInfant: 'Batismo infantil',
+            BaptismBeliever: 'Batismo de crentes',
+            EucharistRealPresence: 'Presença real na Eucaristia',
+            EucharistSymbolic: 'Eucaristia simbólica',
+            LiturgyFormal: 'Liturgia formal',
+            WorshipSpontaneous: 'Culto espontâneo',
+            WorshipStyleTraditional: 'Música tradicional',
+            WorshipStyleContemporary: 'Música contemporânea',
+            SpiritualityMystical: 'Espiritualidade mística',
+            SpiritualityRational: 'Espiritualidade racional',
+            PrayerFormal: 'Oração formal',
+            PrayerSpontaneous: 'Oração espontânea',
+            Miracles: 'Milagres',
+            CharismaticGifts: 'Dons carismáticos',
+            Evangelism: 'Evangelismo',
+            Missions: 'Missões',
+            SocialAction: 'Ação social',
+            CommunityLife: 'Vida comunitária',
+            ChurchGovernmentHierarchical: 'Governo hierárquico',
+            ChurchGovernmentCongregational: 'Governo congregacional',
+            LocalAutonomy: 'Autonomia local',
+            Discipline: 'Disciplina eclesiástica',
+            Ecumenism: 'Ecumenismo',
+            DoctrinalConservatism: 'Conservadorismo doutrinário',
+            DoctrinalFlexibility: 'Flexibilidade doutrinária',
+            SocialJustice: 'Justiça social',
+            EschatologyPremillennial: 'Escatologia pré-milenista',
+            EschatologyAmillennial: 'Escatologia amilenista',
+            GraceSovereign: 'Graça soberana',
+            FreeWill: 'Livre-arbítrio',
+            Predestination: 'Predestinação',
+            Sanctification: 'Santificação',
+            Holiness: 'Santidade',
+            Contemplative: 'Contemplativo',
+            Activist: 'Ativista'
+        };
+
+        // ─── Perguntas (85) ───
+        function q(text, dims) { return { text, dims }; }
+
+        const QUESTIONS = [
+            // 1-10: Escrituras, Tradição, Interpretação
+            q('A leitura pessoal da Bíblia deve fazer parte da rotina de todo cristão.', [
+                { name: 'ScriptureAuthority', weight: 0.8 }, { name: 'SpiritualityRational', weight: 0.4 },
+                { name: 'Sanctification', weight: 0.5 }
+            ]),
+            q('A tradição da Igreja ajuda a compreender corretamente as Escrituras.', [
+                { name: 'Tradition', weight: 0.9 }, { name: 'ScriptureAuthority', weight: 0.3 },
+                { name: 'InterpretationLiteral', weight: -0.4 }
+            ]),
+            q('A Bíblia deve ser interpretada de forma literal sempre que possível.', [
+                { name: 'InterpretationLiteral', weight: 0.9 }, { name: 'ScriptureAuthority', weight: 0.5 },
+                { name: 'Tradition', weight: -0.4 }, { name: 'DoctrinalConservatism', weight: 0.5 }
+            ]),
+            q('O contexto histórico e cultural é essencial para interpretar a Bíblia.', [
+                { name: 'InterpretationLiteral', weight: -0.7 }, { name: 'Tradition', weight: 0.4 },
+                { name: 'DoctrinalFlexibility', weight: 0.5 }
+            ]),
+            q('A Igreja tem autoridade para interpretar as Escrituras.', [
+                { name: 'Tradition', weight: 0.7 }, { name: 'ScriptureAuthority', weight: 0.3 },
+                { name: 'ChurchGovernmentHierarchical', weight: 0.5 }
+            ]),
+            q('Cada cristão pode interpretar a Bíblia por si mesmo, sob orientação do Espírito.', [
+                { name: 'ScriptureAuthority', weight: 0.5 }, { name: 'LocalAutonomy', weight: 0.6 },
+                { name: 'Tradition', weight: -0.4 }
+            ]),
+            q('A teologia sistemática é útil para organizar o que a Bíblia ensina.', [
+                { name: 'SpiritualityRational', weight: 0.7 }, { name: 'ScriptureAuthority', weight: 0.4 },
+                { name: 'DoctrinalConservatism', weight: 0.3 }
+            ]),
+            q('A experiência pessoal é tão importante quanto o estudo para conhecer a Deus.', [
+                { name: 'SpiritualityMystical', weight: 0.8 }, { name: 'PrayerSpontaneous', weight: 0.5 },
+                { name: 'ScriptureAuthority', weight: -0.2 }
+            ]),
+            q('Os credos históricos são expressões válidas da fé cristã.', [
+                { name: 'Tradition', weight: 0.8 }, { name: 'DoctrinalConservatism', weight: 0.4 },
+                { name: 'Ecumenism', weight: 0.3 }
+            ]),
+            q('A Bíblia contém tudo o que é necessário para a salvação e a vida cristã.', [
+                { name: 'ScriptureAuthority', weight: 0.9 }, { name: 'Tradition', weight: -0.3 },
+                { name: 'Sanctification', weight: 0.4 }
+            ]),
+
+            // 11-20: Sacramentos, Batismo, Eucaristia
+            q('O batismo deve ser administrado logo no início da vida cristã, ainda na infância.', [
+                { name: 'BaptismInfant', weight: 0.9 }, { name: 'SacramentsBaptism', weight: 0.6 },
+                { name: 'BaptismBeliever', weight: -0.8 }, { name: 'Tradition', weight: 0.3 }
+            ]),
+            q('O batismo deve ser realizado apenas quando a pessoa já tem consciência da fé.', [
+                { name: 'BaptismBeliever', weight: 0.9 }, { name: 'BaptismInfant', weight: -0.8 },
+                { name: 'SacramentsBaptism', weight: 0.5 }
+            ]),
+            q('A Ceia do Senhor é um sacramento que confere graça de forma real.', [
+                { name: 'EucharistRealPresence', weight: 0.9 }, { name: 'SacramentsEucharist', weight: 0.7 },
+                { name: 'EucharistSymbolic', weight: -0.7 }
+            ]),
+            q('A Ceia é um memorial simbólico, não uma transformação literal.', [
+                { name: 'EucharistSymbolic', weight: 0.9 }, { name: 'EucharistRealPresence', weight: -0.8 },
+                { name: 'SacramentsEucharist', weight: 0.4 }
+            ]),
+            q('Os sacramentos são meios de graça instituídos por Cristo.', [
+                { name: 'SacramentsEucharist', weight: 0.7 }, { name: 'SacramentsBaptism', weight: 0.7 },
+                { name: 'Tradition', weight: 0.4 }
+            ]),
+            q('A Ceia do Senhor deve ser celebrada com frequência, preferencialmente toda semana.', [
+                { name: 'SacramentsEucharist', weight: 0.6 }, { name: 'LiturgyFormal', weight: 0.3 },
+                { name: 'CommunityLife', weight: 0.3 }
+            ]),
+            q('O batismo não é necessário para a salvação, mas é um ato de obediência.', [
+                { name: 'BaptismBeliever', weight: 0.5 }, { name: 'SacramentsBaptism', weight: 0.2 },
+                { name: 'FreeWill', weight: 0.3 }
+            ]),
+            q('O batismo infantil é uma prática importante que substitui a circuncisão.', [
+                { name: 'BaptismInfant', weight: 0.8 }, { name: 'Tradition', weight: 0.5 },
+                { name: 'SacramentsBaptism', weight: 0.4 }
+            ]),
+            q('A Ceia do Senhor é um ato comunitário que fortalece a Igreja.', [
+                { name: 'CommunityLife', weight: 0.6 }, { name: 'SacramentsEucharist', weight: 0.4 },
+                { name: 'LiturgyFormal', weight: 0.2 }
+            ]),
+            q('Os sacramentos devem ser administrados apenas por ministros ordenados.', [
+                { name: 'ChurchGovernmentHierarchical', weight: 0.7 }, { name: 'SacramentsEucharist', weight: 0.3 },
+                { name: 'Tradition', weight: 0.4 }
+            ]),
+
+            // 21-30: Liturgia, Culto, Música
+            q('A liturgia formal e estruturada enriquece a adoração.', [
+                { name: 'LiturgyFormal', weight: 0.9 }, { name: 'WorshipStyleTraditional', weight: 0.6 },
+                { name: 'WorshipSpontaneous', weight: -0.5 }
+            ]),
+            q('Momentos de oração espontânea e louvor livre são fundamentais no culto.', [
+                { name: 'WorshipSpontaneous', weight: 0.9 }, { name: 'PrayerSpontaneous', weight: 0.6 },
+                { name: 'LiturgyFormal', weight: -0.5 }
+            ]),
+            q('A música tradicional (hinos, corais) expressa melhor a fé cristã.', [
+                { name: 'WorshipStyleTraditional', weight: 0.9 }, { name: 'WorshipStyleContemporary', weight: -0.7 },
+                { name: 'Tradition', weight: 0.4 }
+            ]),
+            q('A música contemporânea e os instrumentos modernos devem ser usados no culto.', [
+                { name: 'WorshipStyleContemporary', weight: 0.9 }, { name: 'WorshipStyleTraditional', weight: -0.7 },
+                { name: 'WorshipSpontaneous', weight: 0.4 }
+            ]),
+            q('O culto deve ser centrado na Palavra, com pregação expositiva.', [
+                { name: 'ScriptureAuthority', weight: 0.6 }, { name: 'LiturgyFormal', weight: 0.3 },
+                { name: 'SpiritualityRational', weight: 0.4 }
+            ]),
+            q('O culto deve permitir manifestações espontâneas do Espírito.', [
+                { name: 'WorshipSpontaneous', weight: 0.8 }, { name: 'CharismaticGifts', weight: 0.6 },
+                { name: 'LiturgyFormal', weight: -0.4 }
+            ]),
+            q('Os símbolos religiosos (crucifixo, imagens, velas) ajudam na vida espiritual.', [
+                { name: 'SpiritualityMystical', weight: 0.7 }, { name: 'Tradition', weight: 0.5 },
+                { name: 'LiturgyFormal', weight: 0.4 }
+            ]),
+            q('A simplicidade no culto é preferível, sem muitos símbolos ou rituais.', [
+                { name: 'WorshipSpontaneous', weight: 0.4 }, { name: 'InterpretationLiteral', weight: 0.3 },
+                { name: 'LiturgyFormal', weight: -0.5 }
+            ]),
+            q('O ano litúrgico (Advento, Quaresma, Páscoa) ajuda a viver a fé.', [
+                { name: 'LiturgyFormal', weight: 0.7 }, { name: 'Tradition', weight: 0.6 },
+                { name: 'SpiritualityMystical', weight: 0.3 }
+            ]),
+            q('A pregação deve ser prática e aplicável à vida cotidiana.', [
+                { name: 'Activist', weight: 0.5 }, { name: 'SocialAction', weight: 0.4 },
+                { name: 'ScriptureAuthority', weight: 0.3 }
+            ]),
+
+            // 31-40: Espiritualidade, Oração, Dons
+            q('A oração contemplativa e silenciosa é uma prática valiosa.', [
+                { name: 'Contemplative', weight: 0.9 }, { name: 'SpiritualityMystical', weight: 0.7 },
+                { name: 'PrayerFormal', weight: 0.3 }
+            ]),
+            q('A oração deve ser espontânea e livre, vinda do coração.', [
+                { name: 'PrayerSpontaneous', weight: 0.8 }, { name: 'WorshipSpontaneous', weight: 0.5 },
+                { name: 'PrayerFormal', weight: -0.4 }
+            ]),
+            q('O uso de orações escritas (como o Pai-Nosso) é importante.', [
+                { name: 'PrayerFormal', weight: 0.8 }, { name: 'Tradition', weight: 0.5 },
+                { name: 'PrayerSpontaneous', weight: -0.3 }
+            ]),
+            q('Os dons espirituais, como profecia e cura, são ativos hoje.', [
+                { name: 'CharismaticGifts', weight: 0.9 }, { name: 'Miracles', weight: 0.8 },
+                { name: 'WorshipSpontaneous', weight: 0.4 }
+            ]),
+            q('Os dons espirituais cessaram com os apóstolos.', [
+                { name: 'CharismaticGifts', weight: -0.8 }, { name: 'Miracles', weight: -0.7 },
+                { name: 'DoctrinalConservatism', weight: 0.3 }
+            ]),
+            q('Milagres ainda acontecem hoje em resposta à oração.', [
+                { name: 'Miracles', weight: 0.9 }, { name: 'CharismaticGifts', weight: 0.6 },
+                { name: 'PrayerSpontaneous', weight: 0.3 }
+            ]),
+            q('A experiência mística de Deus é acessível a todos os cristãos.', [
+                { name: 'SpiritualityMystical', weight: 0.8 }, { name: 'Contemplative', weight: 0.6 },
+                { name: 'SpiritualityRational', weight: -0.4 }
+            ]),
+            q('A fé cristã é principalmente racional, baseada em doutrinas claras.', [
+                { name: 'SpiritualityRational', weight: 0.8 }, { name: 'DoctrinalConservatism', weight: 0.5 },
+                { name: 'SpiritualityMystical', weight: -0.5 }
+            ]),
+            q('A vida cristã deve ser marcada por santidade e separação do mundo.', [
+                { name: 'Holiness', weight: 0.9 }, { name: 'Sanctification', weight: 0.7 },
+                { name: 'Activist', weight: -0.3 }
+            ]),
+            q('A graça de Deus é suficiente, e a santificação é obra do Espírito.', [
+                { name: 'GraceSovereign', weight: 0.6 }, { name: 'Sanctification', weight: 0.5 },
+                { name: 'FreeWill', weight: -0.3 }
+            ]),
+
+            // 41-50: Evangelismo, Missões, Ação Social
+            q('Todo cristão deve compartilhar sua fé com outras pessoas.', [
+                { name: 'Evangelism', weight: 0.9 }, { name: 'Missions', weight: 0.5 },
+                { name: 'Activist', weight: 0.4 }
+            ]),
+            q('A missão da Igreja inclui cuidar das necessidades sociais e físicas.', [
+                { name: 'SocialAction', weight: 0.9 }, { name: 'Missions', weight: 0.5 },
+                { name: 'Activist', weight: 0.6 }
+            ]),
+            q('O evangelho deve ser pregado a todas as nações, em todo o mundo.', [
+                { name: 'Missions', weight: 0.9 }, { name: 'Evangelism', weight: 0.6 },
+                { name: 'Ecumenism', weight: 0.2 }
+            ]),
+            q('A Igreja deve se envolver em políticas de justiça social.', [
+                { name: 'SocialJustice', weight: 0.9 }, { name: 'SocialAction', weight: 0.7 },
+                { name: 'Activist', weight: 0.6 }
+            ]),
+            q('A salvação é pela graça, não por obras, mas a fé se expressa em boas obras.', [
+                { name: 'GraceSovereign', weight: 0.5 }, { name: 'SocialAction', weight: 0.3 },
+                { name: 'Sanctification', weight: 0.4 }
+            ]),
+            q('A pregação do evangelho deve ser acompanhada de sinais e maravilhas.', [
+                { name: 'Miracles', weight: 0.7 }, { name: 'CharismaticGifts', weight: 0.6 },
+                { name: 'Evangelism', weight: 0.5 }
+            ]),
+            q('A ação social é uma expressão legítima do amor cristão.', [
+                { name: 'SocialAction', weight: 0.8 }, { name: 'SocialJustice', weight: 0.6 },
+                { name: 'CommunityLife', weight: 0.4 }
+            ]),
+            q('A Igreja deve se preocupar mais com a salvação das almas do que com questões sociais.', [
+                { name: 'Evangelism', weight: 0.6 }, { name: 'SocialAction', weight: -0.6 },
+                { name: 'Missions', weight: 0.4 }
+            ]),
+            q('O discipulado é mais importante do que a evangelização em massa.', [
+                { name: 'Sanctification', weight: 0.7 }, { name: 'CommunityLife', weight: 0.5 },
+                { name: 'Evangelism', weight: -0.3 }
+            ]),
+            q('A Igreja deve ser um agente de transformação da sociedade.', [
+                { name: 'SocialJustice', weight: 0.8 }, { name: 'Activist', weight: 0.7 },
+                { name: 'SocialAction', weight: 0.6 }
+            ]),
+
+            // 51-60: Comunidade, Governo, Disciplina
+            q('A vida cristã deve ser vivida em comunidade, não isoladamente.', [
+                { name: 'CommunityLife', weight: 0.9 }, { name: 'Discipline', weight: 0.3 },
+                { name: 'LocalAutonomy', weight: 0.2 }
+            ]),
+            q('A Igreja deve ter uma estrutura hierárquica com bispos ou presbíteros.', [
+                { name: 'ChurchGovernmentHierarchical', weight: 0.9 }, { name: 'ChurchGovernmentCongregational',
+                    weight: -0.6 },
+                { name: 'Tradition', weight: 0.4 }
+            ]),
+            q('Cada igreja local deve ser autônoma, sem interferência externa.', [
+                { name: 'LocalAutonomy', weight: 0.9 }, { name: 'ChurchGovernmentCongregational', weight: 0.7 },
+                { name: 'ChurchGovernmentHierarchical', weight: -0.6 }
+            ]),
+            q('A disciplina eclesiástica é necessária para manter a pureza da Igreja.', [
+                { name: 'Discipline', weight: 0.9 }, { name: 'Holiness', weight: 0.6 },
+                { name: 'DoctrinalConservatism', weight: 0.4 }
+            ]),
+            q('A Igreja deve ser inclusiva e acolher todos, sem muita ênfase em disciplina.', [
+                { name: 'Discipline', weight: -0.7 }, { name: 'Ecumenism', weight: 0.5 },
+                { name: 'SocialAction', weight: 0.4 }
+            ]),
+            q('A autoridade dos líderes espirituais deve ser respeitada.', [
+                { name: 'ChurchGovernmentHierarchical', weight: 0.6 }, { name: 'Tradition', weight: 0.4 },
+                { name: 'Discipline', weight: 0.3 }
+            ]),
+            q('As decisões da igreja devem ser tomadas em assembleias democráticas.', [
+                { name: 'ChurchGovernmentCongregational', weight: 0.8 }, { name: 'LocalAutonomy', weight: 0.6 },
+                { name: 'ChurchGovernmentHierarchical', weight: -0.5 }
+            ]),
+            q('A unidade da Igreja é mais importante do que diferenças doutrinárias.', [
+                { name: 'Ecumenism', weight: 0.9 }, { name: 'DoctrinalFlexibility', weight: 0.5 },
+                { name: 'DoctrinalConservatism', weight: -0.5 }
+            ]),
+            q('A sã doutrina deve ser preservada, mesmo que isso cause divisão.', [
+                { name: 'DoctrinalConservatism', weight: 0.9 }, { name: 'Discipline', weight: 0.5 },
+                { name: 'Ecumenism', weight: -0.5 }
+            ]),
+            q('A Igreja deve dialogar com outras denominações e tradições cristãs.', [
+                { name: 'Ecumenism', weight: 0.8 }, { name: 'SocialAction', weight: 0.3 },
+                { name: 'DoctrinalFlexibility', weight: 0.4 }
+            ]),
+
+            // 61-70: Doutrina, Escatologia, Graça
+            q('A predestinação é uma doutrina bíblica que mostra a soberania de Deus.', [
+                { name: 'Predestination', weight: 0.9 }, { name: 'GraceSovereign', weight: 0.7 },
+                { name: 'FreeWill', weight: -0.7 }
+            ]),
+            q('O ser humano tem livre-arbítrio para aceitar ou rejeitar a salvação.', [
+                { name: 'FreeWill', weight: 0.9 }, { name: 'Predestination', weight: -0.7 },
+                { name: 'GraceSovereign', weight: -0.3 }
+            ]),
+            q('A graça de Deus é irresistível para aqueles que Ele escolheu.', [
+                { name: 'GraceSovereign', weight: 0.8 }, { name: 'Predestination', weight: 0.7 },
+                { name: 'FreeWill', weight: -0.6 }
+            ]),
+            q('A salvação é oferecida a todos, mas depende da resposta humana.', [
+                { name: 'FreeWill', weight: 0.8 }, { name: 'GraceSovereign', weight: -0.3 },
+                { name: 'Evangelism', weight: 0.3 }
+            ]),
+            q('O arrebatamento da Igreja ocorrerá antes da grande tribulação.', [
+                { name: 'EschatologyPremillennial', weight: 0.9 }, { name: 'EschatologyAmillennial', weight: -0.6 },
+                { name: 'DoctrinalConservatism', weight: 0.3 }
+            ]),
+            q('O reino de Deus já está presente na Igreja e se consumará no futuro.', [
+                { name: 'EschatologyAmillennial', weight: 0.8 }, { name: 'EschatologyPremillennial', weight: -0.4 },
+                { name: 'SocialAction', weight: 0.3 }
+            ]),
+            q('A interpretação do Apocalipse deve ser literal, com eventos futuros.', [
+                { name: 'InterpretationLiteral', weight: 0.6 }, { name: 'EschatologyPremillennial', weight: 0.7 },
+                { name: 'DoctrinalConservatism', weight: 0.4 }
+            ]),
+            q('A esperança cristã está na ressurreição e na vida eterna.', [
+                { name: 'EschatologyAmillennial', weight: 0.4 }, { name: 'SpiritualityMystical', weight: 0.3 },
+                { name: 'Sanctification', weight: 0.3 }
+            ]),
+            q('A justificação é pela fé somente, sem obras da lei.', [
+                { name: 'GraceSovereign', weight: 0.6 }, { name: 'FreeWill', weight: -0.2 },
+                { name: 'DoctrinalConservatism', weight: 0.3 }
+            ]),
+            q('A santificação é um processo que dura a vida inteira.', [
+                { name: 'Sanctification', weight: 0.9 }, { name: 'Holiness', weight: 0.5 },
+                { name: 'CommunityLife', weight: 0.3 }
+            ]),
+
+            // 71-80: Contemplativo, Ativista, etc.
+            q('A vida cristã deve incluir momentos de silêncio e meditação na presença de Deus.', [
+                { name: 'Contemplative', weight: 0.9 }, { name: 'SpiritualityMystical', weight: 0.6 },
+                { name: 'PrayerFormal', weight: 0.3 }
+            ]),
+            q('A ação prática em favor dos pobres e oprimidos é essencial para a fé.', [
+                { name: 'Activist', weight: 0.9 }, { name: 'SocialAction', weight: 0.7 },
+                { name: 'SocialJustice', weight: 0.6 }
+            ]),
+            q('A teologia deve ser vivida, não apenas estudada.', [
+                { name: 'Activist', weight: 0.6 }, { name: 'SocialAction', weight: 0.5 },
+                { name: 'SpiritualityRational', weight: -0.2 }
+            ]),
+            q('A vida devocional diária é a base da espiritualidade cristã.', [
+                { name: 'Sanctification', weight: 0.6 }, { name: 'ScriptureAuthority', weight: 0.4 },
+                { name: 'PrayerSpontaneous', weight: 0.3 }
+            ]),
+            q('A Igreja deve estar atenta aos sinais dos tempos e se adaptar.', [
+                { name: 'DoctrinalFlexibility', weight: 0.7 }, { name: 'SocialAction', weight: 0.4 },
+                { name: 'Tradition', weight: -0.4 }
+            ]),
+            q('A tradição da Igreja é um guia confiável para a vida cristã.', [
+                { name: 'Tradition', weight: 0.8 }, { name: 'LiturgyFormal', weight: 0.4 },
+                { name: 'DoctrinalConservatism', weight: 0.3 }
+            ]),
+            q('A experiência do Espírito Santo é central na vida cristã.', [
+                { name: 'CharismaticGifts', weight: 0.7 }, { name: 'WorshipSpontaneous', weight: 0.5 },
+                { name: 'SpiritualityMystical', weight: 0.4 }
+            ]),
+            q('A razão e a teologia devem andar juntas com a fé.', [
+                { name: 'SpiritualityRational', weight: 0.8 }, { name: 'ScriptureAuthority', weight: 0.3 },
+                { name: 'DoctrinalConservatism', weight: 0.2 }
+            ]),
+            q('A Igreja deve ser um lugar de cura e acolhimento para todos.', [
+                { name: 'CommunityLife', weight: 0.6 }, { name: 'SocialAction', weight: 0.5 },
+                { name: 'Ecumenism', weight: 0.3 }
+            ]),
+            // 81-85: extras
+            q('O culto deve ser reverente e solene, com momentos de silêncio.', [
+                { name: 'LiturgyFormal', weight: 0.7 }, { name: 'Contemplative', weight: 0.6 },
+                { name: 'WorshipStyleTraditional', weight: 0.4 }
+            ]),
+            q('A música no culto deve refletir a alegria e a liberdade do Espírito.', [
+                { name: 'WorshipSpontaneous', weight: 0.7 }, { name: 'WorshipStyleContemporary', weight: 0.6 },
+                { name: 'CharismaticGifts', weight: 0.3 }
+            ]),
+            q('O discipulado pessoal é a chave para o crescimento espiritual.', [
+                { name: 'Sanctification', weight: 0.7 }, { name: 'CommunityLife', weight: 0.5 },
+                { name: 'Discipline', weight: 0.3 }
+            ]),
+            q('A Igreja deve promover a unidade entre cristãos de diferentes tradições.', [
+                { name: 'Ecumenism', weight: 0.9 }, { name: 'SocialAction', weight: 0.3 },
+                { name: 'DoctrinalFlexibility', weight: 0.4 }
+            ]),
+            q('A fé cristã deve influenciar todas as áreas da vida, inclusive a política.', [
+                { name: 'Activist', weight: 0.7 }, { name: 'SocialJustice', weight: 0.6 },
+                { name: 'SocialAction', weight: 0.5 }
+            ])
+        ];
+
+        // ─── Perfis de tradições cristãs ───
+        // Cada perfil é um objeto com valores para cada dimensão (-100 a +100)
+        function makeProfile(values) {
+            const p = {};
+            DIMS.forEach(d => p[d] = 0);
+            Object.keys(values).forEach(k => { if (k in p) p[k] = values[k]; });
+            return p;
+        }
+
+        const PROFILES = {
+            'Católico': makeProfile({
+                ScriptureAuthority: 30,
+                Tradition: 90,
+                InterpretationLiteral: -20,
+                SacramentsEucharist: 80,
+                SacramentsBaptism: 80,
+                BaptismInfant: 90,
+                BaptismBeliever: -80,
+                EucharistRealPresence: 90,
+                EucharistSymbolic: -80,
+                LiturgyFormal: 90,
+                WorshipSpontaneous: -40,
+                WorshipStyleTraditional: 70,
+                WorshipStyleContemporary: -30,
+                SpiritualityMystical: 70,
+                SpiritualityRational: 20,
+                PrayerFormal: 80,
+                PrayerSpontaneous: -20,
+                Miracles: 60,
+                CharismaticGifts: 30,
+                Evangelism: 40,
+                Missions: 60,
+                SocialAction: 70,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: 90,
+                ChurchGovernmentCongregational: -70,
+                LocalAutonomy: -60,
+                Discipline: 60,
+                Ecumenism: 50,
+                DoctrinalConservatism: 60,
+                DoctrinalFlexibility: -30,
+                SocialJustice: 70,
+                EschatologyPremillennial: -40,
+                EschatologyAmillennial: 60,
+                GraceSovereign: 20,
+                FreeWill: 60,
+                Predestination: -30,
+                Sanctification: 40,
+                Holiness: 50,
+                Contemplative: 70,
+                Activist: 40
+            }),
+            'Ortodoxo': makeProfile({
+                ScriptureAuthority: 40,
+                Tradition: 95,
+                InterpretationLiteral: -10,
+                SacramentsEucharist: 90,
+                SacramentsBaptism: 90,
+                BaptismInfant: 90,
+                BaptismBeliever: -90,
+                EucharistRealPresence: 95,
+                EucharistSymbolic: -90,
+                LiturgyFormal: 95,
+                WorshipSpontaneous: -30,
+                WorshipStyleTraditional: 80,
+                WorshipStyleContemporary: -40,
+                SpiritualityMystical: 85,
+                SpiritualityRational: 10,
+                PrayerFormal: 85,
+                PrayerSpontaneous: -10,
+                Miracles: 70,
+                CharismaticGifts: 40,
+                Evangelism: 30,
+                Missions: 50,
+                SocialAction: 60,
+                CommunityLife: 75,
+                ChurchGovernmentHierarchical: 85,
+                ChurchGovernmentCongregational: -80,
+                LocalAutonomy: -70,
+                Discipline: 70,
+                Ecumenism: 40,
+                DoctrinalConservatism: 70,
+                DoctrinalFlexibility: -40,
+                SocialJustice: 60,
+                EschatologyPremillennial: -50,
+                EschatologyAmillennial: 70,
+                GraceSovereign: 30,
+                FreeWill: 50,
+                Predestination: -20,
+                Sanctification: 50,
+                Holiness: 60,
+                Contemplative: 85,
+                Activist: 30
+            }),
+            'Anglicano': makeProfile({
+                ScriptureAuthority: 50,
+                Tradition: 60,
+                InterpretationLiteral: -20,
+                SacramentsEucharist: 70,
+                SacramentsBaptism: 70,
+                BaptismInfant: 70,
+                BaptismBeliever: -60,
+                EucharistRealPresence: 70,
+                EucharistSymbolic: -50,
+                LiturgyFormal: 70,
+                WorshipSpontaneous: -20,
+                WorshipStyleTraditional: 60,
+                WorshipStyleContemporary: 10,
+                SpiritualityMystical: 50,
+                SpiritualityRational: 40,
+                PrayerFormal: 60,
+                PrayerSpontaneous: 10,
+                Miracles: 30,
+                CharismaticGifts: 20,
+                Evangelism: 40,
+                Missions: 50,
+                SocialAction: 60,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: 60,
+                ChurchGovernmentCongregational: -40,
+                LocalAutonomy: -30,
+                Discipline: 40,
+                Ecumenism: 70,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 30,
+                SocialJustice: 60,
+                EschatologyPremillennial: -20,
+                EschatologyAmillennial: 50,
+                GraceSovereign: 20,
+                FreeWill: 50,
+                Predestination: -10,
+                Sanctification: 40,
+                Holiness: 40,
+                Contemplative: 50,
+                Activist: 40
+            }),
+            'Luterano': makeProfile({
+                ScriptureAuthority: 70,
+                Tradition: 40,
+                InterpretationLiteral: -10,
+                SacramentsEucharist: 70,
+                SacramentsBaptism: 70,
+                BaptismInfant: 80,
+                BaptismBeliever: -70,
+                EucharistRealPresence: 80,
+                EucharistSymbolic: -60,
+                LiturgyFormal: 60,
+                WorshipSpontaneous: -30,
+                WorshipStyleTraditional: 60,
+                WorshipStyleContemporary: -20,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 60,
+                PrayerFormal: 50,
+                PrayerSpontaneous: -10,
+                Miracles: 20,
+                CharismaticGifts: 10,
+                Evangelism: 40,
+                Missions: 40,
+                SocialAction: 50,
+                CommunityLife: 50,
+                ChurchGovernmentHierarchical: 40,
+                ChurchGovernmentCongregational: -30,
+                LocalAutonomy: -20,
+                Discipline: 40,
+                Ecumenism: 50,
+                DoctrinalConservatism: 50,
+                DoctrinalFlexibility: -10,
+                SocialJustice: 40,
+                EschatologyPremillennial: -30,
+                EschatologyAmillennial: 50,
+                GraceSovereign: 60,
+                FreeWill: 20,
+                Predestination: 40,
+                Sanctification: 30,
+                Holiness: 30,
+                Contemplative: 20,
+                Activist: 30
+            }),
+            'Reformado': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: 30,
+                InterpretationLiteral: 0,
+                SacramentsEucharist: 50,
+                SacramentsBaptism: 50,
+                BaptismInfant: 70,
+                BaptismBeliever: -60,
+                EucharistRealPresence: -20,
+                EucharistSymbolic: 70,
+                LiturgyFormal: 40,
+                WorshipSpontaneous: -20,
+                WorshipStyleTraditional: 40,
+                WorshipStyleContemporary: -10,
+                SpiritualityMystical: 10,
+                SpiritualityRational: 80,
+                PrayerFormal: 30,
+                PrayerSpontaneous: 0,
+                Miracles: 10,
+                CharismaticGifts: -10,
+                Evangelism: 50,
+                Missions: 50,
+                SocialAction: 40,
+                CommunityLife: 50,
+                ChurchGovernmentHierarchical: 30,
+                ChurchGovernmentCongregational: 20,
+                LocalAutonomy: 10,
+                Discipline: 50,
+                Ecumenism: 30,
+                DoctrinalConservatism: 70,
+                DoctrinalFlexibility: -40,
+                SocialJustice: 30,
+                EschatologyPremillennial: -20,
+                EschatologyAmillennial: 50,
+                GraceSovereign: 80,
+                FreeWill: -50,
+                Predestination: 80,
+                Sanctification: 40,
+                Holiness: 50,
+                Contemplative: 10,
+                Activist: 30
+            }),
+            'Presbiteriano': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: 30,
+                InterpretationLiteral: -10,
+                SacramentsEucharist: 50,
+                SacramentsBaptism: 50,
+                BaptismInfant: 70,
+                BaptismBeliever: -60,
+                EucharistRealPresence: -20,
+                EucharistSymbolic: 70,
+                LiturgyFormal: 40,
+                WorshipSpontaneous: -20,
+                WorshipStyleTraditional: 40,
+                WorshipStyleContemporary: -10,
+                SpiritualityMystical: 10,
+                SpiritualityRational: 70,
+                PrayerFormal: 30,
+                PrayerSpontaneous: 0,
+                Miracles: 10,
+                CharismaticGifts: -10,
+                Evangelism: 50,
+                Missions: 50,
+                SocialAction: 50,
+                CommunityLife: 50,
+                ChurchGovernmentHierarchical: 50,
+                ChurchGovernmentCongregational: -10,
+                LocalAutonomy: -20,
+                Discipline: 50,
+                Ecumenism: 30,
+                DoctrinalConservatism: 60,
+                DoctrinalFlexibility: -30,
+                SocialJustice: 40,
+                EschatologyPremillennial: -30,
+                EschatologyAmillennial: 50,
+                GraceSovereign: 70,
+                FreeWill: -40,
+                Predestination: 70,
+                Sanctification: 40,
+                Holiness: 50,
+                Contemplative: 10,
+                Activist: 30
+            }),
+            'Batista': makeProfile({
+                ScriptureAuthority: 85,
+                Tradition: 10,
+                InterpretationLiteral: 20,
+                SacramentsEucharist: 20,
+                SacramentsBaptism: 20,
+                BaptismInfant: -90,
+                BaptismBeliever: 90,
+                EucharistRealPresence: -80,
+                EucharistSymbolic: 80,
+                LiturgyFormal: -20,
+                WorshipSpontaneous: 40,
+                WorshipStyleTraditional: 20,
+                WorshipStyleContemporary: 40,
+                SpiritualityMystical: 20,
+                SpiritualityRational: 60,
+                PrayerFormal: 0,
+                PrayerSpontaneous: 60,
+                Miracles: 30,
+                CharismaticGifts: 20,
+                Evangelism: 80,
+                Missions: 70,
+                SocialAction: 50,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: -70,
+                ChurchGovernmentCongregational: 80,
+                LocalAutonomy: 90,
+                Discipline: 50,
+                Ecumenism: 20,
+                DoctrinalConservatism: 50,
+                DoctrinalFlexibility: -10,
+                SocialJustice: 40,
+                EschatologyPremillennial: 60,
+                EschatologyAmillennial: -40,
+                GraceSovereign: 30,
+                FreeWill: 70,
+                Predestination: -40,
+                Sanctification: 50,
+                Holiness: 60,
+                Contemplative: 10,
+                Activist: 40
+            }),
+            'Metodista': makeProfile({
+                ScriptureAuthority: 70,
+                Tradition: 30,
+                InterpretationLiteral: -10,
+                SacramentsEucharist: 50,
+                SacramentsBaptism: 50,
+                BaptismInfant: 60,
+                BaptismBeliever: -40,
+                EucharistRealPresence: -30,
+                EucharistSymbolic: 60,
+                LiturgyFormal: 30,
+                WorshipSpontaneous: 30,
+                WorshipStyleTraditional: 30,
+                WorshipStyleContemporary: 20,
+                SpiritualityMystical: 40,
+                SpiritualityRational: 50,
+                PrayerFormal: 20,
+                PrayerSpontaneous: 50,
+                Miracles: 30,
+                CharismaticGifts: 20,
+                Evangelism: 70,
+                Missions: 60,
+                SocialAction: 80,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: 20,
+                ChurchGovernmentCongregational: 30,
+                LocalAutonomy: 20,
+                Discipline: 40,
+                Ecumenism: 50,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 20,
+                SocialJustice: 80,
+                EschatologyPremillennial: 20,
+                EschatologyAmillennial: 40,
+                GraceSovereign: 20,
+                FreeWill: 70,
+                Predestination: -30,
+                Sanctification: 70,
+                Holiness: 70,
+                Contemplative: 30,
+                Activist: 70
+            }),
+            'Congregacional': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: 10,
+                InterpretationLiteral: 10,
+                SacramentsEucharist: 20,
+                SacramentsBaptism: 20,
+                BaptismInfant: -70,
+                BaptismBeliever: 70,
+                EucharistRealPresence: -70,
+                EucharistSymbolic: 70,
+                LiturgyFormal: -20,
+                WorshipSpontaneous: 30,
+                WorshipStyleTraditional: 20,
+                WorshipStyleContemporary: 30,
+                SpiritualityMystical: 10,
+                SpiritualityRational: 60,
+                PrayerFormal: 0,
+                PrayerSpontaneous: 50,
+                Miracles: 20,
+                CharismaticGifts: 10,
+                Evangelism: 70,
+                Missions: 60,
+                SocialAction: 50,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: -80,
+                ChurchGovernmentCongregational: 90,
+                LocalAutonomy: 95,
+                Discipline: 50,
+                Ecumenism: 20,
+                DoctrinalConservatism: 40,
+                DoctrinalFlexibility: 10,
+                SocialJustice: 40,
+                EschatologyPremillennial: 40,
+                EschatologyAmillennial: -20,
+                GraceSovereign: 20,
+                FreeWill: 70,
+                Predestination: -30,
+                Sanctification: 50,
+                Holiness: 60,
+                Contemplative: 10,
+                Activist: 40
+            }),
+            'Pentecostal': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: 10,
+                InterpretationLiteral: 30,
+                SacramentsEucharist: 10,
+                SacramentsBaptism: 10,
+                BaptismInfant: -80,
+                BaptismBeliever: 80,
+                EucharistRealPresence: -80,
+                EucharistSymbolic: 80,
+                LiturgyFormal: -60,
+                WorshipSpontaneous: 90,
+                WorshipStyleTraditional: -30,
+                WorshipStyleContemporary: 80,
+                SpiritualityMystical: 80,
+                SpiritualityRational: 10,
+                PrayerFormal: -30,
+                PrayerSpontaneous: 90,
+                Miracles: 95,
+                CharismaticGifts: 95,
+                Evangelism: 90,
+                Missions: 80,
+                SocialAction: 60,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: -50,
+                ChurchGovernmentCongregational: 60,
+                LocalAutonomy: 60,
+                Discipline: 40,
+                Ecumenism: 20,
+                DoctrinalConservatism: 40,
+                DoctrinalFlexibility: 0,
+                SocialJustice: 40,
+                EschatologyPremillennial: 80,
+                EschatologyAmillennial: -70,
+                GraceSovereign: 20,
+                FreeWill: 70,
+                Predestination: -40,
+                Sanctification: 70,
+                Holiness: 80,
+                Contemplative: 20,
+                Activist: 50
+            }),
+            'Neopentecostal': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: 0,
+                InterpretationLiteral: 40,
+                SacramentsEucharist: 0,
+                SacramentsBaptism: 0,
+                BaptismInfant: -90,
+                BaptismBeliever: 90,
+                EucharistRealPresence: -90,
+                EucharistSymbolic: 90,
+                LiturgyFormal: -70,
+                WorshipSpontaneous: 95,
+                WorshipStyleTraditional: -50,
+                WorshipStyleContemporary: 90,
+                SpiritualityMystical: 70,
+                SpiritualityRational: 10,
+                PrayerFormal: -40,
+                PrayerSpontaneous: 95,
+                Miracles: 100,
+                CharismaticGifts: 100,
+                Evangelism: 95,
+                Missions: 85,
+                SocialAction: 40,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: -60,
+                ChurchGovernmentCongregational: 70,
+                LocalAutonomy: 70,
+                Discipline: 30,
+                Ecumenism: 10,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 20,
+                SocialJustice: 30,
+                EschatologyPremillennial: 90,
+                EschatologyAmillennial: -80,
+                GraceSovereign: 10,
+                FreeWill: 80,
+                Predestination: -50,
+                Sanctification: 60,
+                Holiness: 70,
+                Contemplative: 10,
+                Activist: 40
+            }),
+            'Adventista': makeProfile({
+                ScriptureAuthority: 90,
+                Tradition: 10,
+                InterpretationLiteral: 50,
+                SacramentsEucharist: 20,
+                SacramentsBaptism: 20,
+                BaptismInfant: -80,
+                BaptismBeliever: 80,
+                EucharistRealPresence: -80,
+                EucharistSymbolic: 80,
+                LiturgyFormal: 10,
+                WorshipSpontaneous: 20,
+                WorshipStyleTraditional: 30,
+                WorshipStyleContemporary: 10,
+                SpiritualityMystical: 20,
+                SpiritualityRational: 60,
+                PrayerFormal: 10,
+                PrayerSpontaneous: 30,
+                Miracles: 20,
+                CharismaticGifts: 10,
+                Evangelism: 70,
+                Missions: 70,
+                SocialAction: 60,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: -20,
+                ChurchGovernmentCongregational: 30,
+                LocalAutonomy: 30,
+                Discipline: 60,
+                Ecumenism: 20,
+                DoctrinalConservatism: 70,
+                DoctrinalFlexibility: -30,
+                SocialJustice: 50,
+                EschatologyPremillennial: 80,
+                EschatologyAmillennial: -60,
+                GraceSovereign: 30,
+                FreeWill: 60,
+                Predestination: -20,
+                Sanctification: 70,
+                Holiness: 80,
+                Contemplative: 10,
+                Activist: 40
+            }),
+            'Anabatista': makeProfile({
+                ScriptureAuthority: 85,
+                Tradition: -30,
+                InterpretationLiteral: 30,
+                SacramentsEucharist: 10,
+                SacramentsBaptism: 10,
+                BaptismInfant: -95,
+                BaptismBeliever: 95,
+                EucharistRealPresence: -90,
+                EucharistSymbolic: 90,
+                LiturgyFormal: -50,
+                WorshipSpontaneous: 50,
+                WorshipStyleTraditional: -20,
+                WorshipStyleContemporary: 20,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 40,
+                PrayerFormal: -20,
+                PrayerSpontaneous: 60,
+                Miracles: 20,
+                CharismaticGifts: 20,
+                Evangelism: 70,
+                Missions: 60,
+                SocialAction: 80,
+                CommunityLife: 90,
+                ChurchGovernmentHierarchical: -90,
+                ChurchGovernmentCongregational: 90,
+                LocalAutonomy: 95,
+                Discipline: 70,
+                Ecumenism: 20,
+                DoctrinalConservatism: 40,
+                DoctrinalFlexibility: 0,
+                SocialJustice: 80,
+                EschatologyPremillennial: 30,
+                EschatologyAmillennial: 20,
+                GraceSovereign: 20,
+                FreeWill: 70,
+                Predestination: -30,
+                Sanctification: 70,
+                Holiness: 80,
+                Contemplative: 30,
+                Activist: 60
+            }),
+            'Menonita': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: 10,
+                InterpretationLiteral: 20,
+                SacramentsEucharist: 10,
+                SacramentsBaptism: 10,
+                BaptismInfant: -90,
+                BaptismBeliever: 90,
+                EucharistRealPresence: -80,
+                EucharistSymbolic: 80,
+                LiturgyFormal: -30,
+                WorshipSpontaneous: 40,
+                WorshipStyleTraditional: 10,
+                WorshipStyleContemporary: 10,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 40,
+                PrayerFormal: -10,
+                PrayerSpontaneous: 50,
+                Miracles: 10,
+                CharismaticGifts: 10,
+                Evangelism: 60,
+                Missions: 60,
+                SocialAction: 90,
+                CommunityLife: 90,
+                ChurchGovernmentHierarchical: -80,
+                ChurchGovernmentCongregational: 80,
+                LocalAutonomy: 90,
+                Discipline: 70,
+                Ecumenism: 30,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 10,
+                SocialJustice: 90,
+                EschatologyPremillennial: 10,
+                EschatologyAmillennial: 30,
+                GraceSovereign: 20,
+                FreeWill: 70,
+                Predestination: -20,
+                Sanctification: 70,
+                Holiness: 80,
+                Contemplative: 30,
+                Activist: 70
+            }),
+            'Restauracionista': makeProfile({
+                ScriptureAuthority: 85,
+                Tradition: -40,
+                InterpretationLiteral: 40,
+                SacramentsEucharist: 10,
+                SacramentsBaptism: 10,
+                BaptismInfant: -90,
+                BaptismBeliever: 90,
+                EucharistRealPresence: -90,
+                EucharistSymbolic: 90,
+                LiturgyFormal: -60,
+                WorshipSpontaneous: 60,
+                WorshipStyleTraditional: -30,
+                WorshipStyleContemporary: 40,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 40,
+                PrayerFormal: -30,
+                PrayerSpontaneous: 60,
+                Miracles: 30,
+                CharismaticGifts: 30,
+                Evangelism: 80,
+                Missions: 70,
+                SocialAction: 50,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: -70,
+                ChurchGovernmentCongregational: 80,
+                LocalAutonomy: 80,
+                Discipline: 50,
+                Ecumenism: 10,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 10,
+                SocialJustice: 40,
+                EschatologyPremillennial: 50,
+                EschatologyAmillennial: -20,
+                GraceSovereign: 20,
+                FreeWill: 70,
+                Predestination: -30,
+                Sanctification: 60,
+                Holiness: 70,
+                Contemplative: 10,
+                Activist: 40
+            }),
+            'Não denominacional': makeProfile({
+                ScriptureAuthority: 80,
+                Tradition: -20,
+                InterpretationLiteral: 20,
+                SacramentsEucharist: 20,
+                SacramentsBaptism: 20,
+                BaptismInfant: -60,
+                BaptismBeliever: 60,
+                EucharistRealPresence: -60,
+                EucharistSymbolic: 60,
+                LiturgyFormal: -30,
+                WorshipSpontaneous: 40,
+                WorshipStyleTraditional: -10,
+                WorshipStyleContemporary: 40,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 40,
+                PrayerFormal: -10,
+                PrayerSpontaneous: 50,
+                Miracles: 40,
+                CharismaticGifts: 30,
+                Evangelism: 80,
+                Missions: 60,
+                SocialAction: 50,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: -40,
+                ChurchGovernmentCongregational: 50,
+                LocalAutonomy: 60,
+                Discipline: 30,
+                Ecumenism: 20,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 20,
+                SocialJustice: 40,
+                EschatologyPremillennial: 30,
+                EschatologyAmillennial: 10,
+                GraceSovereign: 20,
+                FreeWill: 60,
+                Predestination: -20,
+                Sanctification: 50,
+                Holiness: 50,
+                Contemplative: 20,
+                Activist: 40
+            }),
+            'Carismático': makeProfile({
+                ScriptureAuthority: 70,
+                Tradition: 10,
+                InterpretationLiteral: 10,
+                SacramentsEucharist: 30,
+                SacramentsBaptism: 30,
+                BaptismInfant: -40,
+                BaptismBeliever: 40,
+                EucharistRealPresence: -30,
+                EucharistSymbolic: 30,
+                LiturgyFormal: -30,
+                WorshipSpontaneous: 80,
+                WorshipStyleTraditional: -20,
+                WorshipStyleContemporary: 60,
+                SpiritualityMystical: 70,
+                SpiritualityRational: 20,
+                PrayerFormal: -20,
+                PrayerSpontaneous: 80,
+                Miracles: 80,
+                CharismaticGifts: 85,
+                Evangelism: 80,
+                Missions: 70,
+                SocialAction: 60,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: -30,
+                ChurchGovernmentCongregational: 40,
+                LocalAutonomy: 40,
+                Discipline: 30,
+                Ecumenism: 30,
+                DoctrinalConservatism: 20,
+                DoctrinalFlexibility: 30,
+                SocialJustice: 50,
+                EschatologyPremillennial: 40,
+                EschatologyAmillennial: -20,
+                GraceSovereign: 20,
+                FreeWill: 60,
+                Predestination: -20,
+                Sanctification: 60,
+                Holiness: 70,
+                Contemplative: 30,
+                Activist: 50
+            }),
+            'Cristão histórico': makeProfile({
+                ScriptureAuthority: 60,
+                Tradition: 70,
+                InterpretationLiteral: -20,
+                SacramentsEucharist: 60,
+                SacramentsBaptism: 60,
+                BaptismInfant: 60,
+                BaptismBeliever: -50,
+                EucharistRealPresence: 60,
+                EucharistSymbolic: -40,
+                LiturgyFormal: 60,
+                WorshipSpontaneous: -20,
+                WorshipStyleTraditional: 50,
+                WorshipStyleContemporary: -10,
+                SpiritualityMystical: 50,
+                SpiritualityRational: 40,
+                PrayerFormal: 50,
+                PrayerSpontaneous: 10,
+                Miracles: 30,
+                CharismaticGifts: 20,
+                Evangelism: 40,
+                Missions: 50,
+                SocialAction: 50,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: 50,
+                ChurchGovernmentCongregational: -30,
+                LocalAutonomy: -20,
+                Discipline: 50,
+                Ecumenism: 60,
+                DoctrinalConservatism: 50,
+                DoctrinalFlexibility: 0,
+                SocialJustice: 50,
+                EschatologyPremillennial: -20,
+                EschatologyAmillennial: 50,
+                GraceSovereign: 30,
+                FreeWill: 50,
+                Predestination: -10,
+                Sanctification: 40,
+                Holiness: 50,
+                Contemplative: 50,
+                Activist: 30
+            }),
+            'Cristão contemplativo': makeProfile({
+                ScriptureAuthority: 40,
+                Tradition: 60,
+                InterpretationLiteral: -40,
+                SacramentsEucharist: 50,
+                SacramentsBaptism: 50,
+                BaptismInfant: 30,
+                BaptismBeliever: -20,
+                EucharistRealPresence: 50,
+                EucharistSymbolic: -30,
+                LiturgyFormal: 60,
+                WorshipSpontaneous: -10,
+                WorshipStyleTraditional: 40,
+                WorshipStyleContemporary: -20,
+                SpiritualityMystical: 95,
+                SpiritualityRational: -10,
+                PrayerFormal: 70,
+                PrayerSpontaneous: 20,
+                Miracles: 30,
+                CharismaticGifts: 10,
+                Evangelism: 20,
+                Missions: 30,
+                SocialAction: 40,
+                CommunityLife: 50,
+                ChurchGovernmentHierarchical: 30,
+                ChurchGovernmentCongregational: 0,
+                LocalAutonomy: 10,
+                Discipline: 30,
+                Ecumenism: 60,
+                DoctrinalConservatism: 20,
+                DoctrinalFlexibility: 30,
+                SocialJustice: 40,
+                EschatologyPremillennial: -40,
+                EschatologyAmillennial: 60,
+                GraceSovereign: 30,
+                FreeWill: 40,
+                Predestination: -10,
+                Sanctification: 40,
+                Holiness: 40,
+                Contemplative: 100,
+                Activist: 10
+            }),
+            'Cristão missionário': makeProfile({
+                ScriptureAuthority: 70,
+                Tradition: 10,
+                InterpretationLiteral: 10,
+                SacramentsEucharist: 20,
+                SacramentsBaptism: 20,
+                BaptismInfant: -30,
+                BaptismBeliever: 30,
+                EucharistRealPresence: -20,
+                EucharistSymbolic: 20,
+                LiturgyFormal: -20,
+                WorshipSpontaneous: 40,
+                WorshipStyleTraditional: 10,
+                WorshipStyleContemporary: 30,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 40,
+                PrayerFormal: 0,
+                PrayerSpontaneous: 50,
+                Miracles: 30,
+                CharismaticGifts: 30,
+                Evangelism: 95,
+                Missions: 95,
+                SocialAction: 60,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: -20,
+                ChurchGovernmentCongregational: 30,
+                LocalAutonomy: 30,
+                Discipline: 30,
+                Ecumenism: 30,
+                DoctrinalConservatism: 30,
+                DoctrinalFlexibility: 20,
+                SocialJustice: 50,
+                EschatologyPremillennial: 30,
+                EschatologyAmillennial: 10,
+                GraceSovereign: 20,
+                FreeWill: 60,
+                Predestination: -20,
+                Sanctification: 50,
+                Holiness: 50,
+                Contemplative: 10,
+                Activist: 60
+            }),
+            'Cristão social': makeProfile({
+                ScriptureAuthority: 60,
+                Tradition: 20,
+                InterpretationLiteral: -20,
+                SacramentsEucharist: 30,
+                SacramentsBaptism: 30,
+                BaptismInfant: 10,
+                BaptismBeliever: 10,
+                EucharistRealPresence: 10,
+                EucharistSymbolic: -10,
+                LiturgyFormal: 0,
+                WorshipSpontaneous: 30,
+                WorshipStyleTraditional: 10,
+                WorshipStyleContemporary: 30,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 40,
+                PrayerFormal: 0,
+                PrayerSpontaneous: 40,
+                Miracles: 20,
+                CharismaticGifts: 10,
+                Evangelism: 30,
+                Missions: 40,
+                SocialAction: 95,
+                CommunityLife: 70,
+                ChurchGovernmentHierarchical: -20,
+                ChurchGovernmentCongregational: 30,
+                LocalAutonomy: 30,
+                Discipline: 20,
+                Ecumenism: 50,
+                DoctrinalConservatism: 0,
+                DoctrinalFlexibility: 40,
+                SocialJustice: 100,
+                EschatologyPremillennial: -20,
+                EschatologyAmillennial: 30,
+                GraceSovereign: 10,
+                FreeWill: 60,
+                Predestination: -10,
+                Sanctification: 40,
+                Holiness: 30,
+                Contemplative: 20,
+                Activist: 90
+            }),
+            'Cristão tradicional': makeProfile({
+                ScriptureAuthority: 50,
+                Tradition: 80,
+                InterpretationLiteral: -10,
+                SacramentsEucharist: 70,
+                SacramentsBaptism: 70,
+                BaptismInfant: 80,
+                BaptismBeliever: -70,
+                EucharistRealPresence: 80,
+                EucharistSymbolic: -70,
+                LiturgyFormal: 80,
+                WorshipSpontaneous: -40,
+                WorshipStyleTraditional: 80,
+                WorshipStyleContemporary: -50,
+                SpiritualityMystical: 50,
+                SpiritualityRational: 30,
+                PrayerFormal: 70,
+                PrayerSpontaneous: -20,
+                Miracles: 30,
+                CharismaticGifts: 0,
+                Evangelism: 30,
+                Missions: 40,
+                SocialAction: 40,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: 70,
+                ChurchGovernmentCongregational: -60,
+                LocalAutonomy: -50,
+                Discipline: 60,
+                Ecumenism: 40,
+                DoctrinalConservatism: 80,
+                DoctrinalFlexibility: -50,
+                SocialJustice: 30,
+                EschatologyPremillennial: -30,
+                EschatologyAmillennial: 50,
+                GraceSovereign: 30,
+                FreeWill: 50,
+                Predestination: -10,
+                Sanctification: 40,
+                Holiness: 60,
+                Contemplative: 40,
+                Activist: 20
+            }),
+            'Cristão litúrgico': makeProfile({
+                ScriptureAuthority: 40,
+                Tradition: 85,
+                InterpretationLiteral: -30,
+                SacramentsEucharist: 80,
+                SacramentsBaptism: 80,
+                BaptismInfant: 80,
+                BaptismBeliever: -80,
+                EucharistRealPresence: 85,
+                EucharistSymbolic: -80,
+                LiturgyFormal: 100,
+                WorshipSpontaneous: -60,
+                WorshipStyleTraditional: 90,
+                WorshipStyleContemporary: -60,
+                SpiritualityMystical: 60,
+                SpiritualityRational: 20,
+                PrayerFormal: 90,
+                PrayerSpontaneous: -30,
+                Miracles: 20,
+                CharismaticGifts: -10,
+                Evangelism: 20,
+                Missions: 30,
+                SocialAction: 40,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: 80,
+                ChurchGovernmentCongregational: -80,
+                LocalAutonomy: -70,
+                Discipline: 60,
+                Ecumenism: 50,
+                DoctrinalConservatism: 60,
+                DoctrinalFlexibility: -30,
+                SocialJustice: 40,
+                EschatologyPremillennial: -50,
+                EschatologyAmillennial: 60,
+                GraceSovereign: 20,
+                FreeWill: 50,
+                Predestination: -10,
+                Sanctification: 30,
+                Holiness: 40,
+                Contemplative: 60,
+                Activist: 10
+            }),
+            'Cristão bíblico-devocional': makeProfile({
+                ScriptureAuthority: 95,
+                Tradition: -20,
+                InterpretationLiteral: 40,
+                SacramentsEucharist: 10,
+                SacramentsBaptism: 10,
+                BaptismInfant: -60,
+                BaptismBeliever: 60,
+                EucharistRealPresence: -60,
+                EucharistSymbolic: 60,
+                LiturgyFormal: -30,
+                WorshipSpontaneous: 40,
+                WorshipStyleTraditional: 10,
+                WorshipStyleContemporary: 30,
+                SpiritualityMystical: 30,
+                SpiritualityRational: 50,
+                PrayerFormal: -10,
+                PrayerSpontaneous: 60,
+                Miracles: 30,
+                CharismaticGifts: 20,
+                Evangelism: 70,
+                Missions: 60,
+                SocialAction: 40,
+                CommunityLife: 60,
+                ChurchGovernmentHierarchical: -40,
+                ChurchGovernmentCongregational: 40,
+                LocalAutonomy: 50,
+                Discipline: 40,
+                Ecumenism: 10,
+                DoctrinalConservatism: 60,
+                DoctrinalFlexibility: -20,
+                SocialJustice: 30,
+                EschatologyPremillennial: 30,
+                EschatologyAmillennial: -10,
+                GraceSovereign: 30,
+                FreeWill: 60,
+                Predestination: -20,
+                Sanctification: 70,
+                Holiness: 70,
+                Contemplative: 20,
+                Activist: 30
+            })
+        };
+
+        // ─── Utilitários ───
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+        // ════════════════════════════════════════════════════════════════
+        //  APLICAÇÃO
+        // ════════════════════════════════════════════════════════════════
+
+        const app = {
+            currentQ: 0,
+            answers: {},
+            totalQ: QUESTIONS.length,
+            dims: DIMS,
+            dimValues: {},
+            profileScores: {},
+            chartInstances: {},
+            isDark: false,
+
+            init() {
+                const saved = localStorage.getItem('perfilcristao_theme');
+                if (saved === 'dark') this.setTheme(true);
+                else if (saved === 'light') this.setTheme(false);
+                else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) this.setTheme(
+                true);
+
+                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetAll());
+                document.getElementById('startBtn').addEventListener('click', () => this.startDiagnostic());
+                document.getElementById('prevBtn').addEventListener('click', () => this.prevQuestion());
+                document.getElementById('nextBtn').addEventListener('click', () => this.nextQuestion());
+                document.getElementById('shareLinkBtn').addEventListener('click', () => this.shareLink());
+                document.getElementById('shareImgBtn').addEventListener('click', () => this.shareImage());
+
+                this.loadProgress();
+                const savedQ = localStorage.getItem('perfilcristao_currentQ');
+                if (savedQ !== null && parseInt(savedQ) > 0 && Object.keys(this.answers).length > 0) {
+                    this.currentQ = parseInt(savedQ);
+                    if (this.currentQ >= this.totalQ) {
+                        this.showResults();
+                    } else {
+                        this.showQuestion();
+                    }
+                } else {
+                    this.showWelcome();
+                }
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                        const next = document.getElementById('nextBtn');
+                        if (next && !next.disabled) next.click();
+                    }
+                    if (e.key === 'ArrowLeft') {
+                        const prev = document.getElementById('prevBtn');
+                        if (prev && !prev.disabled) prev.click();
+                    }
+                });
+            },
+
+            setTheme(dark) {
+                this.isDark = dark;
+                document.documentElement.classList.toggle('dark', dark);
+                document.getElementById('themeToggle').textContent = dark ? '☀️' : '🌙';
+                localStorage.setItem('perfilcristao_theme', dark ? 'dark' : 'light');
+            },
+
+            toggleTheme() {
+                this.setTheme(!this.isDark);
+            },
+
+            resetAll() {
+                if (!confirm('Tem certeza que deseja reiniciar o diagnóstico? Todo o progresso será perdido.')) return;
+                this.answers = {};
+                this.currentQ = 0;
+                localStorage.removeItem('perfilcristao_answers');
+                localStorage.removeItem('perfilcristao_currentQ');
+                this.showWelcome();
+                Object.values(this.chartInstances).forEach(c => { if (c) c.destroy(); });
+                this.chartInstances = {};
+            },
+
+            loadProgress() {
+                try {
+                    const data = localStorage.getItem('perfilcristao_answers');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        if (typeof parsed === 'object') this.answers = parsed;
+                    }
+                } catch (_) {}
+            },
+
+            saveProgress() {
+                localStorage.setItem('perfilcristao_answers', JSON.stringify(this.answers));
+                localStorage.setItem('perfilcristao_currentQ', String(this.currentQ));
+            },
+
+            showWelcome() {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById('screenWelcome').classList.add('active');
+            },
+
+            showQuestion() {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById('screenQuestion').classList.add('active');
+                this.renderQuestion();
+                this.saveProgress();
+            },
+
+            startDiagnostic() {
+                this.currentQ = 0;
+                this.answers = {};
+                this.saveProgress();
+                this.showQuestion();
+            },
+
+            renderQuestion() {
+                const q = QUESTIONS[this.currentQ];
+                if (!q) return;
+
+                document.getElementById('qNum').textContent = `Pergunta ${this.currentQ+1} / ${this.totalQ}`;
+                document.getElementById('qText').textContent = q.text;
+                document.getElementById('progressFill').style.width = `${((this.currentQ)/this.totalQ)*100}%`;
+                document.getElementById('progressLabel').textContent = `${Math.round((this.currentQ/this.totalQ)*100)}%`;
+
+                const dimNames = q.dims.map(d => DIM_LABELS[d.name] || d.name);
+                document.getElementById('qDimTag').textContent = dimNames.slice(0, 3).join(' · ') + (dimNames.length > 3 ?
+                    ' …' : '');
+
+                const container = document.getElementById('optionsContainer');
+                const labels = [
+                    'Discordo totalmente', 'Discordo', 'Discordo parcialmente',
+                    'Neutro', 'Concordo parcialmente', 'Concordo', 'Concordo totalmente'
+                ];
+                const values = [-3, -2, -1, 0, 1, 2, 3];
+                const special = [
+                    { label: 'Não sei', value: null },
+                    { label: 'Prefiro não responder', value: null }
+                ];
+
+                const currentVal = this.answers[this.currentQ] !== undefined ? this.answers[this.currentQ] : null;
+
+                let html = '';
+                labels.forEach((label, i) => {
+                    const sel = (currentVal !== null && currentVal === values[i]) ? 'selected' : '';
+                    html +=
+                        `<button class="opt-btn ${sel}" data-value="${values[i]}">${label}</button>`;
+                });
+                special.forEach((s) => {
+                    const isSpecial = (this.answers[this.currentQ] === null && currentVal === null);
+                    const cls = isSpecial ? 'selected special' : 'special';
+                    html += `<button class="opt-btn ${cls}" data-value="null" data-special="true">${s.label}</button>`;
+                });
+
+                container.innerHTML = html;
+
+                container.querySelectorAll('.opt-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const val = btn.dataset.value === 'null' ? null : parseInt(btn.dataset.value);
+                        this.answers[this.currentQ] = val;
+                        this.saveProgress();
+                        this.renderQuestion();
+                    });
+                });
+
+                document.getElementById('prevBtn').disabled = (this.currentQ === 0);
+                const nextBtn = document.getElementById('nextBtn');
+                const hasAnswer = this.answers[this.currentQ] !== undefined;
+                if (this.currentQ === this.totalQ - 1) {
+                    nextBtn.textContent = hasAnswer ? '📊 Ver resultados' : 'Pular →';
+                    nextBtn.disabled = false;
+                } else {
+                    nextBtn.textContent = 'Próxima →';
+                    nextBtn.disabled = false;
+                }
+            },
+
+            prevQuestion() {
+                if (this.currentQ > 0) {
+                    this.currentQ--;
+                    this.showQuestion();
+                }
+            },
+
+            nextQuestion() {
+                if (this.currentQ === this.totalQ - 1) {
+                    const answered = Object.keys(this.answers).filter(k => this.answers[k] !== undefined).length;
+                    if (answered < this.totalQ * 0.3) {
+                        if (!confirm('Você respondeu menos de 30% das perguntas. Deseja continuar mesmo assim? Os resultados podem não ser precisos.'))
+                            return;
+                    }
+                    this.showResults();
+                    return;
+                }
+                if (this.currentQ < this.totalQ - 1) {
+                    this.currentQ++;
+                    this.showQuestion();
+                }
+            },
+
+            // ─── RESULTADOS ───
+
+            showResults() {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById('screenResults').classList.add('active');
+                this.computeResults();
+                this.renderResults();
+                this.saveProgress();
+            },
+
+            computeResults() {
+                const dims = this.dims;
+                const dimSums = {};
+                const dimCounts = {};
+                dims.forEach(d => { dimSums[d] = 0;
+                    dimCounts[d] = 0; });
+
+                QUESTIONS.forEach((q, idx) => {
+                    const ans = this.answers[idx];
+                    if (ans === undefined || ans === null) return;
+                    q.dims.forEach(({ name, weight }) => {
+                        if (name in dimSums) {
+                            dimSums[name] += ans * weight;
+                            dimCounts[name]++;
+                        }
+                    });
+                });
+
+                const dimAvg = {};
+                dims.forEach(d => {
+                    if (dimCounts[d] > 0) {
+                        let avg = dimSums[d] / dimCounts[d];
+                        avg = clamp(avg * 33, -100, 100);
+                        dimAvg[d] = avg;
+                    } else {
+                        dimAvg[d] = 0;
+                    }
+                });
+                this.dimValues = dimAvg;
+
+                const profileNames = Object.keys(PROFILES);
+                const scores = {};
+                const userVec = dims.map(d => dimAvg[d] || 0);
+                const userNorm = Math.sqrt(userVec.reduce((s, v) => s + v * v, 0)) || 1;
+
+                profileNames.forEach(name => {
+                    const profile = PROFILES[name];
+                    const profVec = dims.map(d => profile[d] || 0);
+                    const profNorm = Math.sqrt(profVec.reduce((s, v) => s + v * v, 0)) || 1;
+                    let dot = 0;
+                    for (let i = 0; i < dims.length; i++) {
+                        dot += userVec[i] * profVec[i];
+                    }
+                    let sim = (dot / (userNorm * profNorm) + 1) / 2;
+                    sim = clamp(sim * 100, 0, 100);
+                    scores[name] = sim;
+                });
+
+                this.profileScores = scores;
+                this.sortedProfiles = Object.entries(scores)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([name, score]) => ({ name, score }));
+
+                const allAns = Object.values(this.answers).filter(v => v !== undefined && v !== null);
+                if (allAns.length > 2) {
+                    const mean = allAns.reduce((s, v) => s + v, 0) / allAns.length;
+                    const variance = allAns.reduce((s, v) => s + (v - mean) ** 2, 0) / allAns.length;
+                    const std = Math.sqrt(variance);
+                    this.coherence = clamp(100 - std * 14, 0, 100);
+                } else {
+                    this.coherence = 50;
+                }
+
+                const answered = Object.keys(this.answers).filter(k => this.answers[k] !== undefined && this.answers[k] !==
+                    null).length;
+                const ratio = answered / this.totalQ;
+                this.confidence = Math.round(clamp(ratio * 95 + 5, 0, 100));
+            },
+
+            renderResults() {
+                const sorted = this.sortedProfiles;
+
+                const top10 = sorted.slice(0, 10);
+                const container = document.getElementById('topIdeologies');
+                container.innerHTML = top10.map(({ name, score }) =>
+                    `<div class="top-item"><span class="name">${name}</span><span class="pct">${Math.round(score)}%</span></div>`
+                ).join('');
+
+                const dimEntries = Object.entries(this.dimValues)
+                    .filter(([_, v]) => v !== 0)
+                    .sort((a, b) => b[1] - a[1]);
+                const topVals = dimEntries.slice(0, 5);
+                const divVals = document.getElementById('topValues');
+                divVals.innerHTML = topVals.map(([d, v]) =>
+                    `<div class="top-item"><span class="name">${DIM_LABELS[d]||d}</span><span class="pct dim">${Math.round(v)}</span></div>`
+                ).join('') || '<div style="color:var(--text3);font-size:0.9rem;">Nenhuma ênfase predominante</div>';
+
+                const topDiv = dimEntries.slice(-5).reverse();
+                const divDiv = document.getElementById('topDivergences');
+                divDiv.innerHTML = topDiv.map(([d, v]) =>
+                    `<div class="top-item"><span class="name">${DIM_LABELS[d]||d}</span><span class="pct dim">${Math.round(v)}</span></div>`
+                ).join('') || '<div style="color:var(--text3);font-size:0.9rem;">Nenhuma divergência significativa</div>';
+
+                const tbody = document.querySelector('#fullTable tbody');
+                tbody.innerHTML = sorted.map(({ name, score }) =>
+                    `<tr><td>${name}</td><td>${Math.round(score)}%</td></tr>`
+                ).join('');
+
+                const axesGrid = document.getElementById('axesGrid');
+                const dimSorted = Object.entries(this.dimValues)
+                    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+                axesGrid.innerHTML = dimSorted.map(([d, v]) =>
+                    `<div class="item"><span class="lbl">${DIM_LABELS[d]||d}</span><span class="val">${Math.round(v)}</span></div>`
+                ).join('');
+
+                document.getElementById('coherenceIdx').textContent = `${Math.round(this.coherence)}%`;
+                document.getElementById('confidenceIdx').textContent = `${this.confidence}%`;
+
+                const top3 = sorted.slice(0, 3);
+                const explain = document.getElementById('explainBox');
+                let expText = `<strong>Seu perfil se aproxima principalmente de:</strong> `;
+                expText += top3.map(({ name, score }) => `${name} (${Math.round(score)}%)`).join(', ');
+                expText +=
+                    `.<br /><br />Isso significa que suas respostas refletem valores e práticas que, em conjunto, se alinham com essas tradições cristãs. Lembre-se: este é um diagnóstico de padrões, não uma definição de identidade espiritual. Cada pessoa é única e pode transitar entre diferentes ênfases.`;
+
+                const topDim = dimEntries.slice(0, 3);
+                if (topDim.length > 0) {
+                    expText += `<br /><br /><strong>Dimensões que mais pesaram:</strong> `;
+                    expText += topDim.map(([d, v]) =>
+                        `${DIM_LABELS[d]||d} (${v > 0 ? 'inclinação positiva' : 'inclinação negativa'}, ${Math.round(v)})`
+                    ).join('; ');
+                }
+                expText +=
+                    `<br /><br /><span style="color:var(--text3);font-size:0.9rem;">O diagnóstico foi gerado com base em ${Object.keys(this.answers).filter(k=>this.answers[k]!==undefined&&this.answers[k]!==null).length} respostas. A margem de confiança reflete a quantidade de perguntas respondidas.</span>`;
+
+                explain.innerHTML = expText;
+
+                this.renderCharts(sorted);
+            },
+
+            renderCharts(sorted) {
+                const topN = Math.min(12, sorted.length);
+                const labels = sorted.slice(0, topN).map(d => d.name);
+                const data = sorted.slice(0, topN).map(d => Math.round(d.score));
+
+                const radarLabels = sorted.slice(0, 8).map(d => d.name);
+                const radarData = sorted.slice(0, 8).map(d => Math.round(d.score));
+
+                const barCtx = document.getElementById('barChart').getContext('2d');
+                if (this.chartInstances.bar) this.chartInstances.bar.destroy();
+                this.chartInstances.bar = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Afinidade (%)',
+                            data: data,
+                            backgroundColor: 'rgba(106, 76, 156, 0.7)',
+                            borderColor: 'rgba(106, 76, 156, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { min: 0, max: 100, ticks: { font: { size: 9 } } },
+                            x: { ticks: { font: { size: 8 }, maxRotation: 30 } }
+                        }
+                    }
+                });
+
+                const radarCtx = document.getElementById('radarChart').getContext('2d');
+                if (this.chartInstances.radar) this.chartInstances.radar.destroy();
+                this.chartInstances.radar = new Chart(radarCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: radarLabels,
+                        datasets: [{
+                            label: 'Afinidade',
+                            data: radarData,
+                            backgroundColor: 'rgba(106, 76, 156, 0.25)',
+                            borderColor: 'rgba(106, 76, 156, 0.9)',
+                            pointBackgroundColor: 'rgba(106, 76, 156, 0.8)',
+                            pointRadius: 3,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            r: {
+                                min: 0,
+                                max: 100,
+                                ticks: { stepSize: 25, font: { size: 8 } },
+                                grid: { color: 'rgba(0,0,0,0.07)' }
+                            }
+                        }
+                    }
+                });
+
+                this.updateChartColors();
+            },
+
+            updateChartColors() {
+                const isDark = this.isDark;
+                const color = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+                const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
+                Object.values(this.chartInstances).forEach(chart => {
+                    if (chart && chart.options) {
+                        if (chart.options.scales) {
+                            if (chart.options.scales.r) {
+                                chart.options.scales.r.grid.color = gridColor;
+                                chart.options.scales.r.ticks.color = color;
+                            }
+                            if (chart.options.scales.y) {
+                                chart.options.scales.y.grid.color = gridColor;
+                                chart.options.scales.y.ticks.color = color;
+                            }
+                            if (chart.options.scales.x) {
+                                chart.options.scales.x.grid.color = gridColor;
+                                chart.options.scales.x.ticks.color = color;
+                            }
+                        }
+                        chart.update();
+                    }
+                });
+            },
+
+            shareLink() {
+                const url = window.location.href;
+                if (navigator.share) {
+                    navigator.share({ title: 'Meu perfil cristão', text: 'Descubra seu perfil!', url: url })
+                        .catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(url).then(() => {
+                        document.getElementById('shareStatus').textContent = '✅ Link copiado!';
+                        setTimeout(() => document.getElementById('shareStatus').textContent = '', 3000);
+                    }).catch(() => {
+                        document.getElementById('shareStatus').textContent = '❌ Erro ao copiar';
+                        setTimeout(() => document.getElementById('shareStatus').textContent = '', 3000);
+                    });
+                }
+            },
+
+            shareImage() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 500;
+                const ctx = canvas.getContext('2d');
+
+                const isDark = this.isDark;
+                const bg = isDark ? '#0d0d1a' : '#f6f8fa';
+                const text = isDark ? '#eaeaf0' : '#1a1a2e';
+                const text2 = isDark ? '#b0b0cc' : '#4a4a6a';
+                const primary = '#6a4c9c';
+
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = primary;
+                ctx.font = 'bold 32px Segoe UI, system-ui, sans-serif';
+                ctx.fillText('✝️ Perfil Cristão', 40, 70);
+
+                ctx.fillStyle = text;
+                ctx.font = '22px Segoe UI, system-ui, sans-serif';
+                ctx.fillText('Diagnóstico do perfil cristão', 40, 120);
+
+                const top3 = this.sortedProfiles.slice(0, 3);
+                ctx.font = '18px Segoe UI, system-ui, sans-serif';
+                ctx.fillStyle = text2;
+                ctx.fillText('Principais afinidades:', 40, 175);
+                ctx.fillStyle = text;
+                let y = 210;
+                top3.forEach(({ name, score }) => {
+                    ctx.fillStyle = primary;
+                    ctx.font = 'bold 20px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(`${Math.round(score)}%`, 40, y);
+                    ctx.fillStyle = text;
+                    ctx.font = '18px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(name, 120, y);
+                    y += 40;
+                });
+
+                const barData = this.sortedProfiles.slice(0, 6);
+                const barX = 400,
+                    barY = 160,
+                    barW = 320,
+                    barH = 20,
+                    gap = 10;
+                barData.forEach(({ name, score }, i) => {
+                    const yy = barY + i * (barH + gap);
+                    ctx.fillStyle = text2;
+                    ctx.font = '13px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(name.substring(0, 14), barX, yy + 14);
+                    ctx.fillStyle = 'rgba(106,76,156,0.2)';
+                    ctx.fillRect(barX + 110, yy, barW, barH);
+                    ctx.fillStyle = primary;
+                    ctx.fillRect(barX + 110, yy, (score / 100) * barW, barH);
+                    ctx.fillStyle = text;
+                    ctx.font = 'bold 12px Segoe UI, system-ui, sans-serif';
+                    ctx.fillText(`${Math.round(score)}%`, barX + 110 + (score / 100) * barW + 6, yy + 14);
+                });
+
+                ctx.fillStyle = text2;
+                ctx.font = '13px Segoe UI, system-ui, sans-serif';
+                ctx.fillText('Gerado por perfilcristao.diagnostico — ferramenta de autoconhecimento', 40, 460);
+
+                const link = document.createElement('a');
+                link.download = 'perfil_cristao.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

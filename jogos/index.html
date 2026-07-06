@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Arcade Hub - Meu Projeto</title>
+    <style>
+        /* ===== RESET E BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1300px;
+            width: 100%;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3.2rem;
+            font-weight: 300;
+            color: #fff;
+            letter-spacing: 6px;
+            text-shadow: 0 0 40px rgba(108, 108, 255, 0.15);
+        }
+
+        .header h1 span {
+            color: #6c6cff;
+        }
+
+        .header p {
+            color: #8080a0;
+            font-size: 1.1rem;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stats-bar .stat {
+            background: #1a1a2e;
+            padding: 8px 25px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-size: 0.95rem;
+        }
+
+        .stats-bar .stat strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* ===== BARRA DE PESQUISA E FILTROS ===== */
+        .controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 35px;
+        }
+
+        .search-box {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 50px;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            max-width: 400px;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 1rem;
+            width: 100%;
+            padding: 8px 0;
+        }
+
+        .search-box input::placeholder {
+            color: #606080;
+        }
+
+        .search-box .icon {
+            color: #606080;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            color: #a0a0c0;
+            padding: 8px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: 0.25s;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            background: #2a2a4a;
+            color: #fff;
+        }
+
+        .filter-btn.active {
+            background: #4a4a8a;
+            border-color: #6c6cff;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(108, 108, 255, 0.15);
+        }
+
+        /* ===== GRADE DE JOGOS ===== */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 22px;
+        }
+
+        /* ===== CARD DO JOGO ===== */
+        .game-card {
+            background: #16162a;
+            border-radius: 20px;
+            border: 1px solid #252545;
+            padding: 22px 18px 18px 18px;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-6px);
+            border-color: #4a4a7a;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-card .emoji {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+        }
+
+        .game-card .title {
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .game-card .category-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8888aa;
+            background: #0f0f1a;
+            padding: 2px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            width: fit-content;
+            margin-bottom: 10px;
+            border: 1px solid #1f1f3a;
+        }
+
+        .game-card .description {
+            color: #9999bb;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            flex: 1;
+            margin-bottom: 14px;
+        }
+
+        .game-card .footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .game-card .play-btn {
+            background: #2a2a5a;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 8px 22px;
+            border-radius: 30px;
+            transition: 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            border: 1px solid #4a4a8a;
+        }
+
+        .game-card .play-btn:hover {
+            background: #4a4a8a;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(108, 108, 255, 0.2);
+            transform: scale(1.04);
+        }
+
+        /* ===== SEM RESULTADOS ===== */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #606080;
+            font-size: 1.2rem;
+            padding: 60px 0;
+        }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2.2rem;
+                letter-spacing: 3px;
+            }
+            .controls-bar {
+                flex-direction: column;
+                align-items: center;
+            }
+            .search-box {
+                max-width: 100%;
+                width: 100%;
+            }
+            .games-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ===== HEADER ===== -->
+        <div class="header">
+            <h1>🎮 <span>ARCADE</span> HUB</h1>
+            <p>Meu projeto pessoal — todos os jogos em um só lugar</p>
+            <div class="stats-bar">
+                <div class="stat">📦 Total planejado: <strong id="totalCount">50</strong></div>
+            </div>
+        </div>
+
+        <!-- ===== CONTROLES ===== -->
+        <div class="controls-bar">
+            <div class="search-box">
+                <span class="icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Buscar jogo por nome ou descrição...">
+            </div>
+            <div class="filter-buttons" id="filterButtons">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="arcade">🎯 Arcade</button>
+                <button class="filter-btn" data-filter="puzzle">🧩 Puzzle</button>
+                <button class="filter-btn" data-filter="plataforma">🧱 Plataforma</button>
+                <button class="filter-btn" data-filter="tabuleiro">♟️ Tabuleiro</button>
+                <button class="filter-btn" data-filter="cartas">🃏 Cartas</button>
+                <button class="filter-btn" data-filter="diversos">🎲 Diversos</button>
+            </div>
+        </div>
+
+        <!-- ===== GRADE DE JOGOS ===== -->
+        <div class="games-grid" id="gamesGrid"></div>
+
+    </div>
+
+    <script>
+        // ================================================================
+        //  1.  BANCO DE DADOS DOS JOGOS (Lista completa de 50)
+        // ================================================================
+       const GAMES = [
+    // -------- 🎯 ARCADE & AÇÃO --------
+    { id: 1, name: 'Pong', emoji: '🏓', category: 'arcade', description: 'Tênis de mesa. Jogue contra a IA ou com um amigo.', file: 'jogos/pong.html' },
+    { id: 2, name: 'Breakout', emoji: '🧱', category: 'arcade', description: 'Quebre todos os tijolos com a bola e a raquete.', file: 'jogos/breakout.html' },
+    { id: 3, name: 'Space Invaders', emoji: '👾', category: 'arcade', description: 'Naves alienígenas descem em formação. Atire antes que cheguem!', file: 'jogos/space-invaders.html' },
+    { id: 4, name: 'Asteroids', emoji: '☄️', category: 'arcade', description: 'Nave triangulinho atirando em asteroides que se partem.', file: 'jogos/asteroids.html' },
+    { id: 5, name: 'Frogger', emoji: '🐸', category: 'arcade', description: 'Atravesse o rio e a rua desviando de carros e jacarés.', file: 'jogos/frogger.html' },
+    { id: 6, name: 'Galaga', emoji: '🛸', category: 'arcade', description: 'Similar ao Space Invaders, mas com formação em "V".', file: 'jogos/galaga.html' },
+    { id: 7, name: 'Missile Command', emoji: '🚀', category: 'arcade', description: 'Defenda suas cidades dos mísseis inimigos.', file: 'jogos/missile-command.html' },
+    { id: 8, name: 'Pac-Man', emoji: '🟡', category: 'arcade', description: 'Labirinto, fantasmas e bolinhas. Fuja e coma!', file: 'jogos/pac-man.html' },
+    { id: 9, name: 'Donkey Kong', emoji: '🦍', category: 'arcade', description: 'Mário desvia de barris e sobe escadas para salvar a donzela.', file: 'jogos/donkey-kong.html' },
+    { id: 10, name: 'Q*bert', emoji: '🔶', category: 'arcade', description: 'Pule em cubos para mudar a cor deles, fugindo do Cobra.', file: 'jogos/qbert.html' },
+    { id: 11, name: 'Centipede', emoji: '🐛', category: 'arcade', description: 'Atire na centopeia que desce em zigue-zague pelo campo.', file: 'jogos/centipede.html' },
+    { id: 12, name: 'Dig Dug', emoji: '⛏️', category: 'arcade', description: 'Cave túneis e estoure inimigos com uma bomba de ar.', file: 'jogos/dig-dug.html' },
+    { id: 13, name: 'Snake', emoji: '🐍', category: 'arcade', description: 'A clássica cobrinha.', file: 'jogos/snake.html' },
+    { id: 14, name: 'Tetris', emoji: '🧩', category: 'arcade', description: 'Encaixe as peças e elimine linhas.', file: 'jogos/tetris.html' },
+
+    // -------- 🧩 PUZZLE & LÓGICA --------
+    { id: 15, name: '2048', emoji: '🔢', category: 'puzzle', description: 'Junte os números até chegar a 2048.', file: 'jogos/2048.html' },
+    { id: 16, name: 'Jogo da Memória', emoji: '🃏', category: 'puzzle', description: 'Encontre todos os pares.', file: 'jogos/memoria.html' },
+    { id: 17, name: 'Lig-4', emoji: '🔴', category: 'puzzle', description: 'Alinhe quatro peças.', file: 'jogos/lig-4.html' },
+    { id: 18, name: 'Sokoban', emoji: '📦', category: 'puzzle', description: 'Empurre caixas até o destino.', file: 'jogos/sokoban.html' },
+    { id: 19, name: '15 Puzzle', emoji: '🧊', category: 'puzzle', description: 'Organize os números.', file: 'jogos/15-puzzle.html' },
+    { id: 20, name: 'Mastermind', emoji: '🎨', category: 'puzzle', description: 'Descubra a sequência.', file: 'jogos/mastermind.html' },
+    { id: 21, name: 'Nonogram / Picross', emoji: '🖼️', category: 'puzzle', description: 'Revele a imagem escondida.', file: 'jogos/nonogram.html' },
+    { id: 22, name: 'Simon Says', emoji: '💡', category: 'puzzle', description: 'Repita a sequência.', file: 'jogos/simon.html' },
+    { id: 23, name: 'Lights Out', emoji: '💡', category: 'puzzle', description: 'Apague todas as luzes.', file: 'jogos/lights-out.html' },
+    { id: 24, name: 'Klotski', emoji: '🟥', category: 'puzzle', description: 'Deslize os blocos.', file: 'jogos/klotski.html' },
+    { id: 25, name: 'Wordle', emoji: '📝', category: 'puzzle', description: 'Descubra a palavra.', file: 'jogos/wordle.html' },
+    { id: 26, name: 'Campo Minado', emoji: '💣', category: 'puzzle', description: 'Evite as minas.', file: 'jogos/campo-minado.html' },
+    { id: 27, name: 'Sudoku', emoji: '🧩', category: 'puzzle', description: 'Complete a grade.', file: 'jogos/sudoku.html' },
+
+    // -------- 🧱 PLATAFORMA --------
+    { id: 28, name: 'Flappy Bird', emoji: '🐦', category: 'plataforma', description: 'Passe pelos canos.', file: 'jogos/flappy-bird.html' },
+    { id: 29, name: 'Dino Run', emoji: '🦕', category: 'plataforma', description: 'Corra e pule.', file: 'jogos/dino-run.html' },
+    { id: 30, name: 'Geometry Dash', emoji: '⬛', category: 'plataforma', description: 'Desvie dos obstáculos.', file: 'jogos/geometry-dash.html' },
+    { id: 31, name: 'Jump King', emoji: '👑', category: 'plataforma', description: 'Suba pulando.', file: 'jogos/jump-king.html' },
+    { id: 32, name: 'Road Fighter', emoji: '🏎️', category: 'plataforma', description: 'Corra evitando carros.', file: 'jogos/road-fighter.html' },
+    { id: 33, name: 'Fall Down', emoji: '🕳️', category: 'plataforma', description: 'Caia entre plataformas.', file: 'jogos/fall-down.html' },
+
+    // -------- ♟️ TABULEIRO --------
+    { id: 34, name: 'Damas', file: 'jogos/damas.html' },
+    { id: 35, name: 'Xadrez', file: 'jogos/xadrez.html' },
+    { id: 36, name: 'Reversi / Othello', file: 'jogos/reversi.html' },
+    { id: 37, name: 'Batalha Naval', file: 'jogos/batalha-naval.html' },
+    { id: 38, name: 'Mancala', file: 'jogos/mancala.html' },
+    { id: 39, name: 'Torre de Hanói', file: 'jogos/torre-hanoi.html' },
+    { id: 40, name: 'Jogo da Velha', file: 'jogos/jogo-da-velha.html' },
+
+    // -------- 🃏 CARTAS --------
+    { id: 41, name: 'Blackjack / 21', file: 'jogos/blackjack.html' },
+    { id: 42, name: 'Paciência', file: 'jogos/paciencia.html' },
+    { id: 43, name: 'War', file: 'jogos/war.html' },
+    { id: 44, name: 'Poker', file: 'jogos/poker.html' },
+
+    // -------- 🎲 DIVERSOS --------
+    { id: 45, name: 'Tiro ao Alvo', file: 'jogos/tiro-ao-alvo.html' },
+    { id: 46, name: 'Bowling', file: 'jogos/bowling.html' },
+    { id: 47, name: 'Mini Golfe', file: 'jogos/mini-golfe.html' },
+    { id: 48, name: 'Tank Battle', file: 'jogos/tank-battle.html' },
+    { id: 49, name: 'Match-3', file: 'jogos/match-3.html' },
+    { id: 50, name: 'Mine 3D (fake)', file: 'jogos/mine-3d.html' }
+// ];
+
+        // ================================================================
+        //  2.  LÓGICA DE RENDERIZAÇÃO E FILTROS
+        // ================================================================
+
+        const grid = document.getElementById('gamesGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        let currentFilter = 'all';
+        let currentSearch = '';
+
+        function renderGames() {
+            const filtered = GAMES.filter(game => {
+                if (currentFilter !== 'all' && game.category !== currentFilter) return false;
+                if (currentSearch.trim() !== '') {
+                    const term = currentSearch.trim().toLowerCase();
+                    const nameMatch = game.name.toLowerCase().includes(term);
+                    const descMatch = game.description.toLowerCase().includes(term);
+                    if (!nameMatch && !descMatch) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="no-results">😕 Nenhum jogo encontrado. Tente outro filtro ou busca.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(game => {
+                const categoryLabels = {
+                    arcade: '🎯 Arcade',
+                    puzzle: '🧩 Puzzle',
+                    plataforma: '🧱 Plataforma',
+                    tabuleiro: '♟️ Tabuleiro',
+                    cartas: '🃏 Cartas',
+                    diversos: '🎲 Diversos'
+                };
+
+                return `
+                    <div class="game-card" data-category="${game.category}" data-name="${game.name}">
+                        <div class="emoji">${game.emoji}</div>
+                        <div class="title">${game.name}</div>
+                        <div class="category-tag">${categoryLabels[game.category] || game.category}</div>
+                        <div class="description">${game.description}</div>
+                        <div class="footer">
+                            <a href="${game.file}" class="play-btn">▶ Jogar</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ================================================================
+        //  3.  EVENTOS
+        // ================================================================
+
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            renderGames();
+        });
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderGames();
+            });
+        });
+
+        // ================================================================
+        //  4.  ATUALIZA CONTADOR TOTAL
+        // ================================================================
+
+        document.getElementById('totalCount').textContent = GAMES.length;
+
+        // ================================================================
+        //  5.  INICIALIZA
+        // ================================================================
+
+        renderGames();
+    </script>
+
+</body>
+</html>

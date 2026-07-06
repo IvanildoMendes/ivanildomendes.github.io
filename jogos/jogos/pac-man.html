@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🟡 Pac-Man</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #0b0b16;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .container {
+            background: #1a1a2e;
+            padding: 25px 30px 30px;
+            border-radius: 30px;
+            border: 1px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+            max-width: 100%;
+        }
+        h1 {
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #a0a0c0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .info-bar span {
+            background: #0f0f1a;
+            padding: 4px 16px;
+            border-radius: 50px;
+            border: 1px solid #2a2a4a;
+        }
+        .info-bar .lives { color: #ffd93d; }
+        .info-bar .score { color: #ffd700; }
+        .info-bar .level { color: #6c6cff; }
+
+        #gameCanvas {
+            background: #0b0b16;
+            border-radius: 16px;
+            border: 3px solid #2a2a4a;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 560px;
+            height: auto;
+            aspect-ratio: 560 / 620;
+            image-rendering: pixelated;
+            touch-action: none;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 18px;
+        }
+        .controls button {
+            background: #2a2a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            border: 1px solid transparent;
+        }
+        .controls button:hover {
+            background: #4a4a8a;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(108,108,255,0.15);
+        }
+        .controls button:active { transform: scale(0.95); }
+        .hint {
+            color: #606080;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+        .hint kbd {
+            background: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 6px;
+            border: 1px solid #2a2a4a;
+            color: #c0c0e0;
+            font-weight: 600;
+        }
+        /* Mobile D-Pad */
+        .mobile-dpad {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            max-width: 180px;
+            margin: 12px auto 0;
+        }
+        .mobile-dpad button {
+            background: #2a2a4a;
+            border: 1px solid #3a3a5a;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.6rem;
+            padding: 8px 0;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: 0.1s;
+            box-shadow: 0 4px 0 #0f0f1a;
+        }
+        .mobile-dpad button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0f0f1a;
+        }
+        .mobile-dpad .center { visibility: hidden; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .info-bar { font-size: 0.9rem; }
+            .controls button { padding: 8px 18px; font-size: 0.8rem; }
+            .hint { font-size: 0.75rem; }
+            .mobile-dpad { display: grid; }
+        }
+        @media (pointer: coarse) { .mobile-dpad { display: grid; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🟡 PAC-MAN</h1>
+    <div class="info-bar">
+        <span class="score">🏆 <span id="scoreDisplay">0</span></span>
+        <span class="level">⚡ Nível <span id="levelDisplay">1</span></span>
+        <span class="lives">❤️ <span id="livesDisplay">3</span></span>
+    </div>
+    <canvas id="gameCanvas" width="560" height="620"></canvas>
+
+    <div class="mobile-dpad">
+        <button data-dir="up">▲</button>
+        <button data-dir="left">◀</button>
+        <button data-dir="down">▼</button>
+        <button data-dir="right">▶</button>
+    </div>
+
+    <div class="controls">
+        <button id="restartBtn">🔄 Reiniciar</button>
+        <button id="pauseBtn">⏸️ Pausar</button>
+    </div>
+    <div class="hint">
+        <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> mover &nbsp;·&nbsp; <kbd>P</kbd> pausa
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    //  1.  CONFIGURAÇÕES E MAPA
+    // ================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const levelSpan = document.getElementById('levelDisplay');
+    const livesSpan = document.getElementById('livesDisplay');
+    const restartBtn = document.getElementById('restartBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+
+    const W = 560, H = 620;
+    const CELL = 20;
+    const COLS = 28;  // 560/20
+    const ROWS = 31;  // 620/20 (linha 0 a 30)
+
+    // Mapa: 0 = vazio, 1 = parede, 2 = bolinha, 3 = power-pellet, 4 = porta (casa dos fantasmas)
+    const MAP_TEMPLATE = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,0,0,0,0,0],
+        [0,0,0,0,0,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,0,0,0,0,0],
+        [1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,3,2,2,1,1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,1,1,2,2,3,1],
+        [1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1],
+        [1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1],
+        [1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
+    // Posição da porta (casa dos fantasmas)
+    const DOOR_ROW = 14;
+    const DOOR_COL_START = 12;
+    const DOOR_COL_END = 15;
+
+    // ================================================================
+    //  2.  ESTADO DO JOGO
+    // ================================================================
+    let map = [];
+    let pacman = { x: 14, y: 23, dir: 0, nextDir: 0, mouth: 0, mouthDir: 1 };
+    let ghosts = [];
+    let score = 0;
+    let lives = 3;
+    let level = 1;
+    let totalDots = 0;
+    let dotsEaten = 0;
+    let gameOver = false;
+    let paused = false;
+    let animationId = null;
+    let powerTimer = 0;
+    const POWER_DURATION = 300; // frames (5 segundos a 60fps)
+    let ghostEatCombo = 0; // pontos multiplicadores
+    let fruit = null; // { x, y, type, timer }
+    let fruitTimer = 0;
+
+    // Direções: 0=dir, 1=baixo, 2=esq, 3=cima
+    const DX = [1, 0, -1, 0];
+    const DY = [0, 1, 0, -1];
+
+    // ================================================================
+    //  3.  FUNÇÕES AUXILIARES
+    // ================================================================
+
+    function loadMap() {
+        map = MAP_TEMPLATE.map(row => [...row]);
+        totalDots = 0;
+        dotsEaten = 0;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (map[r][c] === 2 || map[r][c] === 3) totalDots++;
+            }
+        }
+    }
+
+    function resetPacman() {
+        pacman.x = 14;
+        pacman.y = 23;
+        pacman.dir = 0;
+        pacman.nextDir = 0;
+        pacman.mouth = 0;
+        pacman.mouthDir = 1;
+    }
+
+    function createGhosts() {
+        const ghostColors = ['#ff6b6b', '#ffa94d', '#6bcb77', '#4d96ff'];
+        const names = ['Blinky', 'Pinky', 'Inky', 'Clyde'];
+        // Posições iniciais na casa dos fantasmas
+        const startPositions = [
+            { x: 13, y: 14 },
+            { x: 14, y: 14 },
+            { x: 12, y: 14 },
+            { x: 15, y: 14 }
+        ];
+        ghosts = [];
+        for (let i = 0; i < 4; i++) {
+            const pos = startPositions[i];
+            ghosts.push({
+                x: pos.x,
+                y: pos.y,
+                startX: pos.x,
+                startY: pos.y,
+                dir: 0,
+                color: ghostColors[i],
+                name: names[i],
+                scatter: i === 0 ? false : true, // Blinky persegue sempre
+                scared: false,
+                eaten: false,
+                inHouse: true,
+                releaseTimer: i * 60 + 30 // libera aos poucos
+            });
+        }
+    }
+
+    function resetGame() {
+        loadMap();
+        resetPacman();
+        createGhosts();
+        score = 0;
+        lives = 3;
+        level = 1;
+        gameOver = false;
+        paused = false;
+        pauseBtn.textContent = '⏸️ Pausar';
+        powerTimer = 0;
+        ghostEatCombo = 0;
+        fruit = null;
+        fruitTimer = 0;
+        updateUI();
+        draw();
+    }
+
+    function updateUI() {
+        scoreSpan.textContent = score;
+        levelSpan.textContent = level;
+        livesSpan.textContent = lives;
+    }
+
+    function loseLife() {
+        lives--;
+        updateUI();
+        if (lives <= 0) {
+            gameOver = true;
+            return;
+        }
+        resetPacman();
+        createGhosts();
+        powerTimer = 0;
+        ghostEatCombo = 0;
+        fruit = null;
+        // Reseta as bolinhas? Não, mantém o estado do mapa.
+    }
+
+    function spawnFruit() {
+        const types = ['🍒', '🍓', '🍑', '🍎', '🍉', '🍊'];
+        const idx = Math.min(level - 1, types.length - 1);
+        fruit = {
+            x: 14,
+            y: 17,
+            type: types[idx],
+            timer: 300 // frames até desaparecer
+        };
+    }
+
+    // ================================================================
+    //  4.  LÓGICA DO PAC-MAN
+    // ================================================================
+
+    function canMove(x, y, dir) {
+        const nx = x + DX[dir];
+        const ny = y + DY[dir];
+        // Túnel (wrap-around)
+        if (ny === 14 && (nx < 0 || nx >= COLS)) return true;
+        if (ny < 0 || ny >= ROWS || nx < 0 || nx >= COLS) return false;
+        const cell = map[ny][nx];
+        if (cell === 1) return false;
+        // Porta (fantasmas podem passar, pacman não)
+        if (ny === DOOR_ROW && nx >= DOOR_COL_START && nx <= DOOR_COL_END) return false;
+        return true;
+    }
+
+    function movePacman() {
+        // Tenta virar para a próxima direção
+        if (canMove(pacman.x, pacman.y, pacman.nextDir)) {
+            pacman.dir = pacman.nextDir;
+        }
+        // Move na direção atual
+        if (canMove(pacman.x, pacman.y, pacman.dir)) {
+            pacman.x += DX[pacman.dir];
+            pacman.y += DY[pacman.dir];
+            // Túnel
+            if (pacman.y === 14 && pacman.x < 0) pacman.x = COLS - 1;
+            if (pacman.y === 14 && pacman.x >= COLS) pacman.x = 0;
+        }
+
+        // Animação da boca
+        pacman.mouth += pacman.mouthDir * 0.12;
+        if (pacman.mouth > 1) { pacman.mouth = 1; pacman.mouthDir = -1; }
+        if (pacman.mouth < 0) { pacman.mouth = 0; pacman.mouthDir = 1; }
+
+        // Come bolinhas
+        const cell = map[pacman.y]?.[pacman.x];
+        if (cell === 2) {
+            map[pacman.y][pacman.x] = 0;
+            dotsEaten++;
+            score += 10;
+            updateUI();
+        } else if (cell === 3) {
+            map[pacman.y][pacman.x] = 0;
+            dotsEaten++;
+            score += 50;
+            updateUI();
+            // Power-up!
+            powerTimer = POWER_DURATION;
+            ghostEatCombo = 0;
+            for (const g of ghosts) {
+                if (!g.inHouse && !g.eaten) {
+                    g.scared = true;
+                }
+            }
+            // Os fantasmas na casa também ficam assustados? Não, só os que estão fora.
+        }
+
+        // Verifica se todas as bolinhas foram comidas
+        if (dotsEaten >= totalDots) {
+            // Próximo nível
+            level++;
+            updateUI();
+            loadMap();
+            resetPacman();
+            createGhosts();
+            powerTimer = 0;
+            ghostEatCombo = 0;
+            fruit = null;
+            // Aumenta velocidade dos fantasmas (nível)
+            for (const g of ghosts) {
+                g.releaseTimer = Math.max(10, g.releaseTimer - 10);
+            }
+            spawnFruit();
+        }
+
+        // Fruta bônus
+        if (fruit) {
+            fruit.timer--;
+            if (fruit.timer <= 0) fruit = null;
+            // Se comer a fruta
+            if (pacman.x === fruit.x && pacman.y === fruit.y) {
+                score += 100;
+                updateUI();
+                fruit = null;
+                spawnFruit(); // nova fruta
+            }
+        } else {
+            // Nova fruta a cada 100 pontos
+            if (score > 0 && score % 100 < 10 && Math.random() < 0.01) {
+                spawnFruit();
+            }
+        }
+    }
+
+    // ================================================================
+    //  5.  LÓGICA DOS FANTASMAS
+    // ================================================================
+
+    function getGhostTarget(ghost) {
+        if (ghost.eaten) {
+            // Volta para a casa
+            return { x: 14, y: 14 };
+        }
+        if (ghost.scared) {
+            // Modo assustado: foge aleatoriamente (vai para um canto aleatório)
+            const corners = [
+                { x: 1, y: 1 },
+                { x: COLS - 2, y: 1 },
+                { x: 1, y: ROWS - 2 },
+                { x: COLS - 2, y: ROWS - 2 }
+            ];
+            return corners[Math.floor(Math.random() * corners.length)];
+        }
+        // Modo normal: cada fantasma tem um comportamento
+        switch (ghost.name) {
+            case 'Blinky':
+                // Persegue diretamente o Pac-Man
+                return { x: pacman.x, y: pacman.y };
+            case 'Pinky':
+                // Mira 4 células à frente do Pac-Man
+                return { x: pacman.x + DX[pacman.dir] * 4, y: pacman.y + DY[pacman.dir] * 4 };
+            case 'Inky':
+                // Aleatório (mas com alguma lógica)
+                return { x: pacman.x + DX[pacman.dir] * 2 - 2, y: pacman.y + DY[pacman.dir] * 2 - 2 };
+            case 'Clyde':
+                // Foge se estiver perto, persegue se estiver longe
+                const dx = pacman.x - ghost.x;
+                const dy = pacman.y - ghost.y;
+                if (Math.sqrt(dx*dx + dy*dy) < 8) {
+                    return { x: 0, y: 0 }; // foge para o canto
+                } else {
+                    return { x: pacman.x, y: pacman.y };
+                }
+            default:
+                return { x: pacman.x, y: pacman.y };
+        }
+    }
+
+    function moveGhost(ghost) {
+        if (ghost.inHouse) {
+            ghost.releaseTimer--;
+            if (ghost.releaseTimer <= 0) {
+                ghost.inHouse = false;
+                ghost.x = 14;
+                ghost.y = 14;
+                ghost.dir = 0;
+            }
+            return;
+        }
+
+        // Se estiver comido, vai em direção à casa
+        if (ghost.eaten) {
+            const dx = 14 - ghost.x;
+            const dy = 14 - ghost.y;
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
+                ghost.eaten = false;
+                ghost.scared = false;
+                ghost.inHouse = true;
+                ghost.releaseTimer = 60;
+                return;
+            }
+            // Move em direção à casa
+            const dirs = [];
+            if (dx > 0) dirs.push(0);
+            if (dx < 0) dirs.push(2);
+            if (dy > 0) dirs.push(1);
+            if (dy < 0) dirs.push(3);
+            // Escolhe a melhor direção
+            for (const d of dirs) {
+                if (canMove(ghost.x, ghost.y, d)) {
+                    ghost.x += DX[d];
+                    ghost.y += DY[d];
+                    return;
+                }
+            }
+            return;
+        }
+
+        // Modo assustado: inverte a direção
+        if (ghost.scared) {
+            // Movimento aleatório
+            const possible = [];
+            for (let d = 0; d < 4; d++) {
+                if (d === (ghost.dir + 2) % 4) continue; // não voltar
+                if (canMove(ghost.x, ghost.y, d)) possible.push(d);
+            }
+            if (possible.length > 0) {
+                ghost.dir = possible[Math.floor(Math.random() * possible.length)];
+            } else {
+                ghost.dir = (ghost.dir + 2) % 4;
+            }
+            ghost.x += DX[ghost.dir];
+            ghost.y += DY[ghost.dir];
+            // Túnel
+            if (ghost.y === 14 && ghost.x < 0) ghost.x = COLS - 1;
+            if (ghost.y === 14 && ghost.x >= COLS) ghost.x = 0;
+            return;
+        }
+
+        // Modo normal: persegue o alvo
+        const target = getGhostTarget(ghost);
+        const dx = target.x - ghost.x;
+        const dy = target.y - ghost.y;
+        // Escolhe a melhor direção (prioriza eixos)
+        const preferX = Math.abs(dx) > Math.abs(dy);
+        const dirs = [];
+        if (preferX) {
+            if (dx > 0) dirs.push(0);
+            else if (dx < 0) dirs.push(2);
+            if (dy > 0) dirs.push(1);
+            else if (dy < 0) dirs.push(3);
+        } else {
+            if (dy > 0) dirs.push(1);
+            else if (dy < 0) dirs.push(3);
+            if (dx > 0) dirs.push(0);
+            else if (dx < 0) dirs.push(2);
+        }
+        // Tenta as direções na ordem
+        for (const d of dirs) {
+            if (d === (ghost.dir + 2) % 4) continue; // não voltar
+            if (canMove(ghost.x, ghost.y, d)) {
+                ghost.dir = d;
+                ghost.x += DX[d];
+                ghost.y += DY[d];
+                // Túnel
+                if (ghost.y === 14 && ghost.x < 0) ghost.x = COLS - 1;
+                if (ghost.y === 14 && ghost.x >= COLS) ghost.x = 0;
+                return;
+            }
+        }
+        // Se não conseguir, tenta qualquer direção
+        for (let d = 0; d < 4; d++) {
+            if (d === (ghost.dir + 2) % 4) continue;
+            if (canMove(ghost.x, ghost.y, d)) {
+                ghost.dir = d;
+                ghost.x += DX[d];
+                ghost.y += DY[d];
+                if (ghost.y === 14 && ghost.x < 0) ghost.x = COLS - 1;
+                if (ghost.y === 14 && ghost.x >= COLS) ghost.x = 0;
+                return;
+            }
+        }
+    }
+
+    function updateGhosts() {
+        for (const g of ghosts) {
+            if (g.inHouse && g.eaten) continue;
+            moveGhost(g);
+        }
+
+        // Verifica colisão com Pac-Man
+        for (const g of ghosts) {
+            if (g.inHouse) continue;
+            if (g.eaten) continue;
+            if (pacman.x === g.x && pacman.y === g.y) {
+                if (g.scared) {
+                    // Comeu o fantasma!
+                    g.eaten = true;
+                    g.scared = false;
+                    ghostEatCombo++;
+                    const points = 200 * ghostEatCombo;
+                    score += points;
+                    updateUI();
+                    // Efeito de partículas
+                } else {
+                    // Perdeu vida
+                    loseLife();
+                    if (gameOver) return;
+                    resetPacman();
+                    // Reseta fantasmas
+                    createGhosts();
+                    powerTimer = 0;
+                    ghostEatCombo = 0;
+                    fruit = null;
+                    return;
+                }
+            }
+        }
+    }
+
+    // ================================================================
+    //  6.  ATUALIZAÇÃO GERAL
+    // ================================================================
+
+    function update() {
+        if (paused || gameOver) return;
+
+        // Atualiza power-timer
+        if (powerTimer > 0) {
+            powerTimer--;
+            if (powerTimer === 0) {
+                for (const g of ghosts) {
+                    g.scared = false;
+                }
+            }
+        }
+
+        movePacman();
+        updateGhosts();
+
+        // Verifica game over
+        if (gameOver) return;
+
+        // Atualiza fruta
+        if (fruit) {
+            fruit.timer--;
+            if (fruit.timer <= 0) fruit = null;
+        }
+
+        // spawn fruit a cada 100 pontos (já feito no movePacman)
+    }
+
+    // ================================================================
+    //  7.  RENDERIZAÇÃO
+    // ================================================================
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // --- Fundo ---
+        ctx.fillStyle = '#0b0b16';
+        ctx.fillRect(0, 0, W, H);
+
+        // --- Mapa ---
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = map[r][c];
+                const x = c * CELL, y = r * CELL;
+                if (cell === 1) {
+                    // Parede
+                    ctx.fillStyle = '#1a2a4a';
+                    ctx.fillRect(x, y, CELL, CELL);
+                    ctx.fillStyle = '#2a4a7a';
+                    ctx.fillRect(x + 2, y + 2, CELL - 4, CELL - 4);
+                    ctx.fillStyle = '#3a5a8a';
+                    ctx.fillRect(x + 4, y + 4, CELL - 8, CELL - 8);
+                } else if (cell === 2) {
+                    // Bolinha
+                    ctx.fillStyle = '#ffb8ae';
+                    ctx.beginPath();
+                    ctx.arc(x + CELL/2, y + CELL/2, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (cell === 3) {
+                    // Power-pellet (pisca)
+                    if (Math.floor(Date.now() / 300) % 2 === 0) {
+                        ctx.fillStyle = '#ff6b6b';
+                        ctx.shadowColor = '#ff6b6b';
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath();
+                        ctx.arc(x + CELL/2, y + CELL/2, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+        }
+
+        // --- Porta da casa dos fantasmas ---
+        ctx.fillStyle = '#2a2a4a';
+        ctx.fillRect(DOOR_COL_START * CELL, DOOR_ROW * CELL, (DOOR_COL_END - DOOR_COL_START + 1) * CELL, 4);
+
+        // --- Fruta ---
+        if (fruit) {
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(fruit.type, fruit.x * CELL + CELL/2, fruit.y * CELL + CELL/2 + 2);
+        }
+
+        // --- Fantasmas ---
+        for (const g of ghosts) {
+            if (g.inHouse && !g.eaten) {
+                // Desenha dentro da casa
+                const x = g.x * CELL, y = g.y * CELL;
+                ctx.fillStyle = g.color;
+                ctx.beginPath();
+                ctx.arc(x + CELL/2, y + CELL/2 - 2, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillRect(x + 4, y + 6, 12, 8);
+                // Olhos
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x + 6, y + 4, 3, 0, Math.PI * 2);
+                ctx.arc(x + 14, y + 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#0b0b16';
+                ctx.beginPath();
+                ctx.arc(x + 5, y + 4, 1.5, 0, Math.PI * 2);
+                ctx.arc(x + 13, y + 4, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                continue;
+            }
+            if (g.eaten) {
+                // Desenha só os olhos (voltando para a casa)
+                const x = g.x * CELL, y = g.y * CELL;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x + 6, y + 6, 4, 0, Math.PI * 2);
+                ctx.arc(x + 14, y + 6, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#0b0b16';
+                ctx.beginPath();
+                ctx.arc(x + 5, y + 6, 2, 0, Math.PI * 2);
+                ctx.arc(x + 13, y + 6, 2, 0, Math.PI * 2);
+                ctx.fill();
+                continue;
+            }
+            const x = g.x * CELL, y = g.y * CELL;
+            // Cor do fantasma
+            if (g.scared) {
+                // Azul (ou piscando se estiver acabando)
+                if (powerTimer < 60 && Math.floor(Date.now() / 200) % 2 === 0) {
+                    ctx.fillStyle = '#fff';
+                } else {
+                    ctx.fillStyle = '#4d96ff';
+                }
+            } else {
+                ctx.fillStyle = g.color;
+            }
+            // Corpo
+            ctx.beginPath();
+            ctx.arc(x + CELL/2, y + 6, 9, Math.PI, 0, false);
+            ctx.fill();
+            ctx.fillRect(x + 2, y + 6, 16, 10);
+            // Ondinhas
+            for (let i = 0; i < 4; i++) {
+                ctx.fillRect(x + 2 + i * 5, y + 14, 3, 4);
+            }
+            // Olhos
+            if (!g.scared) {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x + 6, y + 6, 4, 0, Math.PI * 2);
+                ctx.arc(x + 14, y + 6, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#0b0b16';
+                ctx.beginPath();
+                ctx.arc(x + 5, y + 6, 2, 0, Math.PI * 2);
+                ctx.arc(x + 13, y + 6, 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Olhos assustados (X)
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + 4, y + 4);
+                ctx.lineTo(x + 8, y + 8);
+                ctx.moveTo(x + 8, y + 4);
+                ctx.lineTo(x + 4, y + 8);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x + 12, y + 4);
+                ctx.lineTo(x + 16, y + 8);
+                ctx.moveTo(x + 16, y + 4);
+                ctx.lineTo(x + 12, y + 8);
+                ctx.stroke();
+            }
+        }
+
+        // --- Pac-Man ---
+        if (!gameOver || lives > 0) {
+            const px = pacman.x * CELL + CELL/2;
+            const py = pacman.y * CELL + CELL/2;
+            const mouthAngle = pacman.mouth * 0.4;
+            ctx.fillStyle = '#ffd93d';
+            ctx.shadowColor = '#ffd93d';
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(px, py, 10, pacman.dir * Math.PI/2 + mouthAngle, pacman.dir * Math.PI/2 + 2*Math.PI - mouthAngle);
+            ctx.lineTo(px, py);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Olho
+            ctx.fillStyle = '#0b0b16';
+            const eyeX = px + Math.cos(pacman.dir * Math.PI/2 - 0.5) * 5;
+            const eyeY = py + Math.sin(pacman.dir * Math.PI/2 - 0.5) * 5;
+            ctx.beginPath();
+            ctx.arc(eyeX, eyeY, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // --- Game Over ---
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 48px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const msg = lives <= 0 ? '💀 GAME OVER' : '🏆 VOCÊ VENCEU!';
+            ctx.fillText(msg, W/2, H/2 - 20);
+            ctx.fillStyle = '#a0a0c0';
+            ctx.font = '20px sans-serif';
+            ctx.fillText('Clique em "Reiniciar"', W/2, H/2 + 50);
+        }
+
+        // --- Pausa ---
+        if (paused && !gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 44px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⏸ PAUSADO', W/2, H/2);
+        }
+    }
+
+    // ================================================================
+    //  8.  LOOP PRINCIPAL
+    // ================================================================
+
+    function gameLoop() {
+        update();
+        draw();
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // ================================================================
+    //  9.  EVENTOS
+    // ================================================================
+
+    // --- Teclado ---
+    document.addEventListener('keydown', (e) => {
+        const key = e.key;
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'p', 'P'].includes(key)) e.preventDefault();
+        if (key === 'ArrowUp') pacman.nextDir = 3;
+        else if (key === 'ArrowDown') pacman.nextDir = 1;
+        else if (key === 'ArrowLeft') pacman.nextDir = 2;
+        else if (key === 'ArrowRight') pacman.nextDir = 0;
+        else if (key === 'p' || key === 'P') togglePause();
+    });
+
+    // --- Botões mobile ---
+    document.querySelectorAll('[data-dir]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const dir = btn.dataset.dir;
+            if (dir === 'up') pacman.nextDir = 3;
+            else if (dir === 'down') pacman.nextDir = 1;
+            else if (dir === 'left') pacman.nextDir = 2;
+            else if (dir === 'right') pacman.nextDir = 0;
+        });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const dir = btn.dataset.dir;
+            if (dir === 'up') pacman.nextDir = 3;
+            else if (dir === 'down') pacman.nextDir = 1;
+            else if (dir === 'left') pacman.nextDir = 2;
+            else if (dir === 'right') pacman.nextDir = 0;
+        });
+    });
+
+    // --- Botões principais ---
+    function togglePause() {
+        if (gameOver) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? '▶️ Retomar' : '⏸️ Pausar';
+        draw();
+    }
+
+    restartBtn.addEventListener('click', resetGame);
+    pauseBtn.addEventListener('click', togglePause);
+
+    // ================================================================
+    //  10. INICIALIZAR
+    // ================================================================
+
+    resetGame();
+    gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Bingo Digital</title>
+    <style>
+        /* ============================== */
+        /* ESTILOS GLOBAIS E RESET       */
+        /* ============================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f4f6fc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            color: #1a1a2e;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 750px;
+            background: #ffffff;
+            border-radius: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        /* Telas (menu e jogo) */
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* ============================== */
+        /* TELA DO MENU                  */
+        /* ============================== */
+        .menu-header {
+            text-align: center;
+        }
+
+        .menu-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #16213e;
+            letter-spacing: -0.5px;
+        }
+
+        .menu-subtitle {
+            font-size: 1.2rem;
+            color: #546e7a;
+            margin-top: 0.5rem;
+        }
+
+        .mode-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .mode-card {
+            background: #f0f4ff;
+            border: 2px solid transparent;
+            border-radius: 1.5rem;
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-size: 1rem;
+            color: #1a1a2e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .mode-card:hover {
+            background: #e1e8ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+
+        .mode-card.selected {
+            border-color: #3a56e4;
+            background: #eef1ff;
+            box-shadow: 0 0 0 3px rgba(58, 86, 228, 0.2);
+        }
+
+        .mode-flag {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+
+        .mode-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .mode-range {
+            font-size: 0.85rem;
+            color: #455a64;
+            background: rgba(0,0,0,0.04);
+            padding: 0.2rem 0.8rem;
+            border-radius: 2rem;
+        }
+
+        .custom-range {
+            background: #f8faff;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .custom-range.hidden {
+            display: none;
+        }
+
+        .range-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .range-label {
+            font-weight: 600;
+            color: #37474f;
+            font-size: 0.9rem;
+        }
+
+        .range-input {
+            width: 100px;
+            padding: 0.8rem 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 1rem;
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: inherit;
+            background: white;
+            transition: border 0.2s;
+        }
+
+        .range-input:focus {
+            border-color: #3a56e4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(58,86,228,0.2);
+        }
+
+        .range-separator {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #607d8b;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn {
+            border: none;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 2.5rem;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-primary {
+            background: #3a56e4;
+            color: white;
+            border: 2px solid #3a56e4;
+            box-shadow: 0 4px 14px rgba(58, 86, 228, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #2c44c9;
+            border-color: #2c44c9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #cfd8dc;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #90a4ae;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-huge {
+            padding: 1.2rem 3rem;
+            font-size: 1.8rem;
+            border-radius: 4rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .btn-icon {
+            font-size: 1.6rem;
+            padding: 0.4rem 0.8rem;
+            line-height: 1;
+            background: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.2);
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ============================== */
+        /* TELA DO JOGO                  */
+        /* ============================== */
+        .game-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            background: #f8faff;
+            padding: 1rem 1.5rem;
+            border-radius: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .game-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .mode-badge {
+            background: #e8eaf6;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #283593;
+        }
+
+        .counters {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .counter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 0.4rem 1rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .counter-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .counter-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .main-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1rem 0;
+        }
+
+        .number-display {
+            background: linear-gradient(145deg, #f0f4ff, #ffffff);
+            border-radius: 3rem;
+            width: 100%;
+            max-width: 260px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            font-weight: 800;
+            color: #0a0f2c;
+            box-shadow: 0 20px 35px rgba(58, 86, 228, 0.15), inset 0 -2px 0 rgba(0,0,0,0.05);
+            border: 2px solid rgba(255,255,255,0.6);
+            transition: all 0.2s ease;
+        }
+
+        .number-placeholder {
+            font-size: 3rem;
+            color: #c5cae9;
+            font-weight: 400;
+        }
+
+        .display-label {
+            margin-top: 0.8rem;
+            font-weight: 500;
+            color: #546e7a;
+            font-size: 0.95rem;
+        }
+
+        .draw-section {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .history-section {
+            background: #f8faff;
+            border-radius: 1.8rem;
+            padding: 1.2rem 1rem;
+        }
+
+        .history-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #37474f;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .history-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-start;
+            min-height: 60px;
+        }
+
+        .history-number {
+            background: white;
+            border-radius: 50%;
+            width: 2.8rem;
+            height: 2.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1e293b;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .history-number.newest {
+            background: #3a56e4;
+            color: white;
+            border-color: #3a56e4;
+            transform: scale(1.08);
+            box-shadow: 0 0 0 5px rgba(58,86,228,0.25);
+            font-weight: 800;
+        }
+
+        .history-empty {
+            color: #90a4ae;
+            font-style: italic;
+            font-size: 0.95rem;
+            padding: 0.8rem;
+        }
+
+        /* Overlay de bingo */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 15, 44, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .overlay-content {
+            background: white;
+            border-radius: 3rem;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .bingo-icon {
+            font-size: 4.5rem;
+        }
+
+        .bingo-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #3a56e4;
+            letter-spacing: -1px;
+        }
+
+        .bingo-message {
+            font-size: 1.2rem;
+            color: #37474f;
+        }
+
+        .bingo-stats {
+            font-weight: 600;
+            background: #f0f4ff;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+        }
+
+        .overlay-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Responsivo */
+        @media (max-width: 500px) {
+            #app {
+                padding: 1.2rem;
+            }
+            .game-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .number-display {
+                font-size: 5rem;
+                max-width: 200px;
+            }
+            .btn-huge {
+                font-size: 1.4rem;
+                padding: 1rem 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- ============= TELA DO MENU ============= -->
+        <div id="menu-screen" class="screen active">
+            <header class="menu-header">
+                <h1 class="menu-title">🎱 Bingo Digital</h1>
+                <p class="menu-subtitle">Escolha o modo para começar</p>
+            </header>
+
+            <div class="mode-cards" id="mode-cards">
+                <button class="mode-card" data-mode="americano" data-min="1" data-max="75">
+                    <span class="mode-flag">🇺🇸</span>
+                    <span class="mode-name">Bingo Americano</span>
+                    <span class="mode-range">1 a 75</span>
+                </button>
+                <button class="mode-card" data-mode="brasileiro" data-min="1" data-max="90">
+                    <span class="mode-flag">🇧🇷</span>
+                    <span class="mode-name">Bingo Brasileiro</span>
+                    <span class="mode-range">1 a 90</span>
+                </button>
+                <button class="mode-card" data-mode="infantil" data-min="1" data-max="50">
+                    <span class="mode-flag">👦</span>
+                    <span class="mode-name">Bingo Infantil</span>
+                    <span class="mode-range">1 a 50</span>
+                </button>
+                <button class="mode-card" data-mode="livre">
+                    <span class="mode-flag">⚙️</span>
+                    <span class="mode-name">Bingo Livre</span>
+                    <span class="mode-range">Personalizado</span>
+                </button>
+            </div>
+
+            <!-- Campos do modo livre (aparece quando selecionado) -->
+            <div id="custom-range-container" class="custom-range hidden">
+                <div class="range-input-group">
+                    <label for="min-number" class="range-label">Número inicial</label>
+                    <input type="number" id="min-number" class="range-input" value="1" min="0" max="9999">
+                </div>
+                <div class="range-separator">até</div>
+                <div class="range-input-group">
+                    <label for="max-number" class="range-label">Número final</label>
+                    <input type="number" id="max-number" class="range-input" value="150" min="1" max="10000">
+                </div>
+            </div>
+
+            <button id="btn-iniciar" class="btn btn-primary btn-large">▶ Iniciar Jogo</button>
+            <p id="validation-error" class="error-message hidden"></p>
+        </div>
+
+        <!-- ============= TELA DO JOGO ============= -->
+        <div id="game-screen" class="screen">
+            <header class="game-header">
+                <div class="game-info">
+                    <h2 class="game-title">🎱 Bingo</h2>
+                    <span id="mode-badge" class="mode-badge">Americano</span>
+                </div>
+                <div class="counters">
+                    <div class="counter counter-drawn">
+                        <span class="counter-label">Sorteados</span>
+                        <span id="counter-drawn" class="counter-value">0</span>
+                    </div>
+                    <div class="counter counter-remaining">
+                        <span class="counter-label">Faltam</span>
+                        <span id="counter-remaining" class="counter-value">75</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="btn-fullscreen" class="btn btn-icon" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+                    <button id="btn-reiniciar" class="btn btn-outline">🔄 Reiniciar</button>
+                    <button id="btn-voltar" class="btn btn-outline">← Menu</button>
+                </div>
+            </header>
+
+            <main class="main-display">
+                <div id="number-display" class="number-display">
+                    <span id="display-number" class="number-placeholder">?</span>
+                </div>
+                <p class="display-label">Último número sorteado</p>
+            </main>
+
+            <div class="draw-section">
+                <button id="btn-sortear" class="btn btn-primary btn-huge">🎯 Sortear</button>
+            </div>
+
+            <section class="history-section">
+                <h3 class="history-title">📋 Histórico</h3>
+                <div id="history-grid" class="history-grid">
+                    <p class="history-empty">Clique em <strong>Sortear</strong> para começar.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============= OVERLAY DE BINGO ============= -->
+        <div id="bingo-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <div class="bingo-icon">🎉</div>
+                <h2 class="bingo-title">BINGO!</h2>
+                <p class="bingo-message">Todos os números foram sorteados.</p>
+                <p id="bingo-stats" class="bingo-stats"></p>
+                <div class="overlay-actions">
+                    <button id="btn-overlay-reiniciar" class="btn btn-primary">🔄 Jogar novamente</button>
+                    <button id="btn-overlay-menu" class="btn btn-outline">← Voltar ao menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            /* ================================================================ */
+            /* REFERÊNCIAS AOS ELEMENTOS DO DOM                                */
+            /* ================================================================ */
+            const menuScreen = document.getElementById('menu-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const modeCards = document.querySelectorAll('.mode-card');
+            const customRangeContainer = document.getElementById('custom-range-container');
+            const minNumberInput = document.getElementById('min-number');
+            const maxNumberInput = document.getElementById('max-number');
+            const btnIniciar = document.getElementById('btn-iniciar');
+            const validationError = document.getElementById('validation-error');
+
+            // Elementos da tela de jogo
+            const modeBadge = document.getElementById('mode-badge');
+            const counterDrawn = document.getElementById('counter-drawn');
+            const counterRemaining = document.getElementById('counter-remaining');
+            const displayNumber = document.getElementById('display-number');
+            const historyGrid = document.getElementById('history-grid');
+            const btnSortear = document.getElementById('btn-sortear');
+            const btnReiniciar = document.getElementById('btn-reiniciar');
+            const btnVoltar = document.getElementById('btn-voltar');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const bingoOverlay = document.getElementById('bingo-overlay');
+            const bingoStats = document.getElementById('bingo-stats');
+            const btnOverlayReiniciar = document.getElementById('btn-overlay-reiniciar');
+            const btnOverlayMenu = document.getElementById('btn-overlay-menu');
+
+            /* ================================================================ */
+            /* VARIÁVEIS DE ESTADO DO JOGO                                    */
+            /* ================================================================ */
+            let modoAtual = 'americano';      // Modo selecionado
+            let minAtual = 1;                // Faixa mínima
+            let maxAtual = 75;               // Faixa máxima
+            let numerosSorteados = [];       // Lista de números já sorteados (ordem de saída)
+            let numerosRestantes = [];       // Lista de números ainda não sorteados (embaralhada)
+            let jogoAtivo = false;           // Indica se o jogo está em andamento
+
+            /* ================================================================ */
+            /* FUNÇÕES AUXILIARES                                              */
+            /* ================================================================ */
+
+            /**
+             * Embaralha um array usando o algoritmo Fisher-Yates (moderno).
+             * @param {Array} array - Array a ser embaralhado.
+             * @returns {Array} Novo array embaralhado (não modifica o original).
+             */
+            function embaralharFisherYates(array) {
+                const novoArray = [...array];
+                for (let i = novoArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [novoArray[i], novoArray[j]] = [novoArray[j], novoArray[i]];
+                }
+                return novoArray;
+            }
+
+            /**
+             * Gera um array contendo todos os números inteiros de 'inicio' até 'fim'.
+             * @param {number} inicio
+             * @param {number} fim
+             * @returns {number[]}
+             */
+            function gerarListaNumeros(inicio, fim) {
+                return Array.from({ length: fim - inicio + 1 }, (_, i) => i + inicio);
+            }
+
+            /**
+             * Atualiza os contadores (sorteados / faltam) e desabilita o botão se necessário.
+             */
+            function atualizarContadores() {
+                const sorteados = numerosSorteados.length;
+                const total = numerosSorteados.length + numerosRestantes.length;
+                counterDrawn.textContent = sorteados;
+                counterRemaining.textContent = numerosRestantes.length;
+
+                // Desabilita o botão se não houver mais números
+                btnSortear.disabled = numerosRestantes.length === 0;
+            }
+
+            /**
+             * Atualiza a grade do histórico com todos os números já sorteados.
+             * Destaca o último número sorteado (classe 'newest').
+             */
+            function atualizarHistorico() {
+                historyGrid.innerHTML = '';
+                if (numerosSorteados.length === 0) {
+                    historyGrid.innerHTML = '<p class="history-empty">Nenhum número sorteado ainda.</p>';
+                    return;
+                }
+
+                // Percorre todos os números sorteados
+                numerosSorteados.forEach((numero, indice) => {
+                    const elementoNumero = document.createElement('div');
+                    elementoNumero.classList.add('history-number');
+                    elementoNumero.textContent = numero;
+
+                    // O último número da lista é o mais recente
+                    if (indice === numerosSorteados.length - 1) {
+                        elementoNumero.classList.add('newest');
+                    }
+                    historyGrid.appendChild(elementoNumero);
+                });
+            }
+
+            /**
+             * Exibe um número no painel central.
+             * @param {number|null} numero - Número a exibir ou null para placeholder.
+             */
+            function exibirNumero(numero) {
+                if (numero !== null && numero !== undefined) {
+                    displayNumber.textContent = numero;
+                    displayNumber.classList.remove('number-placeholder');
+                } else {
+                    displayNumber.textContent = '?';
+                    displayNumber.classList.add('number-placeholder');
+                }
+            }
+
+            /**
+             * Verifica se o jogo terminou (todos os números sorteados).
+             * Se sim, exibe o overlay de BINGO e desabilita o botão.
+             */
+            function verificarFimDeJogo() {
+                if (numerosRestantes.length === 0 && jogoAtivo) {
+                    // Mostra overlay com estatísticas
+                    bingoStats.textContent = `${numerosSorteados.length} números sorteados de ${minAtual} a ${maxAtual}`;
+                    bingoOverlay.classList.remove('hidden');
+                    btnSortear.disabled = true;
+                }
+            }
+
+            /**
+             * Realiza o sorteio do próximo número.
+             * Remove o primeiro elemento da lista de restantes e adiciona aos sorteados.
+             */
+            function sortearProximo() {
+                if (!jogoAtivo || numerosRestantes.length === 0) return;
+
+                // Pega o próximo número (lista já está embaralhada)
+                const proximo = numerosRestantes.shift();
+                numerosSorteados.push(proximo);
+
+                // Atualiza a interface
+                exibirNumero(proximo);
+                atualizarContadores();
+                atualizarHistorico();
+                verificarFimDeJogo();
+            }
+
+            /**
+             * Configura e inicia um novo jogo com base nos parâmetros atuais.
+             * Reinicia listas, embaralha e prepara a tela.
+             */
+            function iniciarJogo() {
+                // Gera lista completa
+                const listaCompleta = gerarListaNumeros(minAtual, maxAtual);
+                // Embaralha usando Fisher-Yates
+                numerosRestantes = embaralharFisherYates(listaCompleta);
+                numerosSorteados = [];
+                jogoAtivo = true;
+
+                // Atualiza interface da tela de jogo
+                exibirNumero(null); // placeholder
+                atualizarContadores();
+                atualizarHistorico();
+                btnSortear.disabled = false;
+
+                // Atualiza o badge com o nome do modo
+                const nomesModos = {
+                    'americano': 'Americano (1-75)',
+                    'brasileiro': 'Brasileiro (1-90)',
+                    'infantil': 'Infantil (1-50)',
+                    'livre': `Livre (${minAtual}-${maxAtual})`
+                };
+                modeBadge.textContent = nomesModos[modoAtual] || `Personalizado (${minAtual}-${maxAtual})`;
+
+                // Alterna para a tela do jogo
+                menuScreen.classList.remove('active');
+                gameScreen.classList.add('active');
+
+                // Garante que overlay esteja oculto
+                bingoOverlay.classList.add('hidden');
+            }
+
+            /**
+             * Reinicia o jogo atual (mesma faixa e modo).
+             * Apenas reembaralha e limpa.
+             */
+            function reiniciarJogo() {
+                if (!jogoAtivo) return;
+                // Reembaralha toda a lista original
+                const listaCompleta = gerarListaNumeros(minAtual, maxAtual);
+                numerosRestantes = embaralharFisherYates(listaCompleta);
+                numerosSorteados = [];
+                jogoAtivo = true;
+
+                exibirNumero(null);
+                atualizarContadores();
+                atualizarHistorico();
+                btnSortear.disabled = false;
+                bingoOverlay.classList.add('hidden');
+            }
+
+            /**
+             * Retorna ao menu, interrompendo o jogo atual.
+             */
+            function voltarAoMenu() {
+                jogoAtivo = false;
+                gameScreen.classList.remove('active');
+                menuScreen.classList.add('active');
+                bingoOverlay.classList.add('hidden');
+                // Limpa estado do jogo (opcional)
+                numerosSorteados = [];
+                numerosRestantes = [];
+            }
+
+            /**
+             * Alterna o modo de tela cheia usando a Fullscreen API.
+             */
+            function alternarTelaCheia() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.warn('Erro ao entrar em tela cheia:', err);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+
+            /* ================================================================ */
+            /* EVENT LISTENERS                                                */
+            /* ================================================================ */
+
+            // --- Seleção de modo no menu ---
+            modeCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    // Remove seleção de todos
+                    modeCards.forEach(c => c.classList.remove('selected'));
+                    // Adiciona classe no clicado
+                    card.classList.add('selected');
+
+                    const modo = card.dataset.mode;
+                    modoAtual = modo;
+
+                    // Mostra/esconde campos de intervalo personalizado
+                    if (modo === 'livre') {
+                        customRangeContainer.classList.remove('hidden');
+                        // Mantém valores dos inputs atuais (não sobrescreve)
+                    } else {
+                        customRangeContainer.classList.add('hidden');
+                        // Define faixa com base nos atributos data
+                        minAtual = parseInt(card.dataset.min, 10);
+                        maxAtual = parseInt(card.dataset.max, 10);
+                    }
+                    // Limpa mensagem de erro
+                    validationError.classList.add('hidden');
+                });
+            });
+
+            // --- Validação e início do jogo ---
+            btnIniciar.addEventListener('click', () => {
+                // Se modo livre, pega valores dos inputs e valida
+                if (modoAtual === 'livre') {
+                    const min = parseInt(minNumberInput.value.trim(), 10);
+                    const max = parseInt(maxNumberInput.value.trim(), 10);
+
+                    // Validações básicas
+                    if (isNaN(min) || isNaN(max)) {
+                        validationError.textContent = 'Por favor, preencha os dois números.';
+                        validationError.classList.remove('hidden');
+                        return;
+                    }
+                    if (min >= max) {
+                        validationError.textContent = 'O número inicial deve ser menor que o final.';
+                        validationError.classList.remove('hidden');
+                        return;
+                    }
+                    if (min < 0 || max > 10000) {
+                        validationError.textContent = 'Os números devem estar entre 0 e 10.000.';
+                        validationError.classList.remove('hidden');
+                        return;
+                    }
+                    minAtual = min;
+                    maxAtual = max;
+                    validationError.classList.add('hidden');
+                }
+
+                // Inicia o jogo com os valores definidos
+                iniciarJogo();
+            });
+
+            // --- Ações na tela de jogo ---
+            btnSortear.addEventListener('click', sortearProximo);
+            btnReiniciar.addEventListener('click', reiniciarJogo);
+            btnVoltar.addEventListener('click', voltarAoMenu);
+            btnFullscreen.addEventListener('click', alternarTelaCheia);
+
+            // --- Ações no overlay de bingo ---
+            btnOverlayReiniciar.addEventListener('click', () => {
+                bingoOverlay.classList.add('hidden');
+                reiniciarJogo();
+            });
+            btnOverlayMenu.addEventListener('click', () => {
+                bingoOverlay.classList.add('hidden');
+                voltarAoMenu();
+            });
+
+            // --- Ao carregar a página, seleciona o modo americano por padrão ---
+            document.addEventListener('DOMContentLoaded', () => {
+                // Seleciona visualmente o primeiro cartão (americano)
+                const primeiroCartao = document.querySelector('.mode-card[data-mode="americano"]');
+                if (primeiroCartao) {
+                    primeiroCartao.classList.add('selected');
+                    minAtual = parseInt(primeiroCartao.dataset.min, 10);
+                    maxAtual = parseInt(primeiroCartao.dataset.max, 10);
+                }
+            });
+
+            // Atualiza o ícone de tela cheia quando o estado mudar (por tecla ESC, etc)
+            document.addEventListener('fullscreenchange', () => {
+                // Poderia mudar o ícone, mas mantemos simples
+            });
+
+        })();
+    </script>
+</body>
+</html>
