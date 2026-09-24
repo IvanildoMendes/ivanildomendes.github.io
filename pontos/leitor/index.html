@@ -152,7 +152,7 @@ const TOL_PASSADO = 45; // segundos atrás
 // =========================================================
 
 async function carregarCSV() {
-  const resp = await fetch("./dados.csv?t=" + Date.now());
+  const resp = await fetch("dados.csv?t=" + Date.now());
   if (!resp.ok) throw new Error("Falha ao carregar dados.csv (HTTP " + resp.status + ")");
 
   const texto = await resp.text();
