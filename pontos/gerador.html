@@ -110,13 +110,13 @@ async function gerarQR() {
 
     // Dados anteriores ao hash final
     const dados =
-        "00=01|" +
-        "10=" + hashCnpj + "|" +
-        "20=" + hashCpf + "|" +
-        "40=" + local.latitude.toFixed(6) + "x|" +
-        "41=" + local.longitude.toFixed(6) + "x|" +
-        "50=" + CHECKPOINT + "|" +
-        "61=" + timestamp;
+        "0001" +
+        "10" + hashCnpj +
+        "20" + hashCpf +
+        "40" + local.latitude.toFixed(6) + "x" +
+        "41" + local.longitude.toFixed(6) + "x" +
+        "50" + CHECKPOINT +
+        "61" + timestamp + "x";
 
 
     // Hash de todo o conteúdo anterior
@@ -126,7 +126,7 @@ async function gerarQR() {
     // QR final
     const qr =
         dados +
-        "|99=" + hashFinal;
+        "99" + hashFinal;
 
 
     new QRCode(
