@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leitor QR Ponto</title>
+
+<!-- Lib local -->
+<script src="jsQR.js"></script>
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f1115;
+    color: #e5e7eb;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-height: 100vh;
+  }
+  h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  video, canvas {
+    width: 300px; height: 300px;
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 8px;
+    display: block;
+  }
+  .botoes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background .15s;
+  }
+  button:hover:not(:disabled) { background: #374151; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  textarea {
+    width: 90%;
+    max-width: 600px;
+    background: #1a1d23;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 11px;
+    resize: vertical;
+  }
+  #resultado {
+    width: 90%;
+    max-width: 600px;
+    background: #1a1d23;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .linha { display: flex; gap: 8px; margin: 3px 0; }
+  .rotulo { color: #93c5fd; min-width: 110px; flex-shrink: 0; }
+  .valor { color: #fde68a; word-break: break-all; }
+  .ok    { color: #4ade80; font-weight: 600; }
+  .erro  { color: #f87171; font-weight: 600; }
+  .aviso { color: #fbbf24; font-weight: 600; }
+  .secao {
+    color: #c084fc;
+    font-weight: 600;
+    margin-top: 12px;
+    border-bottom: 1px solid #374151;
+    padding-bottom: 3px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .mono {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: #9ca3af;
+  }
+  .titulo-ok {
+    color: #4ade80;
+    font-weight: 700;
+    font-size: 16px;
+    text-align: center;
+    padding: 6px;
+    background: rgba(74,222,128,.1);
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .titulo-erro {
+    color: #f87171;
+    font-weight: 700;
+    font-size: 16px;
+    text-align: center;
+    padding: 6px;
+    background: rgba(248,113,113,.1);
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h2>🔍 Leitor QR — Ponto</h2>
+
+<video id="video" playsinline></video>
+<canvas id="canvas" style="display:none"></canvas>
+
+<div class="botoes">
+  <button id="btnCamera">📷 Iniciar câmera</button>
+  <button id="btnParar" disabled>⏹ Parar</button>
+  <button id="btnExemplo">📋 Exemplo</button>
+</div>
+
+<textarea id="entradaManual" rows="3" placeholder="Cole a string do QR aqui..."></textarea>
+
+<div class="botoes">
+  <button id="btnValidar" disabled>✅ Validar texto</button>
+</div>
+
+<div id="resultado">Carregando CSV...</div>
+
+<script>
+// =========================================================
+// 1. Estado global
+// =========================================================
+
+let FUNCIONARIOS = [];
+let stream = null;
+let animando = false;
+let ultimoQR = "";
+
+const TOL_FUTURO  = 20; // segundos à frente
+const TOL_PASSADO = 45; // segundos atrás
+
+// =========================================================
+// 2. CSV
+// =========================================================
+
+async function carregarCSV() {
+  const resp = await fetch("dados.csv?t=" + Date.now());
+  if (!resp.ok) throw new Error("Falha ao carregar dados.csv (HTTP " + resp.status + ")");
+
+  const texto = await resp.text();
+  const linhas = texto
+    .replace(/^\uFEFF/, "")   // remove BOM
+    .trim()
+    .split(/\r?\n/);
+
+  if (linhas.length < 2) throw new Error("CSV vazio ou sem cabeçalho");
+
+  const SEP = linhas[0].includes(";") ? ";" : ",";
+  const cabecalho = linhas[0].split(SEP).map(c => c.trim().toLowerCase());
+
+  FUNCIONARIOS = linhas.slice(1)
+    .filter(l => l.trim() !== "")
+    .map(l => {
+      const valores = l.split(SEP);
+      const obj = {};
+      cabecalho.forEach((c, i) => obj[c] = (valores[i] || "").trim());
+      return obj;
+    });
+}
+
+// =========================================================
+// 3. Utilitários
+// =========================================================
+
+async function sha256(texto) {
+  const dados = new TextEncoder().encode(texto);
+  const hash = await crypto.subtle.digest("SHA-256", dados);
+  return [...new Uint8Array(hash)]
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+}
+
+function fmtCpf(cpf) {
+  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+function fmtCnpj(cnpj) {
+  return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+}
+
+function fmtData(ts) {
+  const d = new Date(ts * 1000);
+  const p = n => String(n).padStart(2, "0");
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear()
+       + " " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+
+function fmtTipo(t) {
+  const map = {
+    "01": "Entrada",
+    "02": "Saída",
+    "03": "Início intervalo",
+    "04": "Fim intervalo"
+  };
+  return map[t] || "Desconhecido (" + t + ")";
+}
+
+// =========================================================
+// 4. Parser posicional
+// =========================================================
+
+function parsear(qr) {
+  const out = {};
+  let p = 0;
+
+  const lerFixo = (tam) => {
+    const v = qr.slice(p, p + tam);
+    p += tam;
+    return v;
+  };
+
+  const lerAte = (term) => {
+    const fim = qr.indexOf(term, p);
+    if (fim === -1) throw new Error("Terminador '" + term + "' não encontrado");
+    const v = qr.slice(p, fim);
+    p = fim + 1;
+    return v;
+  };
+
+  if (lerFixo(2) !== "00") throw new Error("Falta ID 00");
+  out.versao = lerFixo(2);
+
+  if (lerFixo(2) !== "10") throw new Error("Falta ID 10");
+  out.hashCnpj = lerFixo(64);
+
+  if (lerFixo(2) !== "20") throw new Error("Falta ID 20");
+  out.hashCpf = lerFixo(64);
+
+  if (lerFixo(2) !== "40") throw new Error("Falta ID 40");
+  out.lat = lerAte("x");
+
+  if (lerFixo(2) !== "41") throw new Error("Falta ID 41");
+  out.lon = lerAte("x");
+
+  if (lerFixo(2) !== "50") throw new Error("Falta ID 50");
+  out.tipo = lerFixo(2);
+
+  if (lerFixo(2) !== "61") throw new Error("Falta ID 61");
+  out.timestamp = lerAte("x");
+
+  if (lerFixo(2) !== "99") throw new Error("Falta ID 99");
+  out.hashFinal = lerFixo(64);
+
+  out.fimDados = p - 2 - 64;
+  return out;
+}
+
+// =========================================================
+// 5. Lookup no CSV (força bruta pelo timestamp)
+// =========================================================
+
+async function acharCpfPorHash(hashAlvo, timestamp) {
+  for (const f of FUNCIONARIOS) {
+    const h = await sha256("CPF:" + f.cpf + ":" + timestamp);
+    if (h === hashAlvo) return f;
+  }
+  return null;
+}
+
+async function acharCnpjPorHash(hashAlvo, timestamp) {
+  const vistos = new Set();
+  for (const f of FUNCIONARIOS) {
+    if (vistos.has(f.cnpj)) continue;
+    vistos.add(f.cnpj);
+    const h = await sha256("CNPJ:" + f.cnpj + ":" + timestamp);
+    if (h === hashAlvo) return f;
+  }
+  return null;
+}
+
+// =========================================================
+// 6. Validação + render
+// =========================================================
+
+async function validar(qr) {
+  const div = document.getElementById("resultado");
+
+  if (FUNCIONARIOS.length === 0) {
+    div.innerHTML = '<div class="erro">CSV ainda não carregado.</div>';
+    return;
+  }
+
+  div.innerHTML = "Analisando...";
+
+  try {
+    const c = parsear(qr);
+
+    // 1. Assinatura
+    const dados = qr.slice(0, c.fimDados);
+    const esperado = await sha256(dados);
+    const assinaturaOk = esperado === c.hashFinal;
+
+    // 2. Janela de tempo
+    const agora = Math.floor(Date.now() / 1000);
+    const ts = parseInt(c.timestamp, 10);
+    const delta = agora - ts;
+
+    let tempoStatus, tempoMsg;
+    if (delta < -TOL_FUTURO) {
+      tempoStatus = "erro";
+      tempoMsg = "❌ Futuro demais (" + (-delta) + "s à frente, máx " + TOL_FUTURO + "s)";
+    } else if (delta > TOL_PASSADO) {
+      tempoStatus = "erro";
+      tempoMsg = "❌ Expirado (" + delta + "s atrás, máx " + TOL_PASSADO + "s)";
+    } else {
+      tempoStatus = "ok";
+      const sinal = delta >= 0 ? "atrás" : "à frente";
+      tempoMsg = "✅ Dentro da janela (" + Math.abs(delta) + "s " + sinal + ")";
+    }
+
+    // 3. Lookup no CSV
+    const func = await acharCpfPorHash(c.hashCpf, c.timestamp);
+    const emp  = await acharCnpjPorHash(c.hashCnpj, c.timestamp);
+
+    const valido = assinaturaOk && tempoStatus === "ok" && func && emp;
+
+    // 4. Render
+    let html = "";
+    html += valido
+      ? '<div class="titulo-ok">✅ QR VÁLIDO</div>'
+      : '<div class="titulo-erro">❌ QR INVÁLIDO</div>';
+
+    // Status
+    html += '<div class="secao">Status</div>';
+    html += linha("Assinatura", assinaturaOk
+      ? '<span class="ok">✅ OK</span>'
+      : '<span class="erro">❌ Hash não bate</span>');
+    html += linha("Tempo", '<span class="' + tempoStatus + '">' + tempoMsg + '</span>');
+    html += linha("Tipo", fmtTipo(c.tipo));
+
+    // Funcionário
+    html += '<div class="secao">Funcionário</div>';
+    if (func) {
+      html += linha("CPF", fmtCpf(func.cpf));
+      html += linha("Nome", func.nome);
+      html += linha("Login", func.login);
+    } else {
+      html += linha("CPF", '<span class="erro">❌ não encontrado no CSV</span>');
+    }
+
+    // Empresa
+    html += '<div class="secao">Empresa</div>';
+    if (emp) {
+      html += linha("CNPJ", fmtCnpj(emp.cnpj));
+      html += linha("Nome", emp.empresa);
+    } else {
+      html += linha("CNPJ", '<span class="erro">❌ não encontrado no CSV</span>');
+    }
+
+    // Localização
+    html += '<div class="secao">Localização</div>';
+    html += linha("Latitude", c.lat);
+    html += linha("Longitude", c.lon);
+
+    // Tempo
+    html += '<div class="secao">Tempo</div>';
+    html += linha("Timestamp", c.timestamp);
+    html += linha("Data/hora", fmtData(ts));
+
+    // Debug
+    html += '<div class="secao">Debug</div>';
+    html += linha("Hash CNPJ", '<span class="mono">' + c.hashCnpj.slice(0, 16) + '…</span>');
+    html += linha("Hash CPF",  '<span class="mono">' + c.hashCpf.slice(0, 16) + '…</span>');
+    html += linha("Esperado",  '<span class="mono">' + esperado.slice(0, 16) + '…</span>');
+    html += linha("Recebido",  '<span class="mono">' + c.hashFinal.slice(0, 16) + '…</span>');
+
+    div.innerHTML = html;
+
+  } catch (e) {
+    div.innerHTML = '<div class="erro">Erro: ' + e.message + '</div>';
+  }
+}
+
+function linha(rotulo, valor) {
+  return '<div class="linha"><span class="rotulo">' + rotulo + ':</span>'
+       + '<span class="valor">' + valor + '</span></div>';
+}
+
+// =========================================================
+// 7. Câmera
+// =========================================================
+
+async function iniciarCamera() {
+  if (FUNCIONARIOS.length === 0) {
+    document.getElementById("resultado").innerHTML =
+      '<div class="erro">CSV ainda não carregado.</div>';
+    return;
+  }
+
+  const video  = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const ctx    = canvas.getContext("2d");
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
+    video.srcObject = stream;
+    video.play();
+
+    animando = true;
+    document.getElementById("btnCamera").disabled = true;
+    document.getElementById("btnParar").disabled = false;
+
+    const tick = () => {
+      if (!animando) return;
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(img.data, img.width, img.height, {
+          inversionAttempts: "dontInvert"
+        });
+
+        if (code && code.data && code.data !== ultimoQR) {
+          ultimoQR = code.data;
+          validar(code.data);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    };
+
+    tick();
+
+  } catch (e) {
+    document.getElementById("resultado").innerHTML =
+      '<div class="erro">Câmera: ' + e.message + '</div>';
+  }
+}
+
+function pararCamera() {
+  animando = false;
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  document.getElementById("btnCamera").disabled = false;
+  document.getElementById("btnParar").disabled = true;
+}
+
+// =========================================================
+// 8. Botões
+// =========================================================
+
+document.getElementById("btnCamera").onclick  = iniciarCamera;
+document.getElementById("btnParar").onclick   = pararCamera;
+
+document.getElementById("btnValidar").onclick = () => {
+  const txt = document.getElementById("entradaManual").value.trim();
+  if (txt) validar(txt);
+};
+
+document.getElementById("btnExemplo").onclick = async () => {
+  if (FUNCIONARIOS.length === 0) return;
+
+  // Pega o primeiro funcionário do CSV
+  const f = FUNCIONARIOS[0];
+  const ts = Math.floor(Date.now() / 1000);
+
+  const hashCnpj = await sha256("CNPJ:" + f.cnpj + ":" + ts);
+  const hashCpf  = await sha256("CPF:"  + f.cpf  + ":" + ts);
+
+  const dados =
+    "0001" +
+    "10" + hashCnpj +
+    "20" + hashCpf +
+    "40" + (-23.5478).toFixed(6) + "x" +
+    "41" + (-46.6312).toFixed(6) + "x" +
+    "50" + "01" +
+    "61" + ts + "x";
+
+  const hashFinal = await sha256(dados);
+  const qr = dados + "99" + hashFinal;
+
+  document.getElementById("entradaManual").value = qr;
+  validar(qr);
+};
+
+// =========================================================
+// 9. Boot
+// =========================================================
+
+carregarCSV()
+  .then(() => {
+    document.getElementById("resultado").textContent =
+      "CSV carregado: " + FUNCIONARIOS.length + " funcionários. Pronto.";
+    document.getElementById("btnValidar").disabled = false;
+    document.getElementById("btnExemplo").disabled = false;
+    document.getElementById("btnCamera").disabled  = false;
+  })
+  .catch(e => {
+    document.getElementById("resultado").innerHTML =
+      '<div class="erro">' + e.message + '<br><br>'
+      + 'Dica: rode com servidor HTTP (ex: <code>python3 -m http.server 8000</code>).'
+      + '</div>';
+  });
+
+</script>
+
+</body>
+</html>

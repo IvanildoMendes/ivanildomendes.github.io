@@ -2,141 +2,236 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leitor QR Ponto</title>
-
-<!-- Lib local -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Leitor QR — Ponto</title>
 <script src="jsQR.js"></script>
-
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
     font-family: system-ui, -apple-system, sans-serif;
-    background: #0f1115;
-    color: #e5e7eb;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    min-height: 100vh;
+    background: #0f1115; color: #e5e7eb; overflow: hidden;
   }
-  h2 { margin: 0; font-size: 18px; font-weight: 600; }
-  video, canvas {
-    width: 300px; height: 300px;
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 8px;
-    display: block;
+
+  .tela {
+    position: fixed; inset: 0;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px; gap: 14px; text-align: center;
   }
-  .botoes {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+  .tela.visivel { display: flex; }
+
+  /* ---------- Tela inicial ---------- */
+  .logo { font-size: 64px; margin-bottom: 8px; }
+  h1 { font-size: 24px; margin: 0 0 6px; font-weight: 700; }
+  .subtitulo { color: #9ca3af; font-size: 14px; margin: 0 0 32px; max-width: 280px; }
+
+  .btn-grande {
+    background: #4ade80; color: #0f1115;
+    border: none; padding: 20px 60px;
+    font-size: 18px; font-weight: 700;
+    border-radius: 14px; cursor: pointer;
+    min-width: 220px;
+    transition: transform .1s, background .15s;
+    box-shadow: 0 4px 16px rgba(74,222,128,.25);
+  }
+  .btn-grande:active { transform: scale(.97); }
+  .btn-grande:hover { background: #22c55e; }
+  .btn-grande.secundario {
+    background: #374151; color: #e5e7eb;
+    box-shadow: none;
+  }
+  .btn-grande.secundario:hover { background: #4b5563; }
+
+  .rodape-idle {
+    position: absolute; bottom: 20px; left: 0; right: 0;
+    display: flex; gap: 16px; justify-content: center;
+    align-items: center; font-size: 12px; color: #6b7280;
+  }
+  .btn-link {
+    background: none; border: none; color: #6b7280;
+    cursor: pointer; font-size: 12px; text-decoration: underline;
+    padding: 4px 8px;
+  }
+  .btn-link:hover { color: #9ca3af; }
+
+  /* ---------- Tela câmera ---------- */
+  #tela-camera { padding: 0; gap: 0; }
+  #video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; background: #000;
+  }
+  .overlay-camera {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .mira {
+    width: 240px; height: 240px;
+    border: 3px solid #4ade80; border-radius: 20px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,.55);
+    position: relative;
+  }
+  .mira::before, .mira::after {
+    content: ""; position: absolute; width: 30px; height: 30px;
+    border: 3px solid #4ade80;
+  }
+  .mira::before { top: -3px; left: -3px; border-right: none; border-bottom: none; border-radius: 20px 0 0 0; }
+  .mira::after  { bottom: -3px; right: -3px; border-left: none; border-top: none; border-radius: 0 0 20px 0; }
+
+  .instrucao {
+    position: absolute; bottom: 120px; left: 0; right: 0;
+    text-align: center; color: #fff; font-size: 14px;
+    text-shadow: 0 1px 4px rgba(0,0,0,.9);
+    font-weight: 500;
+  }
+  .btn-secundario {
+    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.25);
+    padding: 12px 32px; border-radius: 10px;
+    font-size: 14px; cursor: pointer;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ---------- Telas de resultado ---------- */
+  .icone-grande { font-size: 88px; line-height: 1; margin-bottom: 8px; }
+  .icone-grande.ok  { color: #4ade80; }
+  .icone-grande.erro { color: #f87171; }
+
+  h2 { font-size: 22px; margin: 0; font-weight: 700; }
+  .msg-ok {
+    color: #4ade80; font-size: 15px; font-weight: 600;
+    margin: 0 0 20px;
+  }
+  .msg-erro {
+    color: #f87171; font-size: 14px; margin: 0 0 20px;
+    max-width: 320px; line-height: 1.5;
+  }
+
+  .detalhes {
+    background: #1a1d23; border: 1px solid #374151;
+    border-radius: 10px; padding: 14px 16px;
+    width: 100%; max-width: 340px;
+    text-align: left; font-size: 13px; line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .linha { display: flex; gap: 8px; }
+  .rotulo { color: #93c5fd; min-width: 90px; flex-shrink: 0; font-size: 12px; }
+  .valor { color: #fde68a; word-break: break-word; font-size: 12px; }
+
+  .tag {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 11px; font-weight: 600;
+  }
+  .tag-entrada { background: rgba(74,222,128,.15); color: #4ade80; }
+  .tag-saida   { background: rgba(248,113,113,.15); color: #f87171; }
+
+  .botoes-resultado {
+    display: flex; gap: 12px; flex-wrap: wrap;
     justify-content: center;
-  }
-  button {
-    background: #1f2937;
-    color: #e5e7eb;
-    border: 1px solid #374151;
-    padding: 8px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background .15s;
-  }
-  button:hover:not(:disabled) { background: #374151; }
-  button:disabled { opacity: .4; cursor: not-allowed; }
-  textarea {
-    width: 90%;
-    max-width: 600px;
-    background: #1a1d23;
-    color: #e5e7eb;
-    border: 1px solid #374151;
-    border-radius: 6px;
-    padding: 8px;
-    font-family: monospace;
-    font-size: 11px;
-    resize: vertical;
-  }
-  #resultado {
-    width: 90%;
-    max-width: 600px;
-    background: #1a1d23;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    padding: 14px;
-    font-size: 13px;
-    line-height: 1.7;
-  }
-  .linha { display: flex; gap: 8px; margin: 3px 0; }
-  .rotulo { color: #93c5fd; min-width: 110px; flex-shrink: 0; }
-  .valor { color: #fde68a; word-break: break-all; }
-  .ok    { color: #4ade80; font-weight: 600; }
-  .erro  { color: #f87171; font-weight: 600; }
-  .aviso { color: #fbbf24; font-weight: 600; }
-  .secao {
-    color: #c084fc;
-    font-weight: 600;
-    margin-top: 12px;
-    border-bottom: 1px solid #374151;
-    padding-bottom: 3px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-  .mono {
-    font-family: ui-monospace, monospace;
-    font-size: 11px;
-    color: #9ca3af;
-  }
-  .titulo-ok {
-    color: #4ade80;
-    font-weight: 700;
-    font-size: 16px;
-    text-align: center;
-    padding: 6px;
-    background: rgba(74,222,128,.1);
-    border-radius: 6px;
-    margin-bottom: 8px;
-  }
-  .titulo-erro {
-    color: #f87171;
-    font-weight: 700;
-    font-size: 16px;
-    text-align: center;
-    padding: 6px;
-    background: rgba(248,113,113,.1);
-    border-radius: 6px;
-    margin-bottom: 8px;
   }
 </style>
 </head>
 <body>
 
-<h2>🔍 Leitor QR — Ponto</h2>
+<!-- ============ TELA 1: IDLE ============ -->
+<div id="tela-idle" class="tela visivel">
+  <div class="logo">🔍</div>
+  <h1>Leitor de Ponto</h1>
+  <p class="subtitulo">Aponte o QR do funcionário para registrar o ponto.</p>
+  <button id="btnIniciar" class="btn-grande">Validar</button>
 
-<video id="video" playsinline></video>
-<canvas id="canvas" style="display:none"></canvas>
-
-<div class="botoes">
-  <button id="btnCamera">📷 Iniciar câmera</button>
-  <button id="btnParar" disabled>⏹ Parar</button>
-  <button id="btnExemplo">📋 Exemplo</button>
+  <div class="rodape-idle">
+    <span id="contadorLeituras">0 leituras</span>
+    <button id="btnBaixarCSV" class="btn-link">Baixar CSV</button>
+    <button id="btnLimpar" class="btn-link">Limpar</button>
+  </div>
 </div>
 
-<textarea id="entradaManual" rows="3" placeholder="Cole a string do QR aqui..."></textarea>
-
-<div class="botoes">
-  <button id="btnValidar" disabled>✅ Validar texto</button>
+<!-- ============ TELA 2: CÂMERA ============ -->
+<div id="tela-camera" class="tela">
+  <video id="video" playsinline></video>
+  <canvas id="canvas" style="display:none"></canvas>
+  <div class="overlay-camera"><div class="mira"></div></div>
+  <p class="instrucao">Aponte o QR para a câmera</p>
+  <button id="btnCancelar" class="btn-secundario">Cancelar</button>
 </div>
 
-<div id="resultado">Carregando CSV...</div>
+<!-- ============ TELA 3: SUCESSO ============ -->
+<div id="tela-sucesso" class="tela">
+  <div class="icone-grande ok">✅</div>
+  <h2 id="sucesso-nome">—</h2>
+  <p class="msg-ok">Você foi verificado</p>
+  <div class="detalhes" id="sucesso-detalhes"></div>
+  <div class="botoes-resultado">
+    <button id="btnProximo" class="btn-grande">Próximo</button>
+    <button id="btnOk" class="btn-grande secundario">OK</button>
+  </div>
+</div>
+
+<!-- ============ TELA 4: ERRO ============ -->
+<div id="tela-erro" class="tela">
+  <div class="icone-grande erro">❌</div>
+  <h2>QR Inválido</h2>
+  <p class="msg-erro" id="erro-motivo">—</p>
+  <div class="detalhes" id="erro-detalhes"></div>
+  <div class="botoes-resultado">
+    <button id="btnTentarNovamente" class="btn-grande">Tentar novamente</button>
+    <button id="btnVoltar" class="btn-grande secundario">OK</button>
+  </div>
+</div>
 
 <script>
 // =========================================================
-// 1. Estado global
+// CONFIGURAÇÃO
+// =========================================================
+
+// URL do servidor. Deixe "" para não enviar (só loga no console).
+// Ex.: "https://meuservidor.com/api/ponto"
+const SERVER_URL = "";
+
+const TOL_FUTURO  = 20; // segundos à frente
+const TOL_PASSADO = 45; // segundos atrás
+
+// =========================================================
+// TABELA DE TIPOS (campo 50)
+// =========================================================
+
+const TIPOS = {
+  "00": "Início do expediente",
+  "01": "Retorno do almoço",
+  "02": "Retorno de atividade externa",
+  "03": "Retorno de atividade interna",
+  "04": "Retorno de reunião",
+  "05": "Retorno de treinamento",
+  "06": "Retorno de serviço externo",
+  "07": "Retorno de visita",
+  "08": "Retorno autorizado",
+  "09": "Retorno de intervalo",
+  "49": "Entrada — outros motivos",
+  "50": "Final do expediente",
+  "51": "Saída para almoço",
+  "52": "Saída para atividade externa",
+  "53": "Saída de atividade interna",
+  "54": "Saída para reunião",
+  "55": "Saída para treinamento",
+  "56": "Saída para serviço externo",
+  "57": "Saída para visita",
+  "58": "Saída autorizada",
+  "59": "Saída para intervalo",
+  "99": "Saída — questões médicas"
+};
+
+function descricaoTipo(cod) { return TIPOS[cod] || "Código " + cod; }
+function categoriaTipo(cod) {
+  const n = parseInt(cod, 10);
+  return isNaN(n) ? "?" : (n < 50 ? "Entrada" : "Saída");
+}
+
+// =========================================================
+// ESTADO
 // =========================================================
 
 let FUNCIONARIOS = [];
@@ -144,40 +239,31 @@ let stream = null;
 let animando = false;
 let ultimoQR = "";
 
-const TOL_FUTURO  = 20; // segundos à frente
-const TOL_PASSADO = 45; // segundos atrás
-
 // =========================================================
-// 2. CSV
+// CSV
 // =========================================================
 
 async function carregarCSV() {
   const resp = await fetch("dados.csv?t=" + Date.now());
-  if (!resp.ok) throw new Error("Falha ao carregar dados.csv (HTTP " + resp.status + ")");
+  if (!resp.ok) throw new Error("HTTP " + resp.status + " ao carregar dados.csv");
 
   const texto = await resp.text();
-  const linhas = texto
-    .replace(/^\uFEFF/, "")   // remove BOM
-    .trim()
-    .split(/\r?\n/);
-
-  if (linhas.length < 2) throw new Error("CSV vazio ou sem cabeçalho");
-
+  const linhas = texto.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
   const SEP = linhas[0].includes(";") ? ";" : ",";
-  const cabecalho = linhas[0].split(SEP).map(c => c.trim().toLowerCase());
+  const cab = linhas[0].split(SEP).map(c => c.trim().toLowerCase());
 
   FUNCIONARIOS = linhas.slice(1)
     .filter(l => l.trim() !== "")
     .map(l => {
-      const valores = l.split(SEP);
-      const obj = {};
-      cabecalho.forEach((c, i) => obj[c] = (valores[i] || "").trim());
-      return obj;
+      const v = l.split(SEP);
+      const o = {};
+      cab.forEach((c, i) => o[c] = (v[i] || "").trim());
+      return o;
     });
 }
 
 // =========================================================
-// 3. Utilitários
+// UTILITÁRIOS
 // =========================================================
 
 async function sha256(texto) {
@@ -185,17 +271,11 @@ async function sha256(texto) {
   const hash = await crypto.subtle.digest("SHA-256", dados);
   return [...new Uint8Array(hash)]
     .map(b => b.toString(16).padStart(2, "0"))
-    .join("")
-    .toUpperCase();
+    .join("").toUpperCase();
 }
 
-function fmtCpf(cpf) {
-  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-}
-
-function fmtCnpj(cnpj) {
-  return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-}
+const fmtCpf  = c => c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+const fmtCnpj = c => c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
 
 function fmtData(ts) {
   const d = new Date(ts * 1000);
@@ -204,208 +284,138 @@ function fmtData(ts) {
        + " " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
 }
 
-function fmtTipo(t) {
-  const map = {
-    "01": "Entrada",
-    "02": "Saída",
-    "03": "Início intervalo",
-    "04": "Fim intervalo"
-  };
-  return map[t] || "Desconhecido (" + t + ")";
+function beep(freq, dur) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + dur / 1000);
+    osc.start();
+    osc.stop(ctx.currentTime + dur / 1000);
+  } catch (e) {}
 }
 
 // =========================================================
-// 4. Parser posicional
+// PARSER
 // =========================================================
 
 function parsear(qr) {
-  const out = {};
-  let p = 0;
-
-  const lerFixo = (tam) => {
-    const v = qr.slice(p, p + tam);
-    p += tam;
-    return v;
+  const out = {}; let p = 0;
+  const lerFixo = t => { const v = qr.slice(p, p + t); p += t; return v; };
+  const lerAte  = term => {
+    const f = qr.indexOf(term, p);
+    if (f === -1) throw new Error("Terminador '" + term + "' ausente");
+    const v = qr.slice(p, f); p = f + 1; return v;
   };
 
-  const lerAte = (term) => {
-    const fim = qr.indexOf(term, p);
-    if (fim === -1) throw new Error("Terminador '" + term + "' não encontrado");
-    const v = qr.slice(p, fim);
-    p = fim + 1;
-    return v;
-  };
-
-  if (lerFixo(2) !== "00") throw new Error("Falta ID 00");
+  if (lerFixo(2) !== "00") throw new Error("Falta campo 00");
   out.versao = lerFixo(2);
-
-  if (lerFixo(2) !== "10") throw new Error("Falta ID 10");
+  if (lerFixo(2) !== "10") throw new Error("Falta campo 10");
   out.hashCnpj = lerFixo(64);
-
-  if (lerFixo(2) !== "20") throw new Error("Falta ID 20");
+  if (lerFixo(2) !== "20") throw new Error("Falta campo 20");
   out.hashCpf = lerFixo(64);
-
-  if (lerFixo(2) !== "40") throw new Error("Falta ID 40");
+  if (lerFixo(2) !== "40") throw new Error("Falta campo 40");
   out.lat = lerAte("x");
-
-  if (lerFixo(2) !== "41") throw new Error("Falta ID 41");
+  if (lerFixo(2) !== "41") throw new Error("Falta campo 41");
   out.lon = lerAte("x");
-
-  if (lerFixo(2) !== "50") throw new Error("Falta ID 50");
+  if (lerFixo(2) !== "50") throw new Error("Falta campo 50");
   out.tipo = lerFixo(2);
-
-  if (lerFixo(2) !== "61") throw new Error("Falta ID 61");
+  if (lerFixo(2) !== "61") throw new Error("Falta campo 61");
   out.timestamp = lerAte("x");
-
-  if (lerFixo(2) !== "99") throw new Error("Falta ID 99");
+  if (lerFixo(2) !== "99") throw new Error("Falta campo 99");
   out.hashFinal = lerFixo(64);
-
   out.fimDados = p - 2 - 64;
   return out;
 }
 
 // =========================================================
-// 5. Lookup no CSV (força bruta pelo timestamp)
+// LOOKUP NO CSV
 // =========================================================
 
-async function acharCpfPorHash(hashAlvo, timestamp) {
+async function acharCpf(hash, ts) {
   for (const f of FUNCIONARIOS) {
-    const h = await sha256("CPF:" + f.cpf + ":" + timestamp);
-    if (h === hashAlvo) return f;
+    if (await sha256("CPF:" + f.cpf + ":" + ts) === hash) return f;
   }
   return null;
 }
-
-async function acharCnpjPorHash(hashAlvo, timestamp) {
+async function acharCnpj(hash, ts) {
   const vistos = new Set();
   for (const f of FUNCIONARIOS) {
     if (vistos.has(f.cnpj)) continue;
     vistos.add(f.cnpj);
-    const h = await sha256("CNPJ:" + f.cnpj + ":" + timestamp);
-    if (h === hashAlvo) return f;
+    if (await sha256("CNPJ:" + f.cnpj + ":" + ts) === hash) return f;
   }
   return null;
 }
 
 // =========================================================
-// 6. Validação + render
+// SERVIDOR + CSV LOCAL
 // =========================================================
 
-async function validar(qr) {
-  const div = document.getElementById("resultado");
-
-  if (FUNCIONARIOS.length === 0) {
-    div.innerHTML = '<div class="erro">CSV ainda não carregado.</div>';
-    return;
+async function enviarServidor(qr) {
+  if (!SERVER_URL) {
+    console.log("[mock] enviaria para servidor:", qr);
+    return { ok: true, mock: true };
   }
-
-  div.innerHTML = "Analisando...";
-
   try {
-    const c = parsear(qr);
-
-    // 1. Assinatura
-    const dados = qr.slice(0, c.fimDados);
-    const esperado = await sha256(dados);
-    const assinaturaOk = esperado === c.hashFinal;
-
-    // 2. Janela de tempo
-    const agora = Math.floor(Date.now() / 1000);
-    const ts = parseInt(c.timestamp, 10);
-    const delta = agora - ts;
-
-    let tempoStatus, tempoMsg;
-    if (delta < -TOL_FUTURO) {
-      tempoStatus = "erro";
-      tempoMsg = "❌ Futuro demais (" + (-delta) + "s à frente, máx " + TOL_FUTURO + "s)";
-    } else if (delta > TOL_PASSADO) {
-      tempoStatus = "erro";
-      tempoMsg = "❌ Expirado (" + delta + "s atrás, máx " + TOL_PASSADO + "s)";
-    } else {
-      tempoStatus = "ok";
-      const sinal = delta >= 0 ? "atrás" : "à frente";
-      tempoMsg = "✅ Dentro da janela (" + Math.abs(delta) + "s " + sinal + ")";
-    }
-
-    // 3. Lookup no CSV
-    const func = await acharCpfPorHash(c.hashCpf, c.timestamp);
-    const emp  = await acharCnpjPorHash(c.hashCnpj, c.timestamp);
-
-    const valido = assinaturaOk && tempoStatus === "ok" && func && emp;
-
-    // 4. Render
-    let html = "";
-    html += valido
-      ? '<div class="titulo-ok">✅ QR VÁLIDO</div>'
-      : '<div class="titulo-erro">❌ QR INVÁLIDO</div>';
-
-    // Status
-    html += '<div class="secao">Status</div>';
-    html += linha("Assinatura", assinaturaOk
-      ? '<span class="ok">✅ OK</span>'
-      : '<span class="erro">❌ Hash não bate</span>');
-    html += linha("Tempo", '<span class="' + tempoStatus + '">' + tempoMsg + '</span>');
-    html += linha("Tipo", fmtTipo(c.tipo));
-
-    // Funcionário
-    html += '<div class="secao">Funcionário</div>';
-    if (func) {
-      html += linha("CPF", fmtCpf(func.cpf));
-      html += linha("Nome", func.nome);
-      html += linha("Login", func.login);
-    } else {
-      html += linha("CPF", '<span class="erro">❌ não encontrado no CSV</span>');
-    }
-
-    // Empresa
-    html += '<div class="secao">Empresa</div>';
-    if (emp) {
-      html += linha("CNPJ", fmtCnpj(emp.cnpj));
-      html += linha("Nome", emp.empresa);
-    } else {
-      html += linha("CNPJ", '<span class="erro">❌ não encontrado no CSV</span>');
-    }
-
-    // Localização
-    html += '<div class="secao">Localização</div>';
-    html += linha("Latitude", c.lat);
-    html += linha("Longitude", c.lon);
-
-    // Tempo
-    html += '<div class="secao">Tempo</div>';
-    html += linha("Timestamp", c.timestamp);
-    html += linha("Data/hora", fmtData(ts));
-
-    // Debug
-    html += '<div class="secao">Debug</div>';
-    html += linha("Hash CNPJ", '<span class="mono">' + c.hashCnpj.slice(0, 16) + '…</span>');
-    html += linha("Hash CPF",  '<span class="mono">' + c.hashCpf.slice(0, 16) + '…</span>');
-    html += linha("Esperado",  '<span class="mono">' + esperado.slice(0, 16) + '…</span>');
-    html += linha("Recebido",  '<span class="mono">' + c.hashFinal.slice(0, 16) + '…</span>');
-
-    div.innerHTML = html;
-
+    const r = await fetch(SERVER_URL + "?qr=" + encodeURIComponent(qr));
+    return { ok: r.ok, status: r.status };
   } catch (e) {
-    div.innerHTML = '<div class="erro">Erro: ' + e.message + '</div>';
+    return { ok: false, erro: e.message };
   }
 }
 
-function linha(rotulo, valor) {
-  return '<div class="linha"><span class="rotulo">' + rotulo + ':</span>'
-       + '<span class="valor">' + valor + '</span></div>';
+function salvarLeitura(leitura) {
+  const lista = JSON.parse(localStorage.getItem("pontos") || "[]");
+  lista.push(leitura);
+  localStorage.setItem("pontos", JSON.stringify(lista));
+  atualizarContador();
+}
+
+function atualizarContador() {
+  const lista = JSON.parse(localStorage.getItem("pontos") || "[]");
+  const el = document.getElementById("contadorLeituras");
+  if (el) el.textContent = lista.length + " leitura" + (lista.length === 1 ? "" : "s");
+}
+
+function baixarCSV() {
+  const lista = JSON.parse(localStorage.getItem("pontos") || "[]");
+  if (lista.length === 0) return alert("Nenhuma leitura para exportar.");
+
+  const cab = "data_hora,cpf,nome,login,cnpj,empresa,tipo,descricao,categoria,lat,lon,qr";
+  const linhas = lista.map(l =>
+    [l.dataHora, l.cpf, l.nome, l.login, l.cnpj, l.empresa,
+     l.tipo, l.descricao, l.categoria, l.lat, l.lon, l.qr]
+      .map(c => '"' + String(c).replace(/"/g, '""') + '"')
+      .join(",")
+  );
+  const csv = "\uFEFF" + [cab, ...linhas].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "pontos_" + new Date().toISOString().slice(0, 10) + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // =========================================================
-// 7. Câmera
+// TELAS
 // =========================================================
 
-async function iniciarCamera() {
-  if (FUNCIONARIOS.length === 0) {
-    document.getElementById("resultado").innerHTML =
-      '<div class="erro">CSV ainda não carregado.</div>';
-    return;
-  }
+function mostrarTela(id) {
+  document.querySelectorAll(".tela").forEach(t => t.classList.remove("visivel"));
+  document.getElementById(id).classList.add("visivel");
+}
 
+// =========================================================
+// CÂMERA
+// =========================================================
+
+async function abrirCamera() {
   const video  = document.getElementById("video");
   const canvas = document.getElementById("canvas");
   const ctx    = canvas.getContext("2d");
@@ -415,11 +425,11 @@ async function iniciarCamera() {
       video: { facingMode: "environment" }
     });
     video.srcObject = stream;
-    video.play();
+    await video.play();
 
     animando = true;
-    document.getElementById("btnCamera").disabled = true;
-    document.getElementById("btnParar").disabled = false;
+    ultimoQR = "";
+    mostrarTela("tela-camera");
 
     const tick = () => {
       if (!animando) return;
@@ -439,85 +449,192 @@ async function iniciarCamera() {
           validar(code.data);
         }
       }
-
       requestAnimationFrame(tick);
     };
-
     tick();
 
   } catch (e) {
-    document.getElementById("resultado").innerHTML =
-      '<div class="erro">Câmera: ' + e.message + '</div>';
+    alert("Não foi possível abrir a câmera: " + e.message);
   }
 }
 
-function pararCamera() {
+function fecharCamera() {
   animando = false;
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
   }
-  document.getElementById("btnCamera").disabled = false;
-  document.getElementById("btnParar").disabled = true;
 }
 
 // =========================================================
-// 8. Botões
+// VALIDAÇÃO
 // =========================================================
 
-document.getElementById("btnCamera").onclick  = iniciarCamera;
-document.getElementById("btnParar").onclick   = pararCamera;
+async function validar(qr) {
+  // 1. Parser
+  let c;
+  try {
+    c = parsear(qr);
+  } catch (e) {
+    return telaErro("Não foi possível ler o QR.", "Layout inválido: " + e.message);
+  }
 
-document.getElementById("btnValidar").onclick = () => {
-  const txt = document.getElementById("entradaManual").value.trim();
-  if (txt) validar(txt);
-};
+  // 2. Assinatura
+  const dados = qr.slice(0, c.fimDados);
+  const esperado = await sha256(dados);
+  if (esperado !== c.hashFinal) {
+    return telaErro("Assinatura do QR não confere.", "O conteúdo foi alterado ou o QR é falso.", c);
+  }
 
-document.getElementById("btnExemplo").onclick = async () => {
-  if (FUNCIONARIOS.length === 0) return;
+  // 3. Janela de tempo
+  const agora = Math.floor(Date.now() / 1000);
+  const ts = parseInt(c.timestamp, 10);
+  const delta = agora - ts;
 
-  // Pega o primeiro funcionário do CSV
-  const f = FUNCIONARIOS[0];
-  const ts = Math.floor(Date.now() / 1000);
+  if (delta < -TOL_FUTURO) {
+    return telaErro("QR do futuro.", "Diferença de " + (-delta) + "s à frente (máx " + TOL_FUTURO + "s).", c);
+  }
+  if (delta > TOL_PASSADO) {
+    return telaErro("QR expirado.", "Gerado há " + delta + "s (máx " + TOL_PASSADO + "s).", c);
+  }
 
-  const hashCnpj = await sha256("CNPJ:" + f.cnpj + ":" + ts);
-  const hashCpf  = await sha256("CPF:"  + f.cpf  + ":" + ts);
+  // 4. CSV
+  const func = await acharCpf(c.hashCpf, ts);
+  const emp  = await acharCnpj(c.hashCnpj, ts);
 
-  const dados =
-    "0001" +
-    "10" + hashCnpj +
-    "20" + hashCpf +
-    "40" + (-23.5478).toFixed(6) + "x" +
-    "41" + (-46.6312).toFixed(6) + "x" +
-    "50" + "01" +
-    "61" + ts + "x";
+  if (!func) return telaErro("Funcionário não encontrado.", "CPF do QR não está no CSV.", c);
+  if (!emp)  return telaErro("Empresa não encontrada.", "CNPJ do QR não está no CSV.", c);
 
-  const hashFinal = await sha256(dados);
-  const qr = dados + "99" + hashFinal;
-
-  document.getElementById("entradaManual").value = qr;
-  validar(qr);
-};
+  // 5. Tudo OK → sucesso
+  telaSucesso(qr, c, func, emp);
+}
 
 // =========================================================
-// 9. Boot
+// TELA DE SUCESSO
 // =========================================================
 
-carregarCSV()
-  .then(() => {
-    document.getElementById("resultado").textContent =
-      "CSV carregado: " + FUNCIONARIOS.length + " funcionários. Pronto.";
-    document.getElementById("btnValidar").disabled = false;
-    document.getElementById("btnExemplo").disabled = false;
-    document.getElementById("btnCamera").disabled  = false;
-  })
-  .catch(e => {
-    document.getElementById("resultado").innerHTML =
-      '<div class="erro">' + e.message + '<br><br>'
-      + 'Dica: rode com servidor HTTP (ex: <code>python3 -m http.server 8000</code>).'
-      + '</div>';
+async function telaSucesso(qr, c, func, emp) {
+  fecharCamera();
+  beep(880, 150);
+
+  const ts = parseInt(c.timestamp, 10);
+  const desc = descricaoTipo(c.tipo);
+  const cat  = categoriaTipo(c.tipo);
+
+  document.getElementById("sucesso-nome").textContent = func.nome;
+
+  const tagClass = cat === "Entrada" ? "tag-entrada" : "tag-saida";
+  document.getElementById("sucesso-detalhes").innerHTML =
+      linha("CPF", fmtCpf(func.cpf))
+    + linha("Login", func.login)
+    + linha("Empresa", emp.empresa)
+    + linha("CNPJ", fmtCnpj(emp.cnpj))
+    + linha("Tipo", '<span class="tag ' + tagClass + '">' + cat + '</span> ' + desc)
+    + linha("Data/hora", fmtData(ts));
+
+  mostrarTela("tela-sucesso");
+
+  // Envia pro servidor (só pra testar, não bloqueia a UI)
+  const resp = await enviarServidor(qr);
+  if (!resp.ok) console.warn("Servidor respondeu com erro:", resp);
+
+  // Salva no CSV local
+  salvarLeitura({
+    dataHora: fmtData(ts),
+    cpf: func.cpf,
+    nome: func.nome,
+    login: func.login,
+    cnpj: emp.cnpj,
+    empresa: emp.empresa,
+    tipo: c.tipo,
+    descricao: desc,
+    categoria: cat,
+    lat: c.lat,
+    lon: c.lon,
+    qr: qr
   });
+}
 
+// =========================================================
+// TELA DE ERRO
+// =========================================================
+
+function telaErro(motivo, detalhe, c) {
+  fecharCamera();
+  beep(220, 400);
+
+  document.getElementById("erro-motivo").textContent = motivo;
+
+  let html = detalhe
+    ? '<div class="linha"><span class="rotulo">Motivo</span><span class="valor">' + detalhe + '</span></div>'
+    : "";
+
+  if (c) {
+    const desc = descricaoTipo(c.tipo);
+    const cat  = categoriaTipo(c.tipo);
+    const tagClass = cat === "Entrada" ? "tag-entrada" : "tag-saida";
+    html += linha("Campo 50", c.tipo + " — " + desc);
+    html += linha("Categoria", '<span class="tag ' + tagClass + '">' + cat + '</span>');
+    html += linha("Timestamp", c.timestamp);
+    html += linha("Latitude", c.lat);
+    html += linha("Longitude", c.lon);
+  }
+
+  document.getElementById("erro-detalhes").innerHTML = html;
+  mostrarTela("tela-erro");
+}
+
+function linha(rotulo, valor) {
+  return '<div class="linha"><span class="rotulo">' + rotulo + '</span><span class="valor">' + valor + '</span></div>';
+}
+
+// =========================================================
+// BOTÕES
+// =========================================================
+
+// Tela inicial
+document.getElementById("btnIniciar").onclick = () => {
+  if (FUNCIONARIOS.length === 0) return alert("CSV ainda não carregado.");
+  abrirCamera();
+};
+
+// Tela câmera
+document.getElementById("btnCancelar").onclick = () => {
+  fecharCamera();
+  mostrarTela("tela-idle");
+};
+
+// Tela sucesso — "Próximo" já reabre a câmera; "OK" volta pra idle
+document.getElementById("btnProximo").onclick = () => {
+  ultimoQR = "";
+  abrirCamera();
+};
+document.getElementById("btnOk").onclick = () => mostrarTela("tela-idle");
+
+// Tela erro — "Tentar novamente" reabre câmera; "OK" volta pra idle
+document.getElementById("btnTentarNovamente").onclick = () => {
+  ultimoQR = "";
+  abrirCamera();
+};
+document.getElementById("btnVoltar").onclick = () => mostrarTela("tela-idle");
+
+// Rodapé da idle
+document.getElementById("btnBaixarCSV").onclick = baixarCSV;
+document.getElementById("btnLimpar").onclick = () => {
+  if (confirm("Apagar todas as leituras salvas?")) {
+    localStorage.removeItem("pontos");
+    atualizarContador();
+  }
+};
+
+// =========================================================
+// BOOT
+// =========================================================
+
+atualizarContador();
+carregarCSV()
+  .then(() => console.log("CSV carregado:", FUNCIONARIOS.length, "funcionários"))
+  .catch(e => alert("Erro ao carregar CSV: " + e.message));
 </script>
 
 </body>
