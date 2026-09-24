@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador QR</title>
+
+<script src="qrcode.min.js"></script>
+
+<style>
+    body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="qrcode"></div>
+
+<script>
+
+const CHECKPOINT = "00";
+
+async function sha256(texto) {
+
+    const dados = new TextEncoder().encode(texto);
+
+    const hash = await crypto.subtle.digest(
+        "SHA-256",
+        dados
+    );
+
+    return [...new Uint8Array(hash)]
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("")
+        .toUpperCase();
+}
+
+
+function obterLocalizacao() {
+
+    return new Promise((resolve, reject) => {
+
+        navigator.geolocation.getCurrentPosition(
+            posicao => {
+
+                resolve({
+                    latitude: posicao.coords.latitude,
+                    longitude: posicao.coords.longitude
+                });
+
+            },
+
+            erro => {
+                reject(erro);
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+
+    });
+
+}
+
+
+async function gerarQR() {
+
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    const cnpj = params.get("cnpj");
+    const cpf = params.get("cpf");
+
+    if (!cnpj || !cpf) {
+        return;
+    }
+
+
+    // GPS
+    const local = await obterLocalizacao();
+
+
+    // Timestamp Unix
+    const timestamp = Math.floor(
+        Date.now() / 1000
+    );
+
+
+    // Hash CNPJ
+    const hashCnpj = await sha256(
+        "CNPJ:" + cnpj + ":" + timestamp
+    );
+
+
+    // Hash CPF
+    const hashCpf = await sha256(
+        "CPF:" + cpf + ":" + timestamp
+    );
+
+
+    // Dados anteriores ao hash final
+    const dados =
+        "00=01|" +
+        "10=" + hashCnpj + "|" +
+        "20=" + hashCpf + "|" +
+        "40=" + local.latitude.toFixed(6) + "x|" +
+        "41=" + local.longitude.toFixed(6) + "x|" +
+        "50=" + CHECKPOINT + "|" +
+        "61=" + timestamp;
+
+
+    // Hash de todo o conteúdo anterior
+    const hashFinal = await sha256(dados);
+
+
+    // QR final
+    const qr =
+        dados +
+        "|99=" + hashFinal;
+
+
+    new QRCode(
+        document.getElementById("qrcode"),
+        {
+            text: qr,
+            width: 320,
+            height: 320,
+            correctLevel: QRCode.CorrectLevel.M
+        }
+    );
+}
+
+
+gerarQR();
+
+</script>
+
+</body>
+</html>
+
