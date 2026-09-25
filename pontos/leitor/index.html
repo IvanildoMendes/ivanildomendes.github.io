@@ -21,10 +21,22 @@
   }
   .tela.visivel { display: flex; }
 
-  /* ---------- Tela inicial ---------- */
   .logo { font-size: 64px; margin-bottom: 8px; }
   h1 { font-size: 24px; margin: 0 0 6px; font-weight: 700; }
-  .subtitulo { color: #9ca3af; font-size: 14px; margin: 0 0 32px; max-width: 280px; }
+  .subtitulo { color: #9ca3af; font-size: 14px; margin: 0 0 32px; max-width: 320px; }
+
+  .terminal-badge {
+    position: absolute; top: 16px; right: 16px;
+    background: #1f2937; border: 1px solid #374151;
+    color: #93c5fd; font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: ui-monospace, monospace;
+  }
+  .terminal-badge .dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: #4ade80; border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+  }
 
   .btn-grande {
     background: #4ade80; color: #0f1115;
@@ -55,7 +67,6 @@
   }
   .btn-link:hover { color: #9ca3af; }
 
-  /* ---------- Tela câmera ---------- */
   #tela-camera { padding: 0; gap: 0; }
   #video {
     position: absolute; inset: 0;
@@ -95,7 +106,6 @@
     backdrop-filter: blur(8px);
   }
 
-  /* ---------- Telas de resultado ---------- */
   .icone-grande { font-size: 88px; line-height: 1; margin-bottom: 8px; }
   .icone-grande.ok  { color: #4ade80; }
   .icone-grande.erro { color: #f87171; }
@@ -132,12 +142,29 @@
     display: flex; gap: 12px; flex-wrap: wrap;
     justify-content: center;
   }
+
+  .boot-erro {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100vh; padding: 24px; text-align: center; gap: 16px;
+  }
+  .boot-erro pre {
+    color: #9ca3af; white-space: pre-wrap;
+    font-size: 13px; max-width: 500px;
+    font-family: ui-monospace, monospace;
+    background: #1a1d23; padding: 14px 18px;
+    border-radius: 8px; border: 1px solid #374151;
+    text-align: left; margin: 0;
+  }
 </style>
 </head>
 <body>
 
 <!-- ============ TELA 1: IDLE ============ -->
 <div id="tela-idle" class="tela visivel">
+  <div class="terminal-badge" id="badge-terminal" style="display:none;">
+    <span class="dot"></span><span id="badge-texto">—</span>
+  </div>
   <div class="logo">🔍</div>
   <h1>Leitor de Ponto</h1>
   <p class="subtitulo">Aponte o QR do funcionário para registrar o ponto.</p>
@@ -189,7 +216,6 @@
 // =========================================================
 
 // URL do servidor. Deixe "" para não enviar (só loga no console).
-// Ex.: "https://meuservidor.com/api/ponto"
 const SERVER_URL = "";
 
 const TOL_FUTURO  = 20; // segundos à frente
@@ -235,24 +261,25 @@ function categoriaTipo(cod) {
 // =========================================================
 
 let FUNCIONARIOS = [];
+let TERMINAIS    = [];
+let GEOFENCE     = null;   // preenchido no boot com a config do terminal
+
 let stream = null;
 let animando = false;
 let ultimoQR = "";
 
 // =========================================================
-// CSV
+// PARSER DE CSV
 // =========================================================
 
-async function carregarCSV() {
-  const resp = await fetch("dados.csv?t=" + Date.now());
-  if (!resp.ok) throw new Error("HTTP " + resp.status + " ao carregar dados.csv");
-
-  const texto = await resp.text();
+function parseCSV(texto) {
   const linhas = texto.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
+  if (linhas.length < 2) return [];
+
   const SEP = linhas[0].includes(";") ? ";" : ",";
   const cab = linhas[0].split(SEP).map(c => c.trim().toLowerCase());
 
-  FUNCIONARIOS = linhas.slice(1)
+  return linhas.slice(1)
     .filter(l => l.trim() !== "")
     .map(l => {
       const v = l.split(SEP);
@@ -260,6 +287,63 @@ async function carregarCSV() {
       cab.forEach((c, i) => o[c] = (v[i] || "").trim());
       return o;
     });
+}
+
+// =========================================================
+// CARREGAMENTO DOS CSVs
+// =========================================================
+
+async function carregarCSVs() {
+  const [r1, r2] = await Promise.all([
+    fetch("dados.csv?t=" + Date.now()),
+    fetch("terminais.csv?t=" + Date.now())
+  ]);
+
+  if (!r1.ok) throw new Error("HTTP " + r1.status + " ao carregar dados.csv");
+  if (!r2.ok) throw new Error("HTTP " + r2.status + " ao carregar terminais.csv");
+
+  FUNCIONARIOS = parseCSV(await r1.text());
+  TERMINAIS    = parseCSV(await r2.text());
+
+  console.log("CSVs carregados:", FUNCIONARIOS.length, "funcionários,", TERMINAIS.length, "terminais");
+}
+
+// =========================================================
+// CONFIG DO TERMINAL (via URL)
+// =========================================================
+
+function carregarTerminal() {
+  const p = new URLSearchParams(location.search);
+  const id = (p.get("terminal") || "").trim();
+
+  if (!id) {
+    throw new Error(
+      "Falta o parâmetro ?terminal=ID na URL.\n\n" +
+      "Exemplo:\n" +
+      "  index.html?terminal=1\n\n" +
+      "Cada terminal tem seu atalho com o ID correto."
+    );
+  }
+
+  const t = TERMINAIS.find(t => t.id === id);
+  if (!t) {
+    throw new Error(
+      "Terminal " + id + " não encontrado em terminais.csv.\n\n" +
+      "Terminais disponíveis: " +
+      TERMINAIS.map(t => t.id).join(", ")
+    );
+  }
+
+  GEOFENCE = {
+    ativo: true,
+    id: t.id,
+    cnpj: (t.cnpj || "").trim() || null,
+    lat: parseFloat(t.lat),
+    lon: parseFloat(t.lon),
+    raioMetros: parseInt(t.raio, 10)
+  };
+
+  console.log("Terminal configurado:", GEOFENCE);
 }
 
 // =========================================================
@@ -298,8 +382,28 @@ function beep(freq, dur) {
   } catch (e) {}
 }
 
+// ---------------------------------------------------------
+// GEOFENCE — Haversine
+// ---------------------------------------------------------
+
+function distanciaMetros(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2
+          + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2))
+          * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function fmtDistancia(m) {
+  if (m < 1000) return Math.round(m) + "m";
+  return (m / 1000).toFixed(2) + "km";
+}
+
 // =========================================================
-// PARSER
+// PARSER DA STRING DO QR
 // =========================================================
 
 function parsear(qr) {
@@ -332,7 +436,7 @@ function parsear(qr) {
 }
 
 // =========================================================
-// LOOKUP NO CSV
+// LOOKUP NOS CSVs
 // =========================================================
 
 async function acharCpf(hash, ts) {
@@ -341,6 +445,7 @@ async function acharCpf(hash, ts) {
   }
   return null;
 }
+
 async function acharCnpj(hash, ts) {
   const vistos = new Set();
   for (const f of FUNCIONARIOS) {
@@ -361,7 +466,10 @@ async function enviarServidor(qr) {
     return { ok: true, mock: true };
   }
   try {
-    const r = await fetch(SERVER_URL + "?qr=" + encodeURIComponent(qr));
+    const url = SERVER_URL
+      + "?terminal=" + encodeURIComponent(GEOFENCE ? GEOFENCE.id : "")
+      + "&qr=" + encodeURIComponent(qr);
+    const r = await fetch(url);
     return { ok: r.ok, status: r.status };
   } catch (e) {
     return { ok: false, erro: e.message };
@@ -385,10 +493,12 @@ function baixarCSV() {
   const lista = JSON.parse(localStorage.getItem("pontos") || "[]");
   if (lista.length === 0) return alert("Nenhuma leitura para exportar.");
 
-  const cab = "data_hora,cpf,nome,login,cnpj,empresa,tipo,descricao,categoria,lat,lon,qr";
+  const cab = "data_hora,terminal,cpf,nome,login,cnpj,empresa,tipo,descricao,categoria,lat,lon,distancia_m,qr";
   const linhas = lista.map(l =>
-    [l.dataHora, l.cpf, l.nome, l.login, l.cnpj, l.empresa,
-     l.tipo, l.descricao, l.categoria, l.lat, l.lon, l.qr]
+    [l.dataHora, l.terminal, l.cpf, l.nome, l.login, l.cnpj, l.empresa,
+     l.tipo, l.descricao, l.categoria, l.lat, l.lon,
+     l.distancia !== null && l.distancia !== undefined ? Math.round(l.distancia) : "",
+     l.qr]
       .map(c => '"' + String(c).replace(/"/g, '""') + '"')
       .join(",")
   );
@@ -409,6 +519,15 @@ function baixarCSV() {
 function mostrarTela(id) {
   document.querySelectorAll(".tela").forEach(t => t.classList.remove("visivel"));
   document.getElementById(id).classList.add("visivel");
+}
+
+function mostrarBadgeTerminal() {
+  const el  = document.getElementById("badge-terminal");
+  const txt = document.getElementById("badge-texto");
+  if (GEOFENCE) {
+    txt.textContent = "terminal " + GEOFENCE.id;
+    el.style.display = "block";
+  }
 }
 
 // =========================================================
@@ -498,22 +617,50 @@ async function validar(qr) {
     return telaErro("QR expirado.", "Gerado há " + delta + "s (máx " + TOL_PASSADO + "s).", c);
   }
 
-  // 4. CSV
+  // 4. Lookup do funcionário e empresa
   const func = await acharCpf(c.hashCpf, ts);
   const emp  = await acharCnpj(c.hashCnpj, ts);
 
-  if (!func) return telaErro("Funcionário não encontrado.", "CPF do QR não está no CSV.", c);
-  if (!emp)  return telaErro("Empresa não encontrada.", "CNPJ do QR não está no CSV.", c);
+  if (!func) return telaErro("Funcionário não encontrado.", "CPF do QR não está no dados.csv.", c);
+  if (!emp)  return telaErro("Empresa não encontrada.", "CNPJ do QR não está no dados.csv.", c);
 
-  // 5. Tudo OK → sucesso
-  telaSucesso(qr, c, func, emp);
+  // 5. Geofence (baseado no terminal, não no QR)
+  let distancia = null;
+  if (GEOFENCE && GEOFENCE.ativo) {
+    distancia = distanciaMetros(
+      parseFloat(c.lat), parseFloat(c.lon),
+      GEOFENCE.lat, GEOFENCE.lon
+    );
+
+    if (distancia > GEOFENCE.raioMetros) {
+      return telaErro(
+        "Fora do local de trabalho.",
+        "Distância de " + fmtDistancia(distancia)
+        + " do terminal (máx " + GEOFENCE.raioMetros + "m).",
+        c
+      );
+    }
+
+    // 6. Empresa do terminal (só se estiver definida no terminais.csv)
+    if (GEOFENCE.cnpj && emp.cnpj !== GEOFENCE.cnpj) {
+      return telaErro(
+        "Funcionário de outra empresa.",
+        "Este terminal só aceita funcionários da empresa "
+        + fmtCnpj(GEOFENCE.cnpj) + ".",
+        c
+      );
+    }
+  }
+
+  // 7. Tudo OK
+  telaSucesso(qr, c, func, emp, distancia);
 }
 
 // =========================================================
 // TELA DE SUCESSO
 // =========================================================
 
-async function telaSucesso(qr, c, func, emp) {
+async function telaSucesso(qr, c, func, emp, distancia) {
   fecharCamera();
   beep(880, 150);
 
@@ -524,23 +671,30 @@ async function telaSucesso(qr, c, func, emp) {
   document.getElementById("sucesso-nome").textContent = func.nome;
 
   const tagClass = cat === "Entrada" ? "tag-entrada" : "tag-saida";
+
+  const linhaGeo = (GEOFENCE && distancia !== null)
+    ? linha("Local", "📍 " + fmtDistancia(distancia) + " do terminal ✅")
+    : "";
+
   document.getElementById("sucesso-detalhes").innerHTML =
       linha("CPF", fmtCpf(func.cpf))
     + linha("Login", func.login)
     + linha("Empresa", emp.empresa)
     + linha("CNPJ", fmtCnpj(emp.cnpj))
     + linha("Tipo", '<span class="tag ' + tagClass + '">' + cat + '</span> ' + desc)
-    + linha("Data/hora", fmtData(ts));
+    + linha("Data/hora", fmtData(ts))
+    + linhaGeo;
 
   mostrarTela("tela-sucesso");
 
-  // Envia pro servidor (só pra testar, não bloqueia a UI)
+  // Envia pro servidor (não bloqueia UI)
   const resp = await enviarServidor(qr);
   if (!resp.ok) console.warn("Servidor respondeu com erro:", resp);
 
   // Salva no CSV local
   salvarLeitura({
     dataHora: fmtData(ts),
+    terminal: GEOFENCE ? GEOFENCE.id : "",
     cpf: func.cpf,
     nome: func.nome,
     login: func.login,
@@ -551,6 +705,7 @@ async function telaSucesso(qr, c, func, emp) {
     categoria: cat,
     lat: c.lat,
     lon: c.lon,
+    distancia: distancia,
     qr: qr
   });
 }
@@ -573,11 +728,23 @@ function telaErro(motivo, detalhe, c) {
     const desc = descricaoTipo(c.tipo);
     const cat  = categoriaTipo(c.tipo);
     const tagClass = cat === "Entrada" ? "tag-entrada" : "tag-saida";
+
+    let linhaGeo = "";
+    if (GEOFENCE && GEOFENCE.ativo && c.lat && c.lon) {
+      const d = distanciaMetros(
+        parseFloat(c.lat), parseFloat(c.lon),
+        GEOFENCE.lat, GEOFENCE.lon
+      );
+      linhaGeo = linha("Distância", fmtDistancia(d)
+        + (d > GEOFENCE.raioMetros ? " ❌" : " ✅"));
+    }
+
     html += linha("Campo 50", c.tipo + " — " + desc);
     html += linha("Categoria", '<span class="tag ' + tagClass + '">' + cat + '</span>');
     html += linha("Timestamp", c.timestamp);
     html += linha("Latitude", c.lat);
     html += linha("Longitude", c.lon);
+    html += linhaGeo;
   }
 
   document.getElementById("erro-detalhes").innerHTML = html;
@@ -592,33 +759,28 @@ function linha(rotulo, valor) {
 // BOTÕES
 // =========================================================
 
-// Tela inicial
 document.getElementById("btnIniciar").onclick = () => {
   if (FUNCIONARIOS.length === 0) return alert("CSV ainda não carregado.");
   abrirCamera();
 };
 
-// Tela câmera
 document.getElementById("btnCancelar").onclick = () => {
   fecharCamera();
   mostrarTela("tela-idle");
 };
 
-// Tela sucesso — "Próximo" já reabre a câmera; "OK" volta pra idle
 document.getElementById("btnProximo").onclick = () => {
   ultimoQR = "";
   abrirCamera();
 };
 document.getElementById("btnOk").onclick = () => mostrarTela("tela-idle");
 
-// Tela erro — "Tentar novamente" reabre câmera; "OK" volta pra idle
 document.getElementById("btnTentarNovamente").onclick = () => {
   ultimoQR = "";
   abrirCamera();
 };
 document.getElementById("btnVoltar").onclick = () => mostrarTela("tela-idle");
 
-// Rodapé da idle
 document.getElementById("btnBaixarCSV").onclick = baixarCSV;
 document.getElementById("btnLimpar").onclick = () => {
   if (confirm("Apagar todas as leituras salvas?")) {
@@ -631,10 +793,28 @@ document.getElementById("btnLimpar").onclick = () => {
 // BOOT
 // =========================================================
 
-atualizarContador();
-carregarCSV()
-  .then(() => console.log("CSV carregado:", FUNCIONARIOS.length, "funcionários"))
-  .catch(e => alert("Erro ao carregar CSV: " + e.message));
+async function boot() {
+  atualizarContador();
+
+  try {
+    await carregarCSVs();
+    carregarTerminal();
+    mostrarBadgeTerminal();
+    console.log("✅ Pronto. Terminal:", GEOFENCE.id);
+  } catch (e) {
+    document.body.innerHTML =
+      '<div class="boot-erro">'
+      + '<div style="font-size:64px;">⚠️</div>'
+      + '<h2 style="color:#f87171;margin:0;">Falha ao inicializar</h2>'
+      + '<pre>' + String(e.message).replace(/</g, "&lt;") + '</pre>'
+      + '<p style="color:#6b7280;font-size:12px;margin:0;">'
+      + 'Verifique os CSVs e o parâmetro ?terminal=ID na URL.</p>'
+      + '</div>';
+    console.error(e);
+  }
+}
+
+boot();
 </script>
 
 </body>
