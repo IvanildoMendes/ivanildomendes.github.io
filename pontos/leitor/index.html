@@ -215,7 +215,7 @@
 // CONFIGURAÇÃO
 // =========================================================
 
-// URL do servidor. Deixe "" para não enviar (só loga no console).
+// URL do servidor. Deixe "Enviar qr " para não enviar (só loga no console).
 const SERVER_URL = "";
 
 const TOL_FUTURO  = 20; // segundos à frente
@@ -781,8 +781,8 @@ document.getElementById("btnTentarNovamente").onclick = () => {
 };
 document.getElementById("btnVoltar").onclick = () => mostrarTela("tela-idle");
 
-document.getElementById("btnBaixarCSV").onclick = baixarCSV;
-document.getElementById("btnLimpar").onclick = () => {
+//document.getElementById("btnBaixarCSV").onclick = baixarCSV;
+//document.getElementById("btnLimpar").onclick = () => {
   if (confirm("Apagar todas as leituras salvas?")) {
     localStorage.removeItem("pontos");
     atualizarContador();
