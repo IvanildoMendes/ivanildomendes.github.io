@@ -172,8 +172,6 @@
 
   <div class="rodape-idle">
     <span id="contadorLeituras">0 leituras</span>
-   <!-- <button id="btnBaixarCSV" class="btn-link">Baixar CSV</button>
-    <button id="btnLimpar" class="btn-link">Limpar</button>-->
   </div>
 </div>
 
@@ -489,29 +487,6 @@ function atualizarContador() {
   if (el) el.textContent = lista.length + " leitura" + (lista.length === 1 ? "" : "s");
 }
 
-function baixarCSV() {
-  const lista = JSON.parse(localStorage.getItem("pontos") || "[]");
-  if (lista.length === 0) return alert("Nenhuma leitura para exportar.");
-
-  const cab = "data_hora,terminal,cpf,nome,login,cnpj,empresa,tipo,descricao,categoria,lat,lon,distancia_m,qr";
-  const linhas = lista.map(l =>
-    [l.dataHora, l.terminal, l.cpf, l.nome, l.login, l.cnpj, l.empresa,
-     l.tipo, l.descricao, l.categoria, l.lat, l.lon,
-     l.distancia !== null && l.distancia !== undefined ? Math.round(l.distancia) : "",
-     l.qr]
-      .map(c => '"' + String(c).replace(/"/g, '""') + '"')
-      .join(",")
-  );
-  const csv = "\uFEFF" + [cab, ...linhas].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "pontos_" + new Date().toISOString().slice(0, 10) + ".csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 // =========================================================
 // TELAS
 // =========================================================
@@ -780,14 +755,6 @@ document.getElementById("btnTentarNovamente").onclick = () => {
   abrirCamera();
 };
 document.getElementById("btnVoltar").onclick = () => mostrarTela("tela-idle");
-
-document.getElementById("btnBaixarCSV").onclick = baixarCSV;
-document.getElementById("btnLimpar").onclick = () => {
-  if (confirm("Apagar todas as leituras salvas?")) {
-    localStorage.removeItem("pontos");
-    atualizarContador();
-  }
-};
 
 // =========================================================
 // BOOT
