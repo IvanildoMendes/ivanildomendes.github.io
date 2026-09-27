@@ -172,8 +172,8 @@
 
   <div class="rodape-idle">
     <span id="contadorLeituras">0 leituras</span>
-    <button id="btnBaixarCSV" class="btn-link">Baixar CSV</button>
-    <button id="btnLimpar" class="btn-link">Limpar</button>
+   <!-- <button id="btnBaixarCSV" class="btn-link">Baixar CSV</button>
+    <button id="btnLimpar" class="btn-link">Limpar</button>-->
   </div>
 </div>
 
@@ -781,8 +781,8 @@ document.getElementById("btnTentarNovamente").onclick = () => {
 };
 document.getElementById("btnVoltar").onclick = () => mostrarTela("tela-idle");
 
-//document.getElementById("btnBaixarCSV").onclick = baixarCSV;
-//document.getElementById("btnLimpar").onclick = () => {
+document.getElementById("btnBaixarCSV").onclick = baixarCSV;
+document.getElementById("btnLimpar").onclick = () => {
   if (confirm("Apagar todas as leituras salvas?")) {
     localStorage.removeItem("pontos");
     atualizarContador();
