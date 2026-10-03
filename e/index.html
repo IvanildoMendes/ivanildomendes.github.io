@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guia Eleitoral 2026 | Central de Links Úteis</title>
-    <meta name="description" content="Central de links úteis para as Eleições 2026: atendimento remoto, autoatendimento, locais de votação, divulgação de candidaturas e simulador de urna.">
-    <!-- Fonte moderna e ícones -->
+    <meta name="description" content="Central de links úteis para as Eleições 2026: atendimento remoto, autoatendimento, locais de votação, divulgação de candidaturas, simulador de urna e e-Título.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -42,7 +41,6 @@
             flex-direction: column;
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
@@ -117,7 +115,6 @@
             font-weight: 400;
         }
 
-        /* Search */
         .search-container {
             max-width: 560px;
             margin: 0 auto;
@@ -157,7 +154,6 @@
             background: white;
         }
 
-        /* Main */
         .main {
             flex: 1;
             padding: 0 1.5rem 4rem;
@@ -186,7 +182,6 @@
             gap: 1.5rem;
         }
 
-        /* Card */
         .card {
             background: var(--card-bg);
             border-radius: var(--border-radius);
@@ -241,6 +236,7 @@
         .card-icon.orange { background: #fff4e6; color: #f59e0b; }
         .card-icon.red { background: #fee2e2; color: #ef4444; }
         .card-icon.teal { background: #e0f2f1; color: #009688; }
+        .card-icon.indigo { background: #e0e7ff; color: #4f46e5; }
 
         .card-title {
             font-size: 1.15rem;
@@ -321,7 +317,6 @@
             transform: translateX(3px);
         }
 
-        /* Empty state */
         .empty-state {
             text-align: center;
             padding: 4rem 1rem;
@@ -340,7 +335,6 @@
             font-weight: 500;
         }
 
-        /* Footer */
         .footer {
             background: white;
             border-top: 1px solid #e2e8f0;
@@ -382,7 +376,6 @@
             max-width: 600px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .header {
                 padding: 2.5rem 1.2rem 4rem;
@@ -450,7 +443,7 @@
             <p>Acesse todos os serviços essenciais para exercer sua cidadania de forma rápida e segura.</p>
             <div class="search-container">
                 <i class="fas fa-search"></i>
-                <input type="text" class="search-input" id="searchInput" placeholder="Buscar serviço (ex: local de votação, simulador...)" aria-label="Buscar serviços eleitorais">
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar serviço (ex: local de votação, e-Título, simulador...)" aria-label="Buscar serviços eleitorais">
             </div>
         </div>
     </header>
@@ -568,6 +561,28 @@
                         </a>
                     </div>
                 </article>
+
+                <!-- e-Título -->
+                <article class="card" data-tags="e-título título digital aplicativo tse android ios certidões justificativa mesário">
+                    <div class="card-header">
+                        <div class="card-icon indigo">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title">e-Título</h2>
+                            <span class="card-category">TSE</span>
+                        </div>
+                    </div>
+                    <p class="card-description">
+                        A via digital do seu título de eleitor. Baixe o aplicativo gratuitamente e acesse: consulta de dados eleitorais, emissão de certidões, justificativa de ausência, consulta de débitos e inscrição como mesário voluntário.
+                    </p>
+                    <div class="card-footer">
+                        <span class="card-tag"><i class="fas fa-mobile-alt"></i> Android / iOS</span>
+                        <a href="https://www.tse.jus.br/eleicoes/eleicoes-2018/aplicativos-da-justica-eleitoral/e-titulo" target="_blank" rel="noopener noreferrer" class="card-link">
+                            Baixar <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </article>
             </div>
 
             <!-- Empty State -->
@@ -631,7 +646,6 @@
                     }
                 });
 
-                // Mostrar/ocultar estado vazio
                 if (visibleCount === 0 && term !== '') {
                     emptyState.style.display = 'block';
                 } else {
@@ -641,10 +655,8 @@
                 updateResultsInfo(visibleCount);
             }
 
-            // Inicializa a contagem
             updateResultsInfo(cards.length);
 
-            // Evento de input com debounce leve
             let timeoutId;
             searchInput.addEventListener('input', function() {
                 clearTimeout(timeoutId);
@@ -653,7 +665,6 @@
                 }, 150);
             });
 
-            // Limpa a busca se o campo for esvaziado
             searchInput.addEventListener('search', function() {
                 if (this.value === '') {
                     filterCards('');
