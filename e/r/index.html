@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Votos em Aratuba · Apuração</title>
+<style>
+  :root{
+    --bg:#0e1014; --card:#161a21; --card2:#1c222c; --line:#262d3a;
+    --txt:#e8eaf0; --mut:#8d96a8; --ac:#2dd4bf; --gold:#fbbf24;
+    --silver:#cbd5e1; --bronze:#d98452;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:28px 16px 64px;
+    background:radial-gradient(1100px 520px at 50% -12%,#1b2431,#0e1014 62%) fixed;
+    color:var(--txt);
+    font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:1020px;margin:0 auto}
+
+  /* ---------- HEADER ---------- */
+  header{margin-bottom:22px}
+  .kicker{
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ac);font-weight:700;margin-bottom:6px;
+  }
+  h1{margin:0;font-size:clamp(24px,4vw,34px);letter-spacing:-.02em}
+  .sub{margin:6px 0 0;color:var(--mut);font-size:14px}
+
+  /* ---------- TABS ---------- */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 16px}
+  .tab{
+    border:1px solid var(--line);background:var(--card);color:var(--mut);
+    padding:9px 15px;border-radius:999px;cursor:pointer;
+    font:inherit;font-size:13.5px;font-weight:600;transition:.18s;
+    white-space:nowrap;
+  }
+  .tab:hover{color:var(--txt);border-color:#38414f}
+  .tab.on{
+    background:linear-gradient(180deg,#2dd4bf,#14b8a6);
+    border-color:transparent;color:#04211d;
+    box-shadow:0 6px 20px -8px #2dd4bf;
+  }
+
+  /* ---------- STATS ---------- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;
+  }
+  .stat span{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .stat strong{display:block;margin-top:5px;font-size:19px;letter-spacing:-.01em}
+  .stat strong.sm{font-size:15px;line-height:1.3}
+
+  /* ---------- TOOLBAR ---------- */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .toolbar{
+    display:flex;gap:10px;padding:14px;border-bottom:1px solid var(--line);
+    background:var(--card2);flex-wrap:wrap;
+  }
+  .toolbar input,.toolbar select{
+    font:inherit;color:var(--txt);background:#0f131a;
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;
+  }
+  .toolbar input{flex:1 1 240px}
+  .toolbar input:focus,.toolbar select:focus{border-color:var(--ac);box-shadow:0 0 0 3px #2dd4bf22}
+  .toolbar select{cursor:pointer}
+
+  /* ---------- LISTA ---------- */
+  .row{
+    display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;
+    padding:12px 16px;border-bottom:1px solid #1e242e;transition:background .15s;
+  }
+  .row:last-child{border-bottom:0}
+  .row:hover{background:#1a202a}
+
+  .rank{
+    width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+    font-size:13px;font-weight:800;background:#0f131a;border:1px solid var(--line);color:var(--mut);
+  }
+  .r1 .rank{background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#3a2500;border-color:transparent}
+  .r2 .rank{background:linear-gradient(180deg,#cbd5e1,#94a3b8);color:#1e2530;border-color:transparent}
+  .r3 .rank{background:linear-gradient(180deg,#d98452,#b45309);color:#2a1400;border-color:transparent}
+
+  .name{font-weight:650;font-size:14.5px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .num{
+    font-size:11px;font-weight:700;color:var(--mut);
+    border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:#0f131a;
+  }
+  .party{font-size:12px;color:var(--ac);font-weight:700;letter-spacing:.04em;margin-top:2px}
+
+  .bar{height:5px;border-radius:99px;background:#0f131a;margin-top:7px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px;
+    background:linear-gradient(90deg,#14b8a6,#2dd4bf);transition:width .35s ease}
+  .r1 .bar i{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+  .r2 .bar i{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
+  .r3 .bar i{background:linear-gradient(90deg,#b45309,#d98452)}
+
+  .votes{text-align:right;min-width:92px}
+  .votes strong{display:block;font-size:15.5px;font-variant-numeric:tabular-nums}
+  .votes small{display:block;font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+
+  .empty{padding:44px 16px;text-align:center;color:var(--mut)}
+  footer{margin-top:22px;text-align:center;color:#5d6675;font-size:12.5px}
+
+  @media(max-width:560px){
+    .row{grid-template-columns:34px 1fr auto;gap:9px;padding:11px 12px}
+    .rank{width:26px;height:26px;font-size:11.5px;border-radius:8px}
+    .votes{min-width:74px}
+    .votes strong{font-size:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Aratuba · Ceará</div>
+    <h1>Apuração de Votos</h1>
+    <p class="sub">Candidatos com 0 votos foram descartados. Clique nas abas para navegar entre os cargos.</p>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <section class="stats" id="stats"></section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Buscar por nome, partido ou número…" autocomplete="off">
+      <select id="sort">
+        <option value="votos-desc">Mais votados</option>
+        <option value="votos-asc">Menos votados</option>
+        <option value="nome">Nome (A–Z)</option>
+        <option value="partido">Partido</option>
+      </select>
+    </div>
+    <div id="lista"></div>
+  </section>
+
+  <footer>Fonte: Votos em Aratuba.txt · dados compilados automaticamente</footer>
+</div>
+
+<script>
+/* ============ DADOS ============ */
+const CARGOS = {
+  presidente: { nome:'Presidente', rows:[
+    ['LULA','PT','13',6776],
+    ['FLAVIO BOLSONARO','PL','22',2571],
+    ['ESCRITOR AUGUSTO CURY','AVANTE','70',201],
+    ['RENAN SANTOS','MISSÃO','14',118],
+    ['RONALDO CAIADO','PSD','55',68],
+    ['SAMARA','UP','80',4],
+    ['ZEMA','NOVO','30',2],
+    ['HERTZ DIAS','PSTU','16',1],
+    ['CLARIANA BARAO','DC','27',1],
+    ['RUI COSTA PIMENTA','PCO','29',1]
+  ]},
+
+  governador: { nome:'Governador', rows:[
+    ['ELMANO DE FREITAS','PT','13',5754],
+    ['CIRO GOMES','PSDB','45',3686],
+    ['DELEGADO HUGGO','MISSÃO','14',14],
+    ['VERA LÚCIA','NOVO','30',5],
+    ['SERLEY LEAL','UP','80',1],
+    ['DANILO SOARES','DEMOCRATA','35',1],
+    ['IERI BRAGA','PCO','29',1]
+  ]},
+
+  senador: { nome:'Senador', rows:[
+    ['CID GOMES','PSB','400',5648],
+    ['LUIZIANNE','REDE','180',5258],
+    ['CAPITÃO WAGNER','UNIÃO','445',3006],
+    ['ALCIDES FERNANDES','PL','222',2820],
+    ['GUILHERME THEOPHILO','NOVO','300',15],
+    ['CATARINA MATOS','UP','800',13]
+  ]},
+
+  federal: { nome:'Dep. Federal', rows:[
+    ['ANDRÉ FERNANDES','PL','2222',868],
+    ['YURY DO PAREDÃO','MDB','1515',613],
+    ['TAINAH MARINHO','PSB','4077',338],
+    ['GIORDANNA MANO','PRD','2555',52],
+    ['DOMINGOS NETO','PSD','5555',16],
+    ['ROBÉRIO MONTEIRO','PSB','4020',1813],
+    ['MOSES RODRIGUES','UNIÃO','4444',13],
+    ['FERNANDO SANTANA','PT','1322',14],
+    ['IDILVAN','PSB','4040',150],
+    ['DR. ACILON','PSB','4055',97],
+    ['CÉLIO STUDART','PSD','5511',55],
+    ['MATHEUS NORONHA','PL','2299',27],
+    ['FERNANDA PESSOA','PSD','5588',21],
+    ['DANILO FORTE','PP','1144',7],
+    ['RENATO ROSENO','PSOL','5050',97],
+    ['RAIMUNDO MARTINS','PT','1323',162],
+    ['ERIKA AMORIM','REPUBLICANOS','1055',165],
+    ['LUIZ GASTÃO','PSD','5533',1426],
+    ['ROGER AGUIAR','PSB','4044',9],
+    ['AJ ALBUQUERQUE','PP','1111',432],
+    ['NENEN COELHO','MDB','1555',9],
+    ['LUISA CELA','PT','1301',47],
+    ['ANDRÉ FIGUEIREDO','PDT','1234',19],
+    ['MAURO FILHO','UNIÃO','4455',281],
+    ['EDUARDO BISMARCK','PV','4343',34],
+    ['LARISSA GASPAR','PT','1331',43],
+    ['JOSÉ AIRTON','PT','1333',34],
+    ['DR JAZIEL','PL','2277',848],
+    ['RONALDO MARTINS','REPUBLICANOS','1010',29],
+    ['EMANUEL ACRIZIO','SOLIDARIEDADE','7700',11],
+    ['CARMELO NETO','PL','2200',43],
+    ['CAPITÃO DANTAS','UNIÃO','4422',15],
+    ['PRISCILA COSTA','PL','2288',16],
+    ['DAYANY DO CAPITÃO','UNIÃO','4445',512],
+    ['SANDRINHA CAVALCANTE','CIDADANIA','2333',1],
+    ['DENIS BEZERRA','PSB','4000',12],
+    ['LUKÃO','CIDADANIA','2323',4],
+    ['ADAIL CARNEIRO','PSDB','4555',8],
+    ['ADRIANA GERÔNIMO','PSOL','5077',11],
+    ['VANDERLAN ALVES','SOLIDARIEDADE','7711',1],
+    ['INÁCIO ARRUDA','PCDOB','6565',12],
+    ['SOLDADO NOELIO','UNIÃO','4490',39],
+    ['ADAIL JR.','PDT','1277',8],
+    ['JOSÉ SARTO','PSDB','4545',40],
+    ['ENFERMEIRA ANA PAULA','SOLIDARIEDADE','7788',10],
+    ['PPCELL','PL','2244',149],
+    ['CHIQUINHO DOS CARNEIROS','PRD','2580',18],
+    ['PEDRO MATOS','PL','2211',6],
+    ['JULIERME SENA','PL','2233',36],
+    ['ADELITA MONTEIRO','PT','1313',18],
+    ['WEIBE TAPEBA','PT','1314',299],
+    ['LUCINILDO FROTA','PL','2278',5],
+    ['VANDERLEY NOGUEIRA','PT','1377',1],
+    ['KATIA RODRIGUES','PDT','1212',5],
+    ['ILDA ANGÉLICA','PRD','2518',8],
+    ['MICHEL LINS','REPUBLICANOS','1001',5],
+    ['DANILO LOPES','PRD','2525',8],
+    ['VAIDON OLIVEIRA','SOLIDARIEDADE','7777',2],
+    ['JACQUELINE GOUVEIA','MDB','1520',1],
+    ['ANA SOARES','PDT','1256',3],
+    ['GABRIEL CARVALHO','MISSÃO','1414',20],
+    ['CARLOS MATOS','UNIÃO','4410',4],
+    ['EVALDO COSTA','REPUBLICANOS','1000',3],
+    ['PROFESSOR ANÍZIO','PT','1399',11],
+    ['ALCYVANIA PINHEIRO','PL','2252',4],
+    ['MITCHELLE MEIRA','REDE','1800',5],
+    ['WELLINGTON SABOIA','PODE','2026',5],
+    ['KAMILA CARDOSO','PL','2270',4],
+    ['PAI DO GAREL','PSB','4001',7],
+    ['BISPA VANESSA LIMA','MDB','1500',8],
+    ['TIRIRICA','PSD','5522',5],
+    ['GORDIM ARAÚJO','PSDB','4522',1],
+    ['DR ADRIANO BARBOSA','PL','2255',4],
+    ['ANDRÉ COMARU','PSOL','5055',6],
+    ['LUANA RÉGIA','PSD','5523',4],
+    ['AMÉLIA BEZERRA','SOLIDARIEDADE','7755',1],
+    ['MORONI','PL','2212',4],
+    ['ANNA KARINA VOZES DA EDUCAÇÃO','PSOL','5005',1],
+    ['GLAU AGUIAR','UNIÃO','4400',2],
+    ['DANIELE PIMENTEL','PSB','4011',6],
+    ['RENATO MORAES','MDB','1511',2],
+    ['TOINHO CONTÁBIL','PT','1312',2],
+    ['GORETE PEREIRA','MDB','1533',9],
+    ['SOPHIA FECHINE','MISSÃO','1400',4],
+    ['MONIQUE VAQUEIRA','PSB','4010',3],
+    ['IGOR NOGUEIRA','PODE','2030',1],
+    ['MADALENA QUILOMBOLA','PT','1311',4],
+    ['SOCORRO LIMA','MDB','1577',1],
+    ['DRA MAZÉ MAIA','PSD','5577',1],
+    ['SUED CARVALHO','UP','8080',1],
+    ['SANTOS','PSD','5551',2],
+    ['JESSICA MACAXEIRA','MDB','1544',1],
+    ['APÓSTOLO CARLOS BRUNILDO','REPUBLICANOS','1022',1],
+    ['AURI JUNIOR','PT','1315',3],
+    ['DANILO RIBEIRO','PL','2266',3],
+    ['JOÃO CARTEIRO','PDT','1233',4],
+    ['ENFERMEIRA LILI','MDB','1592',4],
+    ['FLAVIO FG','PRD','2589',1],
+    ['SUBOFICIAL CARCARÁ','NOVO','3007',1],
+    ['ROSEANE DANDAN','PRD','2500',1],
+    ['MAMÁ MESQUITA','PDT','1222',2],
+    ['PROFESSOR JARIR','PSOL','5018',1],
+    ['HEITOR HOLANDA','PRD','2510',1],
+    ['BOM BIBI','PT','1388',1],
+    ['DAVI LEITE','PSDB','4580',23],
+    ['MANOEL DEODATO','SOLIDARIEDADE','7744',10],
+    ['ROGÉRIO SOARES','PODE','2006',2],
+    ['UELITON BRILHOSO','MISSÃO','1444',1],
+    ['UBIRAJARA É SHOW PAPAI','PSDB','4500',3],
+    ['DRA CINTHIA BELINO','UNIÃO','4404',2],
+    ['GRAU BIEL','PSD','5544',1],
+    ['ORLEANDO SILVA','UNIÃO','4456',1],
+    ['FÁBIA BRILHANTE','PP','1122',7],
+    ['JULIANA COSTA','PSD','5566',2],
+    ['WANDERSON ESTIMA','PSD','5550',4],
+    ["PAI GERSON COLETIVO D'TERREIRO",'PSOL','5099',1],
+    ['FERNANDO XIMENES','MOBILIZA','3300',3],
+    ['MAURICIO SANFORD','REPUBLICANOS','1020',6],
+    ['MAGNO LIMA','PODE','2024',4],
+    ['ALTAIR DO PEIXE','CIDADANIA','2377',1],
+    ['PROF. VALMIR ARRUDA','PSOL','5001',1],
+    ['ANGELA PINHEIRO','MDB','1516',2],
+    ['DR. EDIMIR MARTINS','PSDB','4515',4],
+    ['RUTH REBOUÇAS','PL','2224',1],
+    ['ENFERMEIRA CERIS','REPUBLICANOS','1011',1],
+    ['ÉRIKA JANE','REPUBLICANOS','1026',1],
+    ['NORA BARRETO','PL','2225',1],
+    ['PAULO SAMPAIO','NOVO','3000',1],
+    ['IGOR PEIXOTO','MISSÃO','1442',1],
+    ['JACKY QUEIROZ','SOLIDARIEDADE','7707',2],
+    ['PASTOR MARCIO','MDB','1501',1],
+    ['LARISSA FREITAS','PDT','1284',3],
+    ['GLAYCIANNE SAMPAIO','PCO','2900',2]
+  ]},
+
+  estadual: { nome:'Dep. Estadual', rows:[
+    ['TANCREDO DOS SANTOS','PL','22222',233],
+    ['GABRIEL BIOLOGIA','PSOL','50555',87],
+    ['BELLA CARMELO','PL','22022',109],
+    ['ABREU JUNIOR','PL','22221',127],
+    ['ROMEU ALDIGUERI','PSB','40777',5],
+    ['LIZIANY MEDEIROS','PT','13133',13],
+    ['LAIS NUNES','PT','13111',2],
+    ['OSMAR BAQUIT','PSB','40222',8],
+    ['JADE ROMERO','PT','13013',56],
+    ['SÉRGIO AGUIAR','PSB','40888',4],
+    ['ZEZINHO ALBUQUERQUE','PP','11111',15],
+    ['CATANHO','PT','13131',205],
+    ['GUILHERME LANDIM','PSB','40114',8],
+    ['DANNIEL OLIVEIRA','MDB','15333',4],
+    ['MOSES FILHO','UNIÃO','44444',3],
+    ['JÔ FARIAS','PT','13258',35],
+    ['DOMINGOS FILHO','PSD','55555',2],
+    ['DE ASSIS DINIZ','PT','13456',125],
+    ['FABIOLA CARNEIRO','PSB','40700',57],
+    ['FRANZÉ CARNEIRO','PT','13222',3],
+    ['MISSIAS DIAS','PT','13123',106],
+    ['FIRMO CAMURÇA','PSD','55888',16],
+    ['MARCOS SOBREIRA','PSB','40333',2],
+    ['PALOMA NUNES','PSB','40789',5],
+    ['ELIZEU MONTEIRO','PSB','40200',402],
+    ['MARTA GONÇALVES','PSB','40555',32],
+    ['DRA SILVANA','PL','22777',107],
+    ['ILO NETO','PT','13999',264],
+    ['GADYEL','PT','13700',1],
+    ['MANU PIMENTA','PSB','40100',10],
+    ['DR. GERONIMO','PSB','40111',13],
+    ['JOÃO JAIME','PV','43000',38],
+    ['SALMITO','PSB','40500',28],
+    ['JAMES BEL','UNIÃO','44111',5],
+    ['BRUNO PEDROSA','PT','13000',17],
+    ['MOISÉS BRAZ','PT','13333',12],
+    ['DAVID DURAND','REPUBLICANOS','10123',17],
+    ['ZÉ AILTON','PT','13888',3],
+    ['LEONARDO PINHEIRO','PSB','40999',27],
+    ['LIA GOMES','PSB','40123',3],
+    ['GUILHERME SAMPAIO','PT','13234',2901],
+    ['DR. LUCILVIO GIRÃO','PSB','40234',50],
+    ['GUILHERME BISMARCK','PSB','40456',22],
+    ['NIZO COSTA','PT','13777',22],
+    ['SIMÃO PEDRO','PSD','55333',10],
+    ['LORENA PINHEIRO','PSD','55000',9],
+    ['LEO SURICATE','PSOL','50013',22],
+    ['ANTONIO GRANJA','PSB','40000',17],
+    ['GEORGIA DO MARCELÃO','SOLIDARIEDADE','77123',5],
+    ['DAVI BENEVIDES','PSDB','45456',1219],
+    ['EMILIA PESSOA','PSDB','45123',7],
+    ['GARDEL ROLIM','REPUBLICANOS','10333',93],
+    ['ELIANA ESTRELA','PT','13444',32],
+    ['DRA MAYRA PINHEIRO','PL','22000',7],
+    ['CLÁUDIO PINHO','PSDB','45678',3],
+    ['QUEIROZ FILHO','PSDB','45777',138],
+    ['ACRÍSIO SENA','PT','13132',11],
+    ['JULINHO','PT','13789',5],
+    ['MÁRCIO MARTINS','REPUBLICANOS','10444',16],
+    ['FELIPE MOTA','PSDB','45800',818],
+    ['DEP FERNANDO HUGO - DR HUGO','REPUBLICANOS','10678',21],
+    ['TONY BRITO','PSD','55777',21],
+    ['DIEGO BARRETO','REPUBLICANOS','10234',17],
+    ['ANDERSON FEITOSA','REPUBLICANOS','10222',15],
+    ['PASTOR FROTA','PL','22888',14],
+    ['SARGENTO REGINAURO','PSDB','45190',29],
+    ['KEIVIA DIAS','PRD','25555',14],
+    ['ANTÔNIO HENRIQUE','PSDB','45111',26],
+    ['PROFESSORA ZULEIDE','PSOL','50180',13],
+    ['TADEU OLIVEIRA','PSDB','45999',6],
+    ['JORGE PINHEIRO','PSDB','45000',17],
+    ['CARLOS JUNIOR','MOBILIZA','33000',4],
+    ['HEITOR FERRER','PSDB','45888',13],
+    ['DAVID VASCONCELOS','PL','22223',5],
+    ['TIN GOMES','PSB','40600',18],
+    ['SARGENTO BORGES','PL','22190',8],
+    ['PROFESSORA ADRIANA ALMEIDA','PT','13113',14],
+    ['BOSCO JUNIOR','MOBILIZA','33456',8],
+    ['MARTINHA BRANDÃO','SOLIDARIEDADE','77888',13],
+    ['KLEITON ANDRADE','REPUBLICANOS','10999',4],
+    ['CARLOS KLEBER','PL','22580',9],
+    ['PEDRO LOBO','REPUBLICANOS','10100',1],
+    ['WALTER CAVALCANTE','PV','43640',3],
+    ['ERICH DOUGLAS','PSD','55111',10],
+    ['THIAGO CAMPELO','PP','11222',420],
+    ['APOLLO VICZ','PSD','55011',4],
+    ['JOÃO BARROSO FILHO','PSDB','45645',1],
+    ['ARIZA SILVA','PP','11555',1],
+    ['APÓSTOLO LUIZ HENRIQUE','MDB','15000',5],
+    ['SILVIO NASCIMENTO','REPUBLICANOS','10000',2],
+    ['CHICO BALTAZAR','PSDB','45789',17],
+    ['ALCY PINHEIRO','PL','22522',5],
+    ['DR JOÃO MARTINS','PL','22422',4],
+    ['EGINA SANTIAGO','PL','22762',5],
+    ['RAIANE DA BÁ','PSB','40140',16],
+    ['TOMAZ HOLANDA','MOBILIZA','33123',3],
+    ['LUIZ SERGIO','PSB','40055',2],
+    ['EDILENE PESSOA','PL','22322',2],
+    ['AILTON LOPES','PSOL','50500',2],
+    ['RICARDO SALES','PRD','25888',2],
+    ['LEONELZINHO ALENCAR','PSB','40400',4],
+    ['PROFESSORA MAYA ELIZ','PT','13180',3],
+    ['VALDIR MOTO PEÇAS','UNIÃO','44456',8],
+    ['NETO DO PECEM','PDT','12123',3],
+    ['MARIANO DA PICANHA','MOBILIZA','33111',1],
+    ['EUVALDETE FERRO','PSDB','45455',12],
+    ['DRA. TAIS MATOS','PCDOB','65013',2],
+    ['NESTOR BEZERRA','PSOL','50113',1],
+    ['ABDIAS FILHO','UNIÃO','44000',1],
+    ['EULOGIO NETO','PSB','40110',2],
+    ['AMÁLIA LOPES','MDB','15111',2],
+    ['NEGA DO HENRIQUE JORGE','PSB','40900',15],
+    ['MABEL DE CARVALHO','PP','11100',12],
+    ['PROFESSORA DÉBORA LEITE','UNIÃO','44010',1],
+    ['AUGUSTINHO MOREIRA FILHO','UNIÃO','44141',6],
+    ['LEVY TEIXEIRA','PL','22822',1],
+    ['DR. JOÃO MOTA','PSDB','45411',1],
+    ['MARONI RAMALHO','PDT','12345',8],
+    ['RODRIGO MAMMUTE','UNIÃO','44555',2],
+    ['ALEX CEARA','PL','22111',1],
+    ['DENISE BRITO','PSB','40774',1],
+    ['MACKFLAY','PL','22555',1],
+    ['GRAZI DOS PRATIN','PL','22218',6],
+    ['SEU SÉRGIO','PSD','55024',3],
+    ['MANA LIDERANÇA','PV','43777',2],
+    ['GILVAN DO NASCIMENTO','REPUBLICANOS','10800',2],
+    ['PROFESSORA TERESINHA','PT','13130',1],
+    ['ROBERTO CARIRI','REPUBLICANOS','10111',13],
+    ['DR.ESCOCIO','PSB','40040',1],
+    ['JEOVANE BARROS','NOVO','30000',1],
+    ['ELIOMAR BARBOSA','PSDB','45450',1],
+    ['REJANE HOLANDA','UNIÃO','44545',4],
+    ['ABEDE NEGRO','PP','11234',3],
+    ['SGT DANTAS','UNIÃO','44333',1],
+    ['ENFERMEIRA VIRGÍNIA','MDB','15192',3],
+    ['IBERNON MONTEIRO','UNIÃO','44810',1],
+    ['AVELINO DO POVO','REPUBLICANOS','10101',1],
+    ['SAMUEL FALCÃO','REPUBLICANOS','10007',1],
+    ['DIANNE GLEBIA','UP','80180',1],
+    ['PROFESSOR BEZERRA','PT','13223',6],
+    ['ANDRE GALDINO','PDT','12222',1],
+    ['KENNEDY PASSOS','SOLIDARIEDADE','77077',14],
+    ['CREMOSINHO','UNIÃO','44321',1],
+    ['CHAGAS CANINDÉ','UNIÃO','44100',2],
+    ['CIDA BEZERRA','UNIÃO','44455',1],
+    ['NEGUINHA CARVALHO','MOBILIZA','33007',1],
+    ['SÉRGIO FREITAS','PP','11777',1],
+    ['VANIA CASTELO','PSD','55234',1],
+    ['REGINALDO MOREIRA','MOBILIZA','33300',1],
+    ['LENE SILVA','UNIÃO','44254',1],
+    ['MANU MORAIS','PRD','25000',1],
+    ['LEANDRO SOUSA','PSDB','45444',1],
+    ['ENFERMEIRA CRISTIANE COLARES','REPUBLICANOS','10888',1],
+    ['RAFAELA BARROZO','PSDB','45575',1]
+  ]}
+};
+
+/* ============ ESTADO ============ */
+const state = { cargo:'presidente', q:'', sort:'votos-desc' };
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('pt-BR');
+const pct = (v,t) => (v/t*100).toFixed(2).replace('.',',') + '%';
+
+/* ============ ABAS ============ */
+function buildTabs(){
+  $('tabs').innerHTML = Object.entries(CARGOS).map(([k,c]) =>
+    `<button class="tab${k===state.cargo?' on':''}" data-cargo="${k}">${c.nome}</button>`
+  ).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => {
+    state.cargo = b.dataset.cargo;
+    state.q = ''; $('q').value = '';
+    buildTabs(); render();
+  });
+}
+
+/* ============ RENDER ============ */
+function render(){
+  const c = CARGOS[state.cargo];
+  const total = c.rows.reduce((s,r) => s + r[3], 0);
+  const max   = Math.max(...c.rows.map(r => r[3]));
+
+  /* ranking fixo por votos */
+  const rank = new Map();
+  c.rows.slice().sort((a,b) => b[3]-a[3]).forEach((r,i) => rank.set(r, i+1));
+
+  /* cards */
+  const top = c.rows.slice().sort((a,b) => b[3]-a[3])[0];
+  $('stats').innerHTML = `
+    <div class="stat"><span>Total de votos</span><strong>${fmt(total)}</strong></div>
+    <div class="stat"><span>Candidatos com voto</span><strong>${c.rows.length}</strong></div>
+    <div class="stat"><span>Mais votado</span><strong class="sm">${top[0]}<br>${fmt(top[3])} votos</strong></div>
+  `;
+
+  /* filtro */
+  const q = state.q.trim().toLowerCase();
+  let rows = c.rows.filter(r =>
+    !q || r[0].toLowerCase().includes(q) || r[1].toLowerCase().includes(q) || String(r[2]).includes(q)
+  );
+
+  /* ordenação */
+  switch(state.sort){
+    case 'votos-desc': rows.sort((a,b) => b[3]-a[3]); break;
+    case 'votos-asc':  rows.sort((a,b) => a[3]-b[3]); break;
+    case 'nome':       rows.sort((a,b) => a[0].localeCompare(b[0],'pt-BR')); break;
+    case 'partido':    rows.sort((a,b) => a[1].localeCompare(b[1],'pt-BR') || b[3]-a[3]); break;
+  }
+
+  if(!rows.length){
+    $('lista').innerHTML = `<div class="empty">Nenhum candidato encontrado para “${state.q}”.</div>`;
+    return;
+  }
+
+  $('lista').innerHTML = rows.map(r => {
+    const [nome, partido, numero, votos] = r;
+    const p = rank.get(r);
+    const w = max ? (votos / max * 100) : 0;
+    return `
+      <div class="row${p<=3?' r'+p:''}">
+        <div class="rank">${p}º</div>
+        <div class="info">
+          <div class="name">${nome}<span class="num">${numero}</span></div>
+          <div class="party">${partido}</div>
+          <div class="bar"><i style="width:${w}%"></i></div>
+        </div>
+        <div class="votes">
+          <strong>${fmt(votos)}</strong>
+          <small>${pct(votos,total)}</small>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ============ EVENTOS ============ */
+$('q').addEventListener('input', e => { state.q = e.target.value; render(); });
+$('sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+document.addEventListener('keydown', e => {
+  if(e.key === '/' && document.activeElement !== $('q')){ e.preventDefault(); $('q').focus(); }
+});
+
+buildTabs();
+render();
+</script>
+</body>
+</html>
